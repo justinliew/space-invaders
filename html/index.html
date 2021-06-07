@@ -95,9 +95,19 @@
       //ctx.fillRect(x - 17, y - 12, 4, 4);
     }
 
-    function draw_enemy(x, y) {
-      ctx.drawImage(res.enemy, x - 10, y - 10);
-    }
+    function draw_enemy(x, y, radius) {
+	res.enemy.width = radius;
+    res.enemy.height = radius;
+    let eCtx = res.enemy.getContext('2d');
+    eCtx.fillStyle = "yellow";
+    eCtx.beginPath();
+    eCtx.arc(10, 10, radius, 0, 2 * Math.PI);
+    eCtx.fill();
+    ctx.drawImage(res.enemy, x - radius, y - radius);
+	ctx.fillStyle = "orange";
+    ctx.textBaseline = "top";
+    ctx.font = "20px sans-serif";
+	}
 
     function draw_bullet(x, y) {
       ctx.drawImage(res.bullet, x - 3, y - 3);
@@ -114,8 +124,18 @@
       ctx.fillText('Score: ' + x, 10, 10)
     }
 
+	function draw_debug(a,b,c,d) {
+	  ctx.fillStyle = "orange";
+      ctx.textBaseline = "top";
+      ctx.font = "20px sans-serif";
+      ctx.fillText('Debug: ' + a, 10, 30)
+      ctx.fillText('Debug: ' + b, 10, 50)
+      ctx.fillText('Debug: ' + c, 10, 70)
+      ctx.fillText('Debug: ' + d, 10, 90)
+	}
+
     // The real loading and running of our wasm starts here
-    let imports = { clear_screen, draw_player, draw_enemy, draw_bullet, draw_particle, draw_score };
+    let imports = { clear_screen, draw_player, draw_enemy, draw_bullet, draw_particle, draw_score, draw_debug };
     imports.Math_atan = Math.atan;
     imports.sin = Math.sin;
     imports.cos = Math.cos;
@@ -131,10 +151,9 @@
     let module = {};
     let mod = results.instance;
     module.update = mod.exports.update;
-    module.toggle_shoot = mod.exports.toggle_shoot;
-    module.toggle_boost = mod.exports.toggle_boost;
-    module.toggle_turn_left = mod.exports.toggle_turn_left;
-    module.toggle_turn_right = mod.exports.toggle_turn_right;
+    module.toggle_fire = mod.exports.toggle_fire;
+    module.toggle_left = mod.exports.toggle_left;
+    module.toggle_right = mod.exports.toggle_right;
     module.resize = mod.exports.resize;
     module.draw = mod.exports.draw;
 
@@ -142,16 +161,13 @@
     function processKey(key, b) {
       switch (key) {
         case "ArrowLeft":
-          module.toggle_turn_left(b);
+          module.toggle_left(b);
           break;
         case "ArrowRight":
-          module.toggle_turn_right(b);
-          break;
-        case "ArrowUp":
-          module.toggle_boost(b);
+          module.toggle_right(b);
           break;
         case " ":
-          module.toggle_shoot(b);
+          module.toggle_fire(b);
           break;
       }
     }
@@ -163,7 +179,7 @@
       // We make the canvas somewhat smaller to get some zooming
       canvas.width = window.innerWidth * 0.8;
       canvas.height = window.innerHeight * 0.8;
-//      module.resize(canvas.width, canvas.height);
+      module.resize(canvas.width, canvas.height);
     }
     window.addEventListener('resize', () => {
       resize();
@@ -183,7 +199,7 @@
 
       // Update and draw
       let progress = (timestamp - prevTimestamp) / 1000;
-//      module.update(progress);
+      module.update(progress);
       module.draw();
 
       // Some bookkeeping
