@@ -10,7 +10,6 @@ enum Movement {
 
 pub struct Swarm {
     pub top_left: Point,
-	pub bottom_right: Point,
 	pub num_x: usize,
 	pub num_y: usize,
 	pub spacing_x: usize,
@@ -36,7 +35,6 @@ impl Swarm {
 	pub fn new(x: usize, y: usize, world_size: Size) -> Swarm {
 		let mut ret = Swarm {
 			top_left: Point::new(200.0,100.0),
-			bottom_right: Point::default(),
 			num_x: x,
 			num_y: y,
 			spacing_x: 20,
@@ -48,8 +46,6 @@ impl Swarm {
 			world_size: world_size,
 			time_to_move: BASE_MOVE_DELAY,
 		};
-		ret.bottom_right.x = ret.top_left.x + (ret.num_x * ret.radius) as f64 + (ret.num_x-1) as f64 * ret.spacing_x as f64;
-		ret.bottom_right.y = ret.top_left.y + (ret.num_y * ret.radius) as f64 + (ret.num_y-1) as f64 * ret.spacing_y as f64;
 		ret
 	}
 
@@ -106,11 +102,19 @@ impl Swarm {
 		Some((bucket_x.trunc() as usize, bucket_y.trunc() as usize))
 	}
 
+	fn get_bottom_right(&self) -> Point {
+		Point{
+			x: self.top_left.x + (self.num_x * self.radius) as f64 + (self.num_x-1) as f64 * self.spacing_x as f64,
+			y: self.top_left.y + (self.num_y * self.radius) as f64 + (self.num_y-1) as f64 * self.spacing_y as f64,
+		}
+	}
+
+
 	pub fn check_hit(&mut self, bullet: &Bullet) -> bool {
-		if bullet.x() < self.top_left.x || bullet.x() > self.bottom_right.x {
+		if bullet.x() < self.top_left.x || bullet.x() > self.get_bottom_right().x {
 			return false;
 		}
-		if bullet.y() < self.top_left.y || bullet.y() > self.bottom_right.y {
+		if bullet.y() < self.top_left.y || bullet.y() > self.get_bottom_right().y {
 			return false;
 		}
 
