@@ -17,26 +17,36 @@ pub struct Swarm {
 	pub spacing_y: usize,
 	pub radius: usize,
 	pub alive: Vec<bool>,
+	num_alive: usize,
 	movement: Movement,
 	pub world_size: Size,
+	time_to_move: f64,
 }
 
-const BASE_MOVE_SPEED: f64 = 50.0;
+/*
+I think it starts in the middle
+moves sideways a total of 10 from L to R
+Speeds up as there are fewer and fewer enemies
+ */
+const MOVE_AMT: f64 = 20.0;
+const BASE_MOVE_DELAY: f64 = 1.0;
 
 impl Swarm {
 
 	pub fn new(x: usize, y: usize, world_size: Size) -> Swarm {
 		let mut ret = Swarm {
-			top_left: Point::new(100.0,100.0),
+			top_left: Point::new(200.0,100.0),
 			bottom_right: Point::default(),
 			num_x: x,
 			num_y: y,
-			spacing_x: 30,
-			spacing_y: 30,
-			radius: 20,
+			spacing_x: 20,
+			spacing_y: 20,
+			radius: 15,
 			alive: vec![true;x * y],
+			num_alive: x*y,
 			movement: Movement::LEFT,
 			world_size: world_size,
+			time_to_move: BASE_MOVE_DELAY,
 		};
 		ret.bottom_right.x = ret.top_left.x + (ret.num_x * ret.radius) as f64 + (ret.num_x-1) as f64 * ret.spacing_x as f64;
 		ret.bottom_right.y = ret.top_left.y + (ret.num_y * ret.radius) as f64 + (ret.num_y-1) as f64 * ret.spacing_y as f64;
@@ -45,27 +55,30 @@ impl Swarm {
 
 	pub fn update(&mut self, dt: f64) {
 		let rhs = self.top_left.x as usize + self.num_x * self.spacing_x;
+		self.time_to_move -= dt;
+		if self.time_to_move > 0.0 {
+			return;
+		}
+		self.time_to_move = BASE_MOVE_DELAY * (self.num_alive as f64 / (self.num_x * self.num_y) as f64);
 		match self.movement {
 			Movement::LEFT => {
 				if rhs < self.world_size.width - self.top_left.x as usize {
-					self.top_left.x += BASE_MOVE_SPEED * dt;
+					self.top_left.x += MOVE_AMT;
 				} else {
 					self.movement = Movement::DOWN(true);
 				}
 			},
 			Movement::DOWN(left) => {
-				self.top_left.y += 30.;
+				self.top_left.y += MOVE_AMT;
 				if left {
-					self.top_left.x += BASE_MOVE_SPEED * dt;
 					self.movement = Movement::RIGHT;
 				} else {
-					self.top_left.x -= BASE_MOVE_SPEED * dt;
 					self.movement = Movement::LEFT;
 				}
 			}
 			Movement::RIGHT => {
 				if self.top_left.x > 100. {
-					self.top_left.x -= BASE_MOVE_SPEED * dt;
+					self.top_left.x -= MOVE_AMT;
 				} else {
 					self.movement = Movement::DOWN(false);
 				}
@@ -104,6 +117,7 @@ impl Swarm {
 		if let Some(hit) = self.is_hit(bullet.x(), bullet.y()) {
 			if self.alive[hit.0 + (hit.1 as usize)*self.num_x] {
 				self.alive[hit.0 + (hit.1 as usize)*self.num_x] = false;
+				self.num_alive -= 1;
 				return true;
 			}
 		}
