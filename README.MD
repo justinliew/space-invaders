@@ -8,7 +8,6 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ## TODO
 
-- [ ] player bullet collisions have stopped working reliably!
 - [X] basic player movement.
 - [X] sizing: world space, screen space.
 - [X] player firing and bullets.
