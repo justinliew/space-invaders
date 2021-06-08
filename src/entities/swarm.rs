@@ -102,8 +102,11 @@ impl Swarm {
 		}
 
 		if let Some(hit) = self.is_hit(bullet.x(), bullet.y()) {
-			self.alive[hit.0 + (hit.1 as usize)*self.num_x] = false;
+			if self.alive[hit.0 + (hit.1 as usize)*self.num_x] {
+				self.alive[hit.0 + (hit.1 as usize)*self.num_x] = false;
+				return true;
+			}
 		}
-		true
+		false
 	}
 }

@@ -28,23 +28,6 @@ use crate::size::Size;
 use crate::bullet::Bullet;
 use crate::state::World;
 
-/*
-Things to do
-- player movement. DONE
-- sizing. DONE
-- player firing and bullets. DONE
-- enemy firing.
-- collisions, death.
-- game state, losing.
-- enemies.
-	- proper movement, less smooth.
-	- sprites.
-- encapsulate for picture-in-picture.
-- network story.
-- ECS story.
-*/
-
-
 #[macro_use]
 extern crate lazy_static;
 
@@ -111,14 +94,15 @@ const BULLET_RATE: f64 = 1.0 / BULLETS_PER_SECOND;
 */
 fn handle_collisions(world: &mut World) -> bool {
 	let swarm = &mut world.swarm;
-	let bullets = &world.bullets;
+	let bullets = &mut world.bullets;
+	let num_bullets = bullets.len();
 
-	for bullet in bullets {
-		if swarm.check_hit(bullet) {
-			return true;
-		}
-	}
-	false
+	bullets.retain(|bullet| {
+		let hit = swarm.check_hit(bullet);
+		!hit
+	});
+
+	num_bullets != bullets.len()
 }
 
 #[no_mangle]
@@ -188,7 +172,6 @@ pub unsafe extern "C" fn draw() {
 
 	for bullet in &world.bullets {
 		draw_bullet(bullet.x() * world_to_screen.0, bullet.y() * world_to_screen.1);
-		draw_debug(bullet.x(), bullet.y(), world.swarm.top_left.y, world.swarm.bottom_right.y);
 	}
 
     // for enemy in &world.enemies {
