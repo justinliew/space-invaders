@@ -80,12 +80,12 @@ pub extern "C" fn update(dt: c_double) {
 		},
 		GameState::Playing => {
 			data.current_time += dt;
+			let radius = data.state.world.swarm.radius;
 
-			// Update rocket rotation
-			if data.input.left {
+			if data.input.left && data.state.world.player.x() > radius as f64 {
 				*data.state.world.player.x_mut() -= MOVE_SPEED * dt;
 			}
-			if data.input.right {
+			if data.input.right && data.state.world.player.x() < (data.state.world.world_size.width-radius) as f64 {
 				*data.state.world.player.x_mut() += MOVE_SPEED * dt;
 			};
 
