@@ -1,6 +1,7 @@
 use crate::point::Point;
 use crate::size::Size;
 use crate::bullet::Bullet;
+use crate::state::GameData;
 
 enum Movement {
 	LEFT,
@@ -34,12 +35,12 @@ impl Swarm {
 
 	pub fn new(x: usize, y: usize, world_size: Size) -> Swarm {
 		let mut ret = Swarm {
-			top_left: Point::new(200.0,100.0),
+			top_left: Point::new(200.0,50.0),
 			num_x: x,
 			num_y: y,
-			spacing_x: 20,
-			spacing_y: 20,
-			radius: 15,
+			spacing_x: 40,
+			spacing_y: 40,
+			radius: 20,
 			alive: vec![true;x * y],
 			num_alive: x*y,
 			movement: Movement::LEFT,
@@ -82,11 +83,11 @@ impl Swarm {
 		}
 	}
 
-	pub fn get_enemy_location(&self, x: usize, y: usize, world_to_screen: (f64,f64)) -> Point {
-		Point{
-			x: (self.top_left.x + (self.radius as f64) + (x * (self.spacing_x + self.radius)) as f64) * world_to_screen.0,
-			y: (self.top_left.y + (self.radius as f64) + (y * (self.spacing_y + self.radius)) as f64) * world_to_screen.1,
-		}
+	pub fn get_enemy_location(&self, x: usize, y: usize, data: &GameData) -> Point {
+		data.world_to_screen(&Point{
+			x: (self.top_left.x + (self.radius as f64) + (x * (self.spacing_x + self.radius)) as f64),
+			y: (self.top_left.y + (self.radius as f64) + (y * (self.spacing_y + self.radius)) as f64),
+		})
 	}
 
 	pub fn is_hit(&self, x: f64, y: f64) -> Option<(usize,usize)> {

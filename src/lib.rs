@@ -26,7 +26,8 @@ use crate::input::Input;
 use crate::swarm::Swarm;
 use crate::size::Size;
 use crate::bullet::Bullet;
-use crate::state::World;
+use crate::state::{GameData,World};
+use crate::point::Point;
 
 #[macro_use]
 extern crate lazy_static;
@@ -40,58 +41,18 @@ extern "C" {
     // fn draw_particle(_: c_double, _: c_double, _: c_double);
     fn draw_score(_: c_double);
 	fn draw_debug(_: c_double, _: c_double, _: c_double, _: c_double);
+	fn draw_bounds(_: c_double, _: c_double, _: c_double, _: c_double);
 }
 
 lazy_static! {
 //    static ref DATA: Mutex<GameData> = Mutex::new(GameData::new(Size{width: 1024, height: 600}, Size{width: 1000, height: 600}));
-    static ref DATA: Mutex<GameData> = Mutex::new(GameData::new(Size{width: 1000, height: 600}, Size{width: 1000, height: 600}));
-}
-
-struct GameData {
-	state: state::State,
-	input: Input,
-	current_time: f64,
-	screen_size: Size,
-	in_swarm: bool,
-    // state: GameState,
-    // actions: Actions,
-    // time_controller: TimeController<Pcg32Basic>
-}
-
-impl GameData {
-	fn new(screen_size: Size, world_size: Size) -> GameData {
-		GameData {
-			state: state::State::new(world_size),
-			input: Input::default(),
-			current_time: 0.0,
-			screen_size: screen_size,
-			in_swarm: false,
-			// actions: Actions::default(),
-			// time_controller: TimeController::new(Pcg32Basic::from_seed([42, 42]))
-		}
-	}
+    static ref DATA: Mutex<GameData> = Mutex::new(GameData::new(Size{width: 1000, height: 800}));
 }
 
 const MOVE_SPEED: f64 = 300.0;
 const BULLETS_PER_SECOND: f64 = 2.0;
 const BULLET_RATE: f64 = 1.0 / BULLETS_PER_SECOND;
 
-/*
-	let radii = self.radius() + other.radius();
-	self.position().squared_distance_to(&other.position()) < radii * radii
-
-					if let Some((index, position)) = enemies.iter().enumerate()
-                    .find(|&(_, enemy)| enemy.collides_with(bullet))
-                    .map(|(index, enemy)| (index, enemy.position()))
-                    {
-                        util::make_explosion(particles, &position, 10);
-                        enemies.remove(index);
-                        false
-                    } else {
-                    true
-                }
-
-*/
 fn handle_collisions(world: &mut World) -> bool {
 	let swarm = &mut world.swarm;
 	let bullets = &mut world.bullets;
@@ -138,14 +99,14 @@ pub extern "C" fn update(dt: c_double) {
 	// CollisionsController::handle_collisions(&mut data.state);
 }
 
-unsafe fn draw_swarm(swarm: &Swarm, world_to_screen: (f64,f64)) {
-	let radius = swarm.radius as f64 * world_to_screen.0;
+unsafe fn draw_swarm(swarm: &Swarm, data: &GameData) {
+	let radius = swarm.radius as f64 * data.game_to_screen;
 
 	// is there a better iterator way to do this?
 	for i in 0..swarm.num_x {
 		for j in 0..swarm.num_y {
 			if swarm.alive[j*swarm.num_x+i] {
-				let p = swarm.get_enemy_location(i,j, world_to_screen);
+				let p = swarm.get_enemy_location(i,j, data);
 				draw_enemy(p.x, p.y, radius);
 			}
 		}
@@ -154,9 +115,27 @@ unsafe fn draw_swarm(swarm: &Swarm, world_to_screen: (f64,f64)) {
 
 #[no_mangle]
 pub extern "C" fn resize(width: c_double, height: c_double) {
-	// let data = &mut DATA.lock().unwrap();
-	// data.screen_size.width = width as usize;
-	// data.screen_size.height = height as usize;
+	let data = &mut DATA.lock().unwrap();
+	data.width = width.trunc() as usize;
+	data.height = height.trunc() as usize;
+
+	if (data.state.world.world_size.width as f64) < width && (data.state.world.world_size.height as f64) < height {
+		data.screen_top_left_offset.x = (width - data.state.world.world_size.width as f64) / 2.;
+		data.screen_top_left_offset.y = (height - data.state.world.world_size.height as f64) / 2.;
+		return;
+	}
+
+	if data.state.world.world_size.width as f64 > width {
+		data.game_to_screen = width / data.state.world.world_size.width as f64;
+		// this isn't quite right; it needs some sort of scaling
+		data.screen_top_left_offset.y = (height - data.state.world.world_size.height as f64) / 2.;
+	}
+	else if data.state.world.world_size.height as f64 > height {
+		data.game_to_screen = height / data.state.world.world_size.height as f64;
+		// this isn't quite right; it needs some sort of scaling
+		data.screen_top_left_offset.x = (width - data.state.world.world_size.width as f64) / 2.;
+	}
+
 }
 
 #[no_mangle]
@@ -165,30 +144,29 @@ pub unsafe extern "C" fn draw() {
     let data = &mut DATA.lock().unwrap();
     let world = &data.state.world;
 
-	let world_to_screen = ((data.screen_size.width as f64 / data.state.world.world_size.width as f64),
-							(data.screen_size.height as f64 / data.state.world.world_size.height as f64));
 
     clear_screen();
 
+	draw_bounds(data.screen_top_left_offset.x, data.screen_top_left_offset.y, data.state.world.world_size.width as f64 * data.game_to_screen, data.state.world.world_size.height as f64 * data.game_to_screen);
+
 	for bullet in &world.bullets {
-		draw_bullet(bullet.x() * world_to_screen.0, bullet.y() * world_to_screen.1);
+		let bp = data.world_to_screen(&Point{x: bullet.x(), y: bullet.y()});
+		draw_bullet(bp.x, bp.y);
 	}
 
     // for enemy in &world.enemies {
     //     draw_enemy(enemy.x(), enemy.y());
     // }
 
-	let px = world.player.x() * world_to_screen.0;
-	let py = world.player.y() * world_to_screen.1;
+	let p = data.world_to_screen(&Point{x: world.player.x(), y: world.player.y()});
 
-	draw_player(px,py, world.player.dir());
+	draw_player(p.x, p.y, world.player.dir());
 
-	draw_swarm(&world.swarm, world_to_screen);
+	draw_swarm(&world.swarm, data);
 	match data.in_swarm {
 		true => draw_score(1.0),
 		false => draw_score(0.0),
 	}
-
 }
 
 fn int_to_bool(i: c_int) -> bool {
