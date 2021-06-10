@@ -117,25 +117,51 @@
       ctx.drawImage(res.particle, x - radius, y - radius, 2 * radius, 2 * radius);
     }
 
-    function draw_score(x) {
+	function draw_intro() {
       ctx.fillStyle = "orange";
       ctx.textBaseline = "top";
       ctx.font = "20px sans-serif";
-      ctx.fillText('Score: ' + x, 10, 10)
+      ctx.fillText('Press any key to start', canvas.width/2, canvas.height/2)
+	}
+
+	function draw_game_over(score) {
+      ctx.fillStyle = "orange";
+      ctx.textBaseline = "top";
+      ctx.font = "20px sans-serif";
+      ctx.fillText('Game over! Final score: ' + score, canvas.width/2, canvas.height/2)
+	}
+
+    function draw_hud(score,lives) {
+      ctx.fillStyle = "orange";
+      ctx.textBaseline = "top";
+      ctx.font = "20px sans-serif";
+      ctx.fillText('Score: ' + score, 10, 10)
+      ctx.fillText('Lives: ' + lives, 10, 30)
     }
+
+	function draw_bounds(x,y,w,h) {
+		ctx.strokeStyle = "orange";
+		ctx.beginPath();
+		ctx.moveTo(x,y);
+		ctx.lineTo(x+w,y);
+		ctx.lineTo(x+w,y+h);
+		ctx.lineTo(x,y+h);
+		ctx.lineTo(x,y);
+		ctx.stroke();
+	}
 
 	function draw_debug(a,b,c,d) {
 	  ctx.fillStyle = "orange";
       ctx.textBaseline = "top";
       ctx.font = "20px sans-serif";
-      ctx.fillText('Debug: ' + a, 10, 30)
-      ctx.fillText('Debug: ' + b, 10, 50)
-      ctx.fillText('Debug: ' + c, 10, 70)
-      ctx.fillText('Debug: ' + d, 10, 90)
+      ctx.fillText('Debug: ' + a, 10, 50)
+      ctx.fillText('Debug: ' + b, 10, 70)
+      ctx.fillText('Debug: ' + c, 10, 90)
+      ctx.fillText('Debug: ' + d, 10, 110)
 	}
 
     // The real loading and running of our wasm starts here
-    let imports = { clear_screen, draw_player, draw_enemy, draw_bullet, draw_particle, draw_score, draw_debug };
+    let imports = { clear_screen, draw_player, draw_enemy, draw_bullet, draw_particle, draw_hud, draw_debug, draw_bounds, draw_intro, draw_game_over };
     imports.Math_atan = Math.atan;
     imports.sin = Math.sin;
     imports.cos = Math.cos;
@@ -151,6 +177,7 @@
     let module = {};
     let mod = results.instance;
     module.update = mod.exports.update;
+	module.key_pressed = mod.exports.key_pressed;
     module.toggle_fire = mod.exports.toggle_fire;
     module.toggle_left = mod.exports.toggle_left;
     module.toggle_right = mod.exports.toggle_right;
@@ -170,6 +197,7 @@
           module.toggle_fire(b);
           break;
       }
+	  module.key_pressed(key, b);
     }
     document.addEventListener('keydown', e => processKey(e.key, true));
     document.addEventListener('keyup', e => processKey(e.key, false));

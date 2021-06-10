@@ -30,12 +30,13 @@ Speeds up as there are fewer and fewer enemies
  */
 const MOVE_AMT: f64 = 20.0;
 const BASE_MOVE_DELAY: f64 = 1.0;
+const START_LOCATION: Point = Point{x: 200.0, y: 50.0};
 
 impl Swarm {
 
 	pub fn new(x: usize, y: usize, world_size: Size) -> Swarm {
 		let mut ret = Swarm {
-			top_left: Point::new(200.0,50.0),
+			top_left: START_LOCATION,
 			num_x: x,
 			num_y: y,
 			spacing_x: 40,
@@ -48,6 +49,14 @@ impl Swarm {
 			time_to_move: BASE_MOVE_DELAY,
 		};
 		ret
+	}
+
+	pub fn reset(&mut self) {
+		self.top_left = START_LOCATION;
+		self.alive = vec![true;self.num_x*self.num_y];
+		self.num_alive = self.num_x * self.num_y;
+		self.movement = Movement::LEFT;
+		self.time_to_move = BASE_MOVE_DELAY;
 	}
 
 	pub fn update(&mut self, dt: f64) {
@@ -83,7 +92,7 @@ impl Swarm {
 		}
 	}
 
-	pub fn get_enemy_location(&self, x: usize, y: usize, data: &GameData) -> Point {
+	pub fn get_enemy_location_screen(&self, x: usize, y: usize, data: &GameData) -> Point {
 		data.world_to_screen(&Point{
 			x: (self.top_left.x + (self.radius as f64) + (x * (self.spacing_x + self.radius)) as f64),
 			y: (self.top_left.y + (self.radius as f64) + (y * (self.spacing_y + self.radius)) as f64),
@@ -127,5 +136,16 @@ impl Swarm {
 			}
 		}
 		false
+	}
+
+	pub fn get_lowest_alive(&self) -> Option<f64> {
+		for (index, alive) in self.alive.iter().enumerate().rev() {
+			if *alive {
+				let row = index / self.num_x;
+				let y = self.top_left.y + (self.radius * (row+1)) as f64 + (self.spacing_y * row) as f64;
+				return Some(y);
+			}
+		}
+		None
 	}
 }

@@ -43,12 +43,23 @@ impl World {
     }
 }
 
+pub enum GameState {
+	Intro,
+	Playing,
+	Death,
+	GameOver,
+}
+
 /// The data structure that contains the state of the game
 pub struct State {
     /// The world contains everything that needs to be drawn
     pub world: World,
     /// The current score of the player
-    pub score: u32,
+    pub score: i32,
+	/// Number of lives
+	pub lives: i32,
+	/// state of the game
+	pub game_state: GameState,
 }
 
 impl State {
@@ -57,24 +68,32 @@ impl State {
         State {
             world: World::new(world_size),
             score: 0,
+			lives: 3,
+			game_state: GameState::Intro,
         }
     }
 
     /// Reset our game-state
     pub fn reset(&mut self) {
-//        let mut rng = Pcg32Basic::from_seed([42, 42]);
 
-        // Reset player position
-        // *self.world.player.x_mut() = self.world.size.random_x(&mut rng);
-        // *self.world.player.y_mut() = self.world.size.random_y(&mut rng);
-
-        // Reset score
         self.score = 0;
+		self.lives = 3;
 
         // Remove all enemies and bullets
-        // self.world.bullets.clear();
-        // self.world.enemies.clear();
+        self.world.bullets.clear();
+		self.world.swarm.reset();
     }
+
+	pub fn update(&mut self) {
+		if let Some(lowest) = self.world.swarm.get_lowest_alive() {
+			if lowest >= self.world.player.vector.position.y {
+				// game over
+				self.game_state = GameState::GameOver;
+			}
+		} else {
+			// if there are no enemies then we win
+		}
+	}
 }
 
 pub struct GameData {
@@ -86,7 +105,6 @@ pub struct GameData {
 	pub game_to_screen: f64,
 	pub width: usize,
 	pub height: usize,
-	pub in_swarm: bool,
     // state: GameState,
     // actions: Actions,
     // time_controller: TimeController<Pcg32Basic>
@@ -102,7 +120,6 @@ impl GameData {
 			game_to_screen: 1.,
 			width: 1024,
 			height: 768,
-			in_swarm: false,
 			// actions: Actions::default(),
 			// time_controller: TimeController::new(Pcg32Basic::from_seed([42, 42]))
 		}

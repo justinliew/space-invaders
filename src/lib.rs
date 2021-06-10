@@ -1,4 +1,4 @@
-use std::os::raw::{c_double, c_int};
+use std::os::raw::{c_double, c_int, c_char};
 use std::sync::Mutex;
 use std::f64;
 
@@ -26,7 +26,7 @@ use crate::input::Input;
 use crate::swarm::Swarm;
 use crate::size::Size;
 use crate::bullet::Bullet;
-use crate::state::{GameData,World};
+use crate::state::{GameData,World,GameState};
 use crate::point::Point;
 
 #[macro_use]
@@ -39,7 +39,9 @@ extern "C" {
     fn draw_enemy(_: c_double, _: c_double, _: c_double);
     fn draw_bullet(_: c_double, _: c_double);
     // fn draw_particle(_: c_double, _: c_double, _: c_double);
-    fn draw_score(_: c_double);
+    fn draw_hud(_: c_int, _: c_int);
+	fn draw_intro();
+	fn draw_game_over(_: c_int);
 	fn draw_debug(_: c_double, _: c_double, _: c_double, _: c_double);
 	fn draw_bounds(_: c_double, _: c_double, _: c_double, _: c_double);
 }
@@ -70,33 +72,62 @@ fn handle_collisions(world: &mut World) -> bool {
 pub extern "C" fn update(dt: c_double) {
     let data: &mut GameData = &mut DATA.lock().unwrap();
 
-	data.current_time += dt;
+	match &data.state.game_state {
+		GameState::Intro => {
+			if data.input.any {
+				data.state.game_state = GameState::Playing;
+			}
+		},
+		GameState::Playing => {
+			data.current_time += dt;
 
-	// Update rocket rotation
-	if data.input.left {
-		*data.state.world.player.x_mut() -= MOVE_SPEED * dt;
+			// Update rocket rotation
+			if data.input.left {
+				*data.state.world.player.x_mut() -= MOVE_SPEED * dt;
+			}
+			if data.input.right {
+				*data.state.world.player.x_mut() += MOVE_SPEED * dt;
+			};
+
+			// Add bullets
+			if data.input.fire && data.current_time - data.input.last_shoot > BULLET_RATE {
+				data.input.last_shoot = data.current_time;
+				data.state.world.bullets.push(Bullet::new(data.state.world.player.vector.clone())); // TODO front
+			}
+
+			// udpate enemies
+			data.state.world.swarm.update(dt);
+
+			// update bullets
+			for bullet in &mut data.state.world.bullets {
+				bullet.update(dt);
+			}
+
+			// Remove bullets outside the viewport
+			{
+				let width = data.state.world.world_size.width;
+				let height = data.state.world.world_size.height;
+				let bullets = &mut data.state.world.bullets;
+				bullets.retain(|bullet| {
+					let within = bullet.x() > 0. && bullet.x() < width as f64&&
+							bullet.y() > 0. && bullet.y() < height as f64;
+					within
+				});
+			}
+
+			handle_collisions(&mut data.state.world);
+			data.state.update();
+		},
+		GameState::Death => {
+
+		},
+		GameState::GameOver => {
+			if data.input.any {
+				data.state.reset();
+				data.state.game_state = GameState::Intro;
+			}
+		}
 	}
-	if data.input.right {
-		*data.state.world.player.x_mut() += MOVE_SPEED * dt;
-	};
-
-	// Add bullets
-	if data.input.fire && data.current_time - data.input.last_shoot > BULLET_RATE {
-		data.input.last_shoot = data.current_time;
-		data.state.world.bullets.push(Bullet::new(data.state.world.player.vector.clone())); // TODO front
-	}
-
-	// udpate enemies
-	data.state.world.swarm.update(dt);
-
-	// update bullets
-	for bullet in &mut data.state.world.bullets {
-		bullet.update(dt);
-	}
-
-	data.in_swarm = handle_collisions(&mut data.state.world);
-
-	// CollisionsController::handle_collisions(&mut data.state);
 }
 
 unsafe fn draw_swarm(swarm: &Swarm, data: &GameData) {
@@ -106,11 +137,13 @@ unsafe fn draw_swarm(swarm: &Swarm, data: &GameData) {
 	for i in 0..swarm.num_x {
 		for j in 0..swarm.num_y {
 			if swarm.alive[j*swarm.num_x+i] {
-				let p = swarm.get_enemy_location(i,j, data);
+				let p = swarm.get_enemy_location_screen(i,j, data);
 				draw_enemy(p.x, p.y, radius);
 			}
 		}
 	}
+	let lowest = swarm.get_lowest_alive().unwrap();
+	draw_debug(lowest,0.,0.,0.);
 }
 
 #[no_mangle]
@@ -149,28 +182,42 @@ pub unsafe extern "C" fn draw() {
 
 	draw_bounds(data.screen_top_left_offset.x, data.screen_top_left_offset.y, data.state.world.world_size.width as f64 * data.game_to_screen, data.state.world.world_size.height as f64 * data.game_to_screen);
 
-	for bullet in &world.bullets {
-		let bp = data.world_to_screen(&Point{x: bullet.x(), y: bullet.y()});
-		draw_bullet(bp.x, bp.y);
+	match &data.state.game_state {
+		GameState::Intro => {
+			draw_intro();
+		},
+		GameState::Playing => {
+			for bullet in &world.bullets {
+				let bp = data.world_to_screen(&Point{x: bullet.x(), y: bullet.y()});
+				draw_bullet(bp.x, bp.y);
+				draw_debug(0.0,0.0,0.,0.);
+			}
+
+			let p = data.world_to_screen(&Point{x: world.player.x(), y: world.player.y()});
+
+			draw_player(p.x, p.y, world.player.dir());
+
+			draw_swarm(&world.swarm, data);
+		},
+		GameState::Death => {
+
+		},
+		GameState::GameOver => {
+			draw_game_over(data.state.score);
+		},
 	}
 
-    // for enemy in &world.enemies {
-    //     draw_enemy(enemy.x(), enemy.y());
-    // }
-
-	let p = data.world_to_screen(&Point{x: world.player.x(), y: world.player.y()});
-
-	draw_player(p.x, p.y, world.player.dir());
-
-	draw_swarm(&world.swarm, data);
-	match data.in_swarm {
-		true => draw_score(1.0),
-		false => draw_score(0.0),
-	}
+	draw_hud(data.state.score, data.state.lives);
 }
 
 fn int_to_bool(i: c_int) -> bool {
     i != 0
+}
+
+#[no_mangle]
+pub extern "C" fn key_pressed(k: c_char, b: c_int) {
+    let data = &mut DATA.lock().unwrap();
+    data.input.any = int_to_bool(b);
 }
 
 #[no_mangle]

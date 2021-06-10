@@ -8,15 +8,24 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ## TODO
 
+
 - [X] basic player movement.
 - [X] sizing: world space, screen space.
 - [X] player firing and bullets.
-- [ ] enemy firing.
-- [ ] game state, losing, lives.
 - [X] proper enemy movement, less smooth.
+- [ ] end game needs some sort of delay before restart.
+- [ ] swarm needs to move the entire way across based on which ones are still alive.
+- [ ] constrain player.
+- [ ] enemy firing.
+- [ ] player lives.
+- [ ] shields.
 - [ ] enemy speed progression.
 - [ ] enemy sprites.
+- [ ] scoring.
 - [ ] explosions.
+- [ ] mystery UFO.
+- [ ] entering high score name.
+- [ ] audio.
 - [ ] encapsulate relevant game state for picture-in-picture for multiplayer.
 - [ ] encapsulate the sim for verification on C@E.
 - [ ] network story.
