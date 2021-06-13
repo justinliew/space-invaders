@@ -123,7 +123,9 @@ pub extern "C" fn update(dt: c_double) {
 			data.state.update();
 		},
 		GameState::Death => {
-
+			// TODO delay
+			data.state.post_death_reset();
+			data.state.game_state = GameState::Playing;
 		},
 		GameState::GameOver => {
 			if data.input.any {

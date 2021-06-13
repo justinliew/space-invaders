@@ -37,6 +37,10 @@ impl Player {
 		}
 	}
 
+	pub fn reset_location(&mut self) {
+		self.vector = START_LOCATION.clone();
+	}
+
 	// TODO derive_position_direction
 	pub fn x(&self) -> f64 { self.vector.position.x }
 	pub fn x_mut(&mut self) -> &mut f64 { &mut self.vector.position.x }

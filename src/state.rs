@@ -85,19 +85,29 @@ impl State {
 		self.world.player.alive = true;
     }
 
+	pub fn post_death_reset(&mut self) {
+        self.world.bullets.clear();
+		self.world.player.alive = true;
+		self.world.player.reset_location();
+
+	}
+
 	pub fn update(&mut self) {
 		if let Some(lowest) = self.world.swarm.get_lowest_alive() {
 			if lowest >= self.world.player.vector.position.y {
-				// game over
-				self.game_state = GameState::GameOver;
+				self.game_state = GameState::Death;
 			}
 		} else {
 			// if there are no enemies then we win
 		}
 
 		if !self.world.player.alive {
-			// TODO - lives
-			self.game_state = GameState::GameOver;
+			self.lives -= 1;
+			if self.lives == 0 {
+				self.game_state = GameState::GameOver;
+			} else {
+				self.game_state = GameState::Death;
+			}
 		}
 	}
 }
