@@ -25,7 +25,7 @@ mod size;
 use crate::input::Input;
 use crate::swarm::Swarm;
 use crate::size::Size;
-use crate::bullet::Bullet;
+use crate::bullet::{Bullet,BulletType};
 use crate::state::{GameData,World,GameState};
 use crate::point::Point;
 
@@ -56,13 +56,15 @@ const BULLETS_PER_SECOND: f64 = 2.0;
 const BULLET_RATE: f64 = 1.0 / BULLETS_PER_SECOND;
 
 fn handle_collisions(world: &mut World) -> bool {
+	let player = &mut world.player;
 	let swarm = &mut world.swarm;
 	let bullets = &mut world.bullets;
 	let num_bullets = bullets.len();
 
 	bullets.retain(|bullet| {
-		let hit = swarm.check_hit(bullet);
-		!hit
+		let playerhit = player.check_hit(bullet);
+		let swarmhit = swarm.check_hit(bullet);
+		!playerhit && !swarmhit
 	});
 
 	num_bullets != bullets.len()
@@ -92,7 +94,7 @@ pub extern "C" fn update(dt: c_double) {
 			// Add bullets
 			if data.input.fire && data.current_time - data.input.last_shoot > BULLET_RATE {
 				data.input.last_shoot = data.current_time;
-				data.state.world.bullets.push(Bullet::new(data.state.world.player.vector.clone())); // TODO front
+				data.state.world.bullets.push(Bullet::new(data.state.world.player.vector.clone(), BulletType::Player)); // TODO front
 			}
 
 			// udpate enemies
@@ -208,6 +210,10 @@ pub unsafe extern "C" fn draw() {
 	}
 
 	draw_hud(data.state.score, data.state.lives);
+	match world.player.alive {
+		true => draw_debug(1.,0.,0.,0.),
+		false => draw_debug(0.,0.,0.,0.),
+	}
 }
 
 fn int_to_bool(i: c_int) -> bool {

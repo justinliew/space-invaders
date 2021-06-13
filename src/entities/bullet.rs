@@ -3,18 +3,25 @@
 use crate::point::Point;
 use crate::vector::Vector;
 
-#[derive(Default)]
+#[derive(PartialEq)]
+pub enum BulletType {
+	Player,
+	Swarm,
+}
+
 pub struct Bullet {
-    pub location: Vector
+    pub location: Vector,
+	pub bullet_type: BulletType,
 }
 
 const BULLET_SPEED: f64 = 200.0;
 
 impl Bullet {
 
-	pub fn new(spawn_location: Vector) -> Bullet {
+	pub fn new(spawn_location: Vector, bullet_type: BulletType) -> Bullet {
 		Bullet {
 			location: spawn_location,
+			bullet_type: bullet_type,
 		}
 	}
 

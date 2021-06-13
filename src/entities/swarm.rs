@@ -1,7 +1,7 @@
 
 use crate::point::Point;
 use crate::size::Size;
-use crate::bullet::Bullet;
+use crate::bullet::{Bullet,BulletType};
 use crate::state::GameData;
 use crate::vector::Vector;
 
@@ -100,7 +100,7 @@ impl Swarm {
 			}
 		}
 		if let Some(loc) = self.get_bullet_spawn_location() {
-			return Some(Bullet::new(Vector::new(loc, std::f64::consts::PI / 2.0)));
+			return Some(Bullet::new(Vector::new(loc, std::f64::consts::PI / 2.0), BulletType::Swarm));
 		} else {
 			return None;
 		}
@@ -168,6 +168,9 @@ impl Swarm {
 
 
 	pub fn check_hit(&mut self, bullet: &Bullet) -> bool {
+		if bullet.bullet_type != BulletType::Player {
+			return false;
+		}
 		if bullet.x() < self.top_left.x || bullet.x() > self.get_bottom_right().x {
 			return false;
 		}

@@ -82,6 +82,7 @@ impl State {
         // Remove all enemies and bullets
         self.world.bullets.clear();
 		self.world.swarm.reset();
+		self.world.player.alive = true;
     }
 
 	pub fn update(&mut self) {
@@ -92,6 +93,11 @@ impl State {
 			}
 		} else {
 			// if there are no enemies then we win
+		}
+
+		if !self.world.player.alive {
+			// TODO - lives
+			self.game_state = GameState::GameOver;
 		}
 	}
 }

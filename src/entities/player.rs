@@ -3,12 +3,14 @@
 use crate::point::Point;
 //use crate::{derive_position_direction, vector::{Vector}};
 use crate::vector::Vector;
+use crate::bullet::{Bullet,BulletType};
 
 //use geometry::{Advance, Collide, Position};
 
 #[derive(Default)]
 pub struct Player {
-    pub vector: Vector
+    pub vector: Vector,
+	pub alive: bool,
 }
 
 /// The player is represented as the polygon below
@@ -31,6 +33,7 @@ impl Player {
 	pub fn new() -> Player {
 		Player {
 			vector: START_LOCATION.clone(),
+			alive: true,
 		}
 	}
 
@@ -41,6 +44,21 @@ impl Player {
 	pub fn y_mut(&mut self) -> &mut f64 { &mut self.vector.position.y }
 
 	pub fn dir(&self) -> f64 { self.vector.direction }
+
+	pub fn check_hit(&mut self, bullet: &Bullet) -> bool {
+		if bullet.bullet_type != BulletType::Swarm {
+			return false;
+		}
+
+		// TODO player radius
+		let hit = bullet.x() > self.x() - 8. && bullet.x() < self.x() + 8. &&
+			bullet.y() > self.y() - 8. && bullet.y() < self.y() + 8.;
+
+		if hit {
+			self.alive = false;
+		}
+		hit
+	}
 
     // Returns the front of the rocket
     // pub fn front(&self) -> Point {
