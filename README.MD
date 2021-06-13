@@ -8,18 +8,22 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ## TODO
 
+### MVP
+
+- [X] player lives. We need a soft reset that resets the player.
+- [X] scoring.
+- [ ] enemy sprites.
+- [ ] shields.
+- [ ] swarm needs to move the entire way across based on which ones are still alive.
+- [ ] end game needs some sort of delay before restart.
+
 ### Major Issues/Features
 
 - [X] basic player movement.
 - [X] sizing: world space, screen space.
 - [X] player firing and bullets.
 - [X] proper enemy movement, less smooth.
-- [ ] enemy firing.
-- [ ] player lives.
-- [ ] shields.
-- [ ] swarm needs to move the entire way across based on which ones are still alive.
-- [ ] enemy sprites.
-- [ ] scoring.
+- [X] enemy firing.
 - [ ] explosions.
 - [ ] mystery UFO.
 - [ ] entering high score name.
@@ -27,6 +31,7 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ### Architecture
 
+- [ ] proper ECS type structures for more generic collisions, movement, etc.
 - [ ] encapsulate relevant game state for picture-in-picture for multiplayer.
 - [ ] encapsulate the sim for verification on C@E.
 - [ ] network story.
@@ -38,5 +43,4 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ### Polish
 
-- [ ] end game needs some sort of delay before restart.
 - [ ] enemy speed progression.
