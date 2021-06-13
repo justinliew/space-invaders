@@ -96,7 +96,9 @@ pub extern "C" fn update(dt: c_double) {
 			}
 
 			// udpate enemies
-			data.state.world.swarm.update(dt);
+			if let Some(bullet) = data.state.world.swarm.update(dt) {
+				data.state.world.bullets.push(bullet);
+			}
 
 			// update bullets
 			for bullet in &mut data.state.world.bullets {
@@ -143,7 +145,6 @@ unsafe fn draw_swarm(swarm: &Swarm, data: &GameData) {
 		}
 	}
 	let lowest = swarm.get_lowest_alive().unwrap();
-	draw_debug(lowest,0.,0.,0.);
 }
 
 #[no_mangle]
@@ -190,7 +191,6 @@ pub unsafe extern "C" fn draw() {
 			for bullet in &world.bullets {
 				let bp = data.world_to_screen(&Point{x: bullet.x(), y: bullet.y()});
 				draw_bullet(bp.x, bp.y);
-				draw_debug(0.0,0.0,0.,0.);
 			}
 
 			let p = data.world_to_screen(&Point{x: world.player.x(), y: world.player.y()});

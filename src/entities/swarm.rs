@@ -1,7 +1,9 @@
+
 use crate::point::Point;
 use crate::size::Size;
 use crate::bullet::Bullet;
 use crate::state::GameData;
+use crate::vector::Vector;
 
 enum Movement {
 	LEFT,
@@ -21,6 +23,7 @@ pub struct Swarm {
 	movement: Movement,
 	pub world_size: Size,
 	time_to_move: f64,
+	pub fire_column: usize,
 }
 
 /*
@@ -31,6 +34,9 @@ Speeds up as there are fewer and fewer enemies
 const MOVE_AMT: f64 = 20.0;
 const BASE_MOVE_DELAY: f64 = 1.0;
 const START_LOCATION: Point = Point{x: 200.0, y: 50.0};
+// I am having issues with rand packages on the wasm-unknown-unknown target
+// so I am just using a hard coded list of columns that repeats
+const FIRING_COLUMNS : &[usize;10] = &[4,5,3,2,6,8,1,0,7,9];
 
 impl Swarm {
 
@@ -47,6 +53,7 @@ impl Swarm {
 			movement: Movement::LEFT,
 			world_size: world_size,
 			time_to_move: BASE_MOVE_DELAY,
+			fire_column: 0,
 		};
 		ret
 	}
@@ -57,14 +64,16 @@ impl Swarm {
 		self.num_alive = self.num_x * self.num_y;
 		self.movement = Movement::LEFT;
 		self.time_to_move = BASE_MOVE_DELAY;
+		self.fire_column = 0;
 	}
 
-	pub fn update(&mut self, dt: f64) {
+	pub fn update(&mut self, dt: f64) -> Option<Bullet> {
 		let rhs = self.top_left.x as usize + self.num_x * self.spacing_x;
 		self.time_to_move -= dt;
 		if self.time_to_move > 0.0 {
-			return;
+			return None;
 		}
+
 		self.time_to_move = BASE_MOVE_DELAY * (self.num_alive as f64 / (self.num_x * self.num_y) as f64);
 		match self.movement {
 			Movement::LEFT => {
@@ -90,13 +99,22 @@ impl Swarm {
 				}
 			}
 		}
+		if let Some(loc) = self.get_bullet_spawn_location() {
+			return Some(Bullet::new(Vector::new(loc, std::f64::consts::PI / 2.0)));
+		} else {
+			return None;
+		}
+	}
+
+	fn get_enemy_location_game(&self, x: usize, y: usize) -> Point {
+		Point{
+			x: (self.top_left.x + (self.radius as f64) + (x * (self.spacing_x + self.radius)) as f64),
+			y: (self.top_left.y + (self.radius as f64) + (y * (self.spacing_y + self.radius)) as f64),
+		}
 	}
 
 	pub fn get_enemy_location_screen(&self, x: usize, y: usize, data: &GameData) -> Point {
-		data.world_to_screen(&Point{
-			x: (self.top_left.x + (self.radius as f64) + (x * (self.spacing_x + self.radius)) as f64),
-			y: (self.top_left.y + (self.radius as f64) + (y * (self.spacing_y + self.radius)) as f64),
-		})
+		data.world_to_screen(&self.get_enemy_location_game(x,y))
 	}
 
 	pub fn is_hit(&self, x: f64, y: f64) -> Option<(usize,usize)> {
@@ -117,6 +135,35 @@ impl Swarm {
 			x: self.top_left.x + (self.num_x * self.radius) as f64 + (self.num_x-1) as f64 * self.spacing_x as f64,
 			y: self.top_left.y + (self.num_y * self.radius) as f64 + (self.num_y-1) as f64 * self.spacing_y as f64,
 		}
+	}
+
+	fn get_bullet_spawn_location(&mut self) -> Option<Point> {
+		loop {
+			// get the next column
+			if self.fire_column >= self.num_x-1 {
+				self.fire_column = 0;
+			} else {
+				self.fire_column += 1;
+			}
+			let col = FIRING_COLUMNS[self.fire_column];
+
+			// find an alive enemy
+			let mut row = self.num_y - 1;
+
+			let mut found = false;
+			while row >=0 {
+				if self.alive[row * self.num_x + col] {
+					found = true;
+					break;
+				}
+				row -= 1;
+			}
+
+			if found {
+				return Some(self.get_enemy_location_game(col, row) - Point::new(self.radius as f64/2., 0.));
+			}
+		}
+		None
 	}
 
 
