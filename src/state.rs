@@ -32,7 +32,7 @@ impl World {
     pub fn new(world_size: Size) -> World {
         World {
             player: Player::new(),
-			swarm: Swarm::new(10,6, world_size),
+			swarm: Swarm::new(10,5, world_size),
 			world_size: world_size,
 			bullets: vec![],
             // particles: Vec::with_capacity(1000),

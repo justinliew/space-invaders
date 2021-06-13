@@ -167,25 +167,38 @@ impl Swarm {
 	}
 
 
-	pub fn check_hit(&mut self, bullet: &Bullet) -> bool {
+	pub fn check_hit(&mut self, bullet: &Bullet) -> Option<u32> {
 		if bullet.bullet_type != BulletType::Player {
-			return false;
+			return None;
 		}
 		if bullet.x() < self.top_left.x || bullet.x() > self.get_bottom_right().x {
-			return false;
+			return None;
 		}
 		if bullet.y() < self.top_left.y || bullet.y() > self.get_bottom_right().y {
-			return false;
+			return None;
 		}
 
 		if let Some(hit) = self.is_hit(bullet.x(), bullet.y()) {
 			if self.alive[hit.0 + (hit.1 as usize)*self.num_x] {
 				self.alive[hit.0 + (hit.1 as usize)*self.num_x] = false;
 				self.num_alive -= 1;
-				return true;
+				return match hit.1 {
+					0 => {
+						Some(30)
+					}
+					1|2 => {
+						Some(20)
+					},
+					3|4 => {
+						Some(10)
+					},
+					_ => {
+						unreachable!()
+					}
+				}
 			}
 		}
-		false
+		None
 	}
 
 	pub fn get_lowest_alive(&self) -> Option<f64> {

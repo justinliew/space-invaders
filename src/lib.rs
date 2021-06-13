@@ -26,7 +26,7 @@ use crate::input::Input;
 use crate::swarm::Swarm;
 use crate::size::Size;
 use crate::bullet::{Bullet,BulletType};
-use crate::state::{GameData,World,GameState};
+use crate::state::{State, GameData,World,GameState};
 use crate::point::Point;
 
 #[macro_use]
@@ -55,17 +55,23 @@ const MOVE_SPEED: f64 = 300.0;
 const BULLETS_PER_SECOND: f64 = 2.0;
 const BULLET_RATE: f64 = 1.0 / BULLETS_PER_SECOND;
 
-fn handle_collisions(world: &mut World) -> bool {
+fn handle_collisions(state: &mut State) -> bool {
+	let world = &mut state.world;
 	let player = &mut world.player;
 	let swarm = &mut world.swarm;
 	let bullets = &mut world.bullets;
 	let num_bullets = bullets.len();
 
+	let mut score_delta = 0;
 	bullets.retain(|bullet| {
 		let playerhit = player.check_hit(bullet);
 		let swarmhit = swarm.check_hit(bullet);
-		!playerhit && !swarmhit
+		if let Some(points) = swarmhit {
+			score_delta += points as i32;
+		}
+		!playerhit && swarmhit.is_none()
 	});
+	state.score += score_delta;
 
 	num_bullets != bullets.len()
 }
@@ -119,7 +125,7 @@ pub extern "C" fn update(dt: c_double) {
 				});
 			}
 
-			handle_collisions(&mut data.state.world);
+			handle_collisions(&mut data.state);
 			data.state.update();
 		},
 		GameState::Death => {
