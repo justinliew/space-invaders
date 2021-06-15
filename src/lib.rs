@@ -159,7 +159,19 @@ unsafe fn draw_swarm(swarm: &Swarm, data: &GameData) {
 		for j in 0..swarm.num_y {
 			if swarm.alive[j*swarm.num_x+i] {
 				let p = swarm.get_enemy_location_screen(i,j, data);
-				draw_sprite(0, swarm.frame, p.x as u32,p.y as u32);
+				let index = match j {
+					0 => {
+						1
+					},
+					1|2 => {
+						2
+					},
+					// 3|4
+					_ => {
+						0
+					}
+				};
+				draw_sprite(index, swarm.frame, p.x as u32,p.y as u32);
 			}
 		}
 	}

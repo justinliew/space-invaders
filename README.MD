@@ -18,6 +18,7 @@ We could also run parts of it on C@E for a potential multiplayer version.
 - [ ] add all sprites.
 - [ ] swarm needs to move the entire way across based on which ones are still alive.
 - [ ] end game needs some sort of delay before restart.
+- [ ] bullets need to spawn from the proper spot.
 
 ### Major Issues/Features
 
