@@ -52,8 +52,8 @@ extern "C" {
 }
 
 lazy_static! {
-//    static ref DATA: Mutex<GameData> = Mutex::new(GameData::new(Size{width: 1024, height: 600}, Size{width: 1000, height: 600}));
-    static ref DATA: Mutex<GameData> = Mutex::new(GameData::new(Size{width: 1000, height: 800}));
+	// these have to be multiples of 12
+    static ref DATA: Mutex<GameData> = Mutex::new(GameData::new(Size{width: 1008, height: 804}));
 }
 
 const MOVE_SPEED: f64 = 300.0;
@@ -163,7 +163,7 @@ unsafe fn draw_swarm(swarm: &Swarm, data: &GameData) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn resize(width: c_double, height: c_double) {
+pub unsafe extern "C" fn resize(width: c_double, height: c_double) -> c_double {
 	let data = &mut DATA.lock().unwrap();
 	data.width = width.trunc() as usize;
 	data.height = height.trunc() as usize;
@@ -171,9 +171,11 @@ pub unsafe extern "C" fn resize(width: c_double, height: c_double) {
 	if (data.state.world.world_size.width as f64) < width && (data.state.world.world_size.height as f64) < height {
 		data.screen_top_left_offset.x = (width - data.state.world.world_size.width as f64) / 2.;
 		data.screen_top_left_offset.y = (height - data.state.world.world_size.height as f64) / 2.;
-		return;
+		data.game_to_screen = 1.;
+		return data.game_to_screen;
 	}
 
+	// this stuff doesn't work very well...
 	if data.state.world.world_size.width as f64 > width {
 		data.game_to_screen = width / data.state.world.world_size.width as f64;
 		// this isn't quite right; it needs some sort of scaling
@@ -184,6 +186,7 @@ pub unsafe extern "C" fn resize(width: c_double, height: c_double) {
 		// this isn't quite right; it needs some sort of scaling
 		data.screen_top_left_offset.x = (width - data.state.world.world_size.width as f64) / 2.;
 	}
+	data.game_to_screen
 }
 
 #[no_mangle]

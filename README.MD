@@ -12,8 +12,10 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 - [X] player lives. We need a soft reset that resets the player.
 - [X] scoring.
-- [ ] enemy sprites.
+- [X] enemy sprites.
+- [ ] ensure bullet collisions are exact.
 - [ ] shields.
+- [ ] add all sprites.
 - [ ] swarm needs to move the entire way across based on which ones are still alive.
 - [ ] end game needs some sort of delay before restart.
 
@@ -28,6 +30,7 @@ We could also run parts of it on C@E for a potential multiplayer version.
 - [ ] mystery UFO.
 - [ ] entering high score name.
 - [ ] audio.
+- [ ] scaling when a window is smaller than the game area is problematic.
 
 ### Architecture
 

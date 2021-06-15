@@ -201,34 +201,49 @@ let sprites = [];
     document.addEventListener('keydown', e => processKey(e.key, true));
     document.addEventListener('keyup', e => processKey(e.key, false));
 
-	function init_sprites(res) {
+	/*
+	Sprites are 12x12, and the enemy game radius is 24
+	So we double the sprites when we init, and then when we render we need to scale by game to screen
+	*/
+	function init_sprites(scale) {
 		let enemy1_0 = [
-			0,0,1,0,0,0,0,0,1,0,0,
-			0,0,0,1,0,0,0,1,0,0,0,
-			0,0,1,1,1,1,1,1,1,0,0,
-			0,1,1,0,1,1,1,0,1,1,0,
-			1,1,1,1,1,1,1,1,1,1,1,
-			1,0,1,1,1,1,1,1,1,0,1,
-			1,0,1,0,0,0,0,0,1,0,1,
-			0,0,0,1,1,0,1,1,0,0,0
+			0,0,1,0,0,0,0,0,1,0,0,0,
+			0,0,0,1,0,0,0,1,0,0,0,0,
+			0,0,1,1,1,1,1,1,1,0,0,0,
+			0,1,1,0,1,1,1,0,1,1,0,0,
+			1,1,1,1,1,1,1,1,1,1,1,0,
+			1,0,1,1,1,1,1,1,1,0,1,0,
+			1,0,1,0,0,0,0,0,1,0,1,0,
+			0,0,0,1,1,0,1,1,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0
 		];
 
 		let enemy1_1 = [
-			0,0,1,0,0,0,0,0,1,0,0,
-			1,0,0,1,0,0,0,1,0,0,1,
-			1,0,1,1,1,1,1,1,1,0,1,
-			1,1,1,0,1,1,1,0,1,1,1,
-			1,1,1,1,1,1,1,1,1,1,1,
-			0,0,1,1,1,1,1,1,1,0,0,
-			0,0,1,0,0,0,0,0,1,0,0,
-			0,1,0,0,0,0,0,0,0,1,0
+			0,0,1,0,0,0,0,0,1,0,0,0,
+			1,0,0,1,0,0,0,1,0,0,1,0,
+			1,0,1,1,1,1,1,1,1,0,1,0,
+			1,1,1,0,1,1,1,0,1,1,1,0,
+			1,1,1,1,1,1,1,1,1,1,1,0,
+			0,0,1,1,1,1,1,1,1,0,0,0,
+			0,0,1,0,0,0,0,0,1,0,0,0,
+			0,1,0,0,0,0,0,0,0,1,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0
 		];
 
-		init_sprite_frame_js(res, 0, 0, enemy1_0, 11, 8);
-		init_sprite_frame_js(res, 0, 1, enemy1_1, 11, 8);
+		init_sprite_frame_js(0, 0, enemy1_0, scale*2);
+		init_sprite_frame_js(0, 1, enemy1_1, scale*2);
 	}
 
-	function init_sprite_frame_js(res, sprite_id, frame_index, data, w, h) {
+	function init_sprite_frame_js(sprite_id, frame_index, data, scale) {
+
+		let final_size = scale * 12;
+		console.log(final_size);
 
 		if (typeof(sprites[sprite_id]) == "undefined") {
 			sprites[sprite_id] = [];
@@ -236,19 +251,19 @@ let sprites = [];
 
 		// TODO does this leak if we call this multiple times?
 		sprites[sprite_id][frame_index] = {
-			image_data: canvas.getContext("2d").createImageData(w,h),
-			w: w,
-			h: h
+			image_data: canvas.getContext("2d").createImageData(final_size,final_size),
+			w: final_size,
+			h: final_size
 		}
-		for (var i=0;i<w;++i) {
-			for (var j=0;j<h;++j) {
-					var source_index = j*w + i;
-					var dest_index = source_index*4;
-					var value = data[source_index] > 0 ? 255 : 0;
-					sprites[sprite_id][frame_index].image_data.data[dest_index] = value;
-					sprites[sprite_id][frame_index].image_data.data[dest_index+1] = value;
-					sprites[sprite_id][frame_index].image_data.data[dest_index+2] = value;
-					sprites[sprite_id][frame_index].image_data.data[dest_index+3] = 255;
+		for (var j=0;j<final_size;++j) {
+			for (var i=0;i<final_size;++i) {
+				var dest_index = i + j*final_size;
+				var source_index = Math.floor(i/scale) + Math.floor(j/scale) * 12;
+				var value = data[source_index] > 0 ? 255 : 0;
+				sprites[sprite_id][frame_index].image_data.data[4*dest_index] = 0;
+				sprites[sprite_id][frame_index].image_data.data[4*dest_index+1] = value;
+				sprites[sprite_id][frame_index].image_data.data[4*dest_index+2] = 0;
+				sprites[sprite_id][frame_index].image_data.data[4*dest_index+3] = 255;
 			}
 		}
 	}
@@ -256,10 +271,10 @@ let sprites = [];
     // Resizing
     function resize() {
       // We make the canvas somewhat smaller to get some zooming
-      canvas.width = window.innerWidth * 0.8;
-      canvas.height = window.innerHeight * 0.8;
-      module.resize(canvas.width, canvas.height);
-	  init_sprites();
+      canvas.width = window.innerWidth * 1;
+      canvas.height = window.innerHeight * 1;
+      let scale = module.resize(canvas.width, canvas.height);
+	  init_sprites(scale);
     }
     window.addEventListener('resize', () => {
       resize();

@@ -48,7 +48,7 @@ impl Swarm {
 			num_y: y,
 			spacing_x: 40,
 			spacing_y: 40,
-			radius: 20,
+			radius: 24,
 			alive: vec![true;x * y],
 			num_alive: x*y,
 			movement: Movement::LEFT,
