@@ -24,6 +24,7 @@ pub struct Swarm {
 	pub world_size: Size,
 	time_to_move: f64,
 	pub fire_column: usize,
+	pub frame: u32,
 }
 
 /*
@@ -54,6 +55,7 @@ impl Swarm {
 			world_size: world_size,
 			time_to_move: BASE_MOVE_DELAY,
 			fire_column: 0,
+			frame: 0,
 		};
 		ret
 	}
@@ -99,6 +101,17 @@ impl Swarm {
 				}
 			}
 		}
+
+		match self.frame {
+			0 => {
+				self.frame = 1;
+			},
+			1 => {
+				self.frame = 0;
+			},
+			_ => {},
+		}
+
 		if let Some(loc) = self.get_bullet_spawn_location() {
 			return Some(Bullet::new(Vector::new(loc, std::f64::consts::PI / 2.0), BulletType::Swarm));
 		} else {

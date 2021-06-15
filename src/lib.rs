@@ -1,4 +1,4 @@
-use std::os::raw::{c_double, c_int, c_char};
+use std::os::raw::{c_double, c_int, c_char, c_void, c_uint};
 use std::sync::Mutex;
 use std::f64;
 
@@ -44,6 +44,11 @@ extern "C" {
 	fn draw_game_over(_: c_int);
 	fn draw_debug(_: c_double, _: c_double, _: c_double, _: c_double);
 	fn draw_bounds(_: c_double, _: c_double, _: c_double, _: c_double);
+
+	/*
+	sprite id, frame index, x, y
+	 */
+	fn draw_sprite(_: c_uint, _: c_uint, _: c_uint, _: c_uint);
 }
 
 lazy_static! {
@@ -150,7 +155,7 @@ unsafe fn draw_swarm(swarm: &Swarm, data: &GameData) {
 		for j in 0..swarm.num_y {
 			if swarm.alive[j*swarm.num_x+i] {
 				let p = swarm.get_enemy_location_screen(i,j, data);
-				draw_enemy(p.x, p.y, radius);
+				draw_sprite(0, swarm.frame, p.x as u32,p.y as u32);
 			}
 		}
 	}
@@ -158,7 +163,7 @@ unsafe fn draw_swarm(swarm: &Swarm, data: &GameData) {
 }
 
 #[no_mangle]
-pub extern "C" fn resize(width: c_double, height: c_double) {
+pub unsafe extern "C" fn resize(width: c_double, height: c_double) {
 	let data = &mut DATA.lock().unwrap();
 	data.width = width.trunc() as usize;
 	data.height = height.trunc() as usize;
@@ -179,7 +184,10 @@ pub extern "C" fn resize(width: c_double, height: c_double) {
 		// this isn't quite right; it needs some sort of scaling
 		data.screen_top_left_offset.x = (width - data.state.world.world_size.width as f64) / 2.;
 	}
+}
 
+#[no_mangle]
+pub unsafe extern "C" fn init() {
 }
 
 #[no_mangle]
