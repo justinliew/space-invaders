@@ -13,7 +13,7 @@ We could also run parts of it on C@E for a potential multiplayer version.
 - [X] player lives. We need a soft reset that resets the player.
 - [X] scoring.
 - [X] enemy sprites.
-- [ ] ensure bullet collisions are exact.
+- [X] ensure bullet collisions are exact.
 - [ ] shields.
 - [ ] add all sprites.
 - [ ] swarm needs to move the entire way across based on which ones are still alive.
