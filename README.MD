@@ -15,10 +15,11 @@ We could also run parts of it on C@E for a potential multiplayer version.
 - [X] enemy sprites.
 - [X] ensure bullet collisions are exact.
 - [ ] shields.
-- [ ] add all sprites.
+- [X] add all sprites.
 - [ ] swarm needs to move the entire way across based on which ones are still alive.
 - [ ] end game needs some sort of delay before restart.
 - [ ] bullets need to spawn from the proper spot.
+- [ ] do a size pass on everything.
 
 ### Major Issues/Features
 
