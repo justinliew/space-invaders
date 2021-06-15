@@ -43,6 +43,7 @@ We could also run parts of it on C@E for a potential multiplayer version.
 ### Code Cleanup
 - [ ] f64 vs usize for point, vector, size.
 - [ ] proper functions instead of data.state.world.world_size.x for example.
+- [ ] bottom right calculation for swarm is incorrect
 
 ### Polish
 

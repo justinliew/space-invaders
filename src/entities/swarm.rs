@@ -121,8 +121,8 @@ impl Swarm {
 
 	fn get_enemy_location_game(&self, x: usize, y: usize) -> Point {
 		Point{
-			x: (self.top_left.x + (self.radius as f64) + (x * (self.spacing_x + self.radius)) as f64),
-			y: (self.top_left.y + (self.radius as f64) + (y * (self.spacing_y + self.radius)) as f64),
+			x: self.top_left.x + (x * (self.radius + self.spacing_x)) as f64,
+			y: self.top_left.y + (y * (self.radius + self.spacing_y)) as f64,
 		}
 	}
 
@@ -143,7 +143,7 @@ impl Swarm {
 		Some((bucket_x.trunc() as usize, bucket_y.trunc() as usize))
 	}
 
-	fn get_bottom_right(&self) -> Point {
+	pub fn get_bottom_right(&self) -> Point {
 		Point{
 			x: self.top_left.x + (self.num_x * self.radius) as f64 + (self.num_x-1) as f64 * self.spacing_x as f64,
 			y: self.top_left.y + (self.num_y * self.radius) as f64 + (self.num_y-1) as f64 * self.spacing_y as f64,

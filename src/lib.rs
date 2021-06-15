@@ -56,7 +56,7 @@ lazy_static! {
     static ref DATA: Mutex<GameData> = Mutex::new(GameData::new(Size{width: 1008, height: 804}));
 }
 
-const MOVE_SPEED: f64 = 300.0;
+const MOVE_SPEED: f64 = 200.0;
 const BULLETS_PER_SECOND: f64 = 2.0;
 const BULLET_RATE: f64 = 1.0 / BULLETS_PER_SECOND;
 
@@ -150,6 +150,10 @@ pub extern "C" fn update(dt: c_double) {
 unsafe fn draw_swarm(swarm: &Swarm, data: &GameData) {
 	let radius = swarm.radius as f64 * data.game_to_screen;
 
+	// enable to draw bounds
+	// let br = swarm.get_bottom_right();
+	// draw_bounds(data.screen_top_left_offset.x + swarm.top_left.x * data.game_to_screen, data.screen_top_left_offset.y + swarm.top_left.y * data.game_to_screen, 
+	// 			br.x * data.game_to_screen, br.y * data.game_to_screen);
 	// is there a better iterator way to do this?
 	for i in 0..swarm.num_x {
 		for j in 0..swarm.num_y {
@@ -202,7 +206,8 @@ pub unsafe extern "C" fn draw() {
 
     clear_screen();
 
-	draw_bounds(data.screen_top_left_offset.x, data.screen_top_left_offset.y, data.state.world.world_size.width as f64 * data.game_to_screen, data.state.world.world_size.height as f64 * data.game_to_screen);
+	draw_bounds(data.screen_top_left_offset.x, data.screen_top_left_offset.y,
+				data.state.world.world_size.width as f64 * data.game_to_screen, data.state.world.world_size.height as f64 * data.game_to_screen);
 
 	match &data.state.game_state {
 		GameState::Intro => {
