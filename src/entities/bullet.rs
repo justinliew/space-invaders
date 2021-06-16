@@ -12,16 +12,16 @@ pub enum BulletType {
 pub struct Bullet {
     pub location: Vector,
 	pub bullet_type: BulletType,
+	speed: f64,
 }
-
-const BULLET_SPEED: f64 = 200.0;
 
 impl Bullet {
 
-	pub fn new(spawn_location: Vector, bullet_type: BulletType) -> Bullet {
+	pub fn new(spawn_location: Vector, bullet_type: BulletType, speed: f64) -> Bullet {
 		Bullet {
 			location: spawn_location,
 			bullet_type: bullet_type,
+			speed: speed,
 		}
 	}
 
@@ -41,8 +41,8 @@ impl Bullet {
     // }
 
 	pub fn update(&mut self, dt: f64) {
-        self.location.position.x += self.location.direction.cos() * dt * BULLET_SPEED;
-        self.location.position.y += self.location.direction.sin() * dt * BULLET_SPEED;
+        self.location.position.x += self.location.direction.cos() * dt * self.speed;
+        self.location.position.y += self.location.direction.sin() * dt * self.speed;
 	}
 }
 

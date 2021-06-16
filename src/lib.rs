@@ -127,7 +127,7 @@ pub extern "C" fn update(dt: c_double) {
 			// Add bullets
 			if data.input.fire && data.current_time - data.input.last_shoot > BULLET_RATE {
 				data.input.last_shoot = data.current_time;
-				data.state.world.bullets.push(Bullet::new(data.state.world.player.vector.clone(), BulletType::Player)); // TODO front
+				data.state.world.bullets.push(Bullet::new(data.state.world.player.vector.clone(), BulletType::Player, 400.));
 			}
 
 			// udpate enemies

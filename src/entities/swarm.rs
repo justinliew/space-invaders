@@ -46,9 +46,9 @@ impl Swarm {
 			top_left: START_LOCATION,
 			num_x: x,
 			num_y: y,
-			spacing_x: 40,
-			spacing_y: 40,
-			radius: 24,
+			spacing_x: 20,
+			spacing_y: 20,
+			radius: 36,
 			alive: vec![true;x * y],
 			num_alive: x*y,
 			movement: Movement::LEFT,
@@ -113,7 +113,7 @@ impl Swarm {
 		}
 
 		if let Some(loc) = self.get_bullet_spawn_location() {
-			return Some(Bullet::new(Vector::new(loc, std::f64::consts::PI / 2.0), BulletType::Swarm));
+			return Some(Bullet::new(Vector::new(loc, std::f64::consts::PI / 2.0), BulletType::Swarm, 200.));
 		} else {
 			return None;
 		}
