@@ -1,5 +1,5 @@
 extern crate itertools_num;
-use std::os::raw::{c_double, c_int, c_char, c_void, c_uint};
+use std::os::raw::{c_double, c_int, c_char, c_uint};
 use std::sync::Mutex;
 use std::f64;
 
@@ -18,6 +18,9 @@ mod swarm;
 #[path = "./entities/particle.rs"]
 mod particle;
 
+#[path = "./entities/shield.rs"]
+mod shield;
+
 #[path = "./core/point.rs"]
 mod point;
 #[path = "./core/vector.rs"]
@@ -26,11 +29,10 @@ mod vector;
 #[path = "./core/size.rs"]
 mod size;
 
-use crate::input::Input;
 use crate::swarm::Swarm;
 use crate::size::Size;
 use crate::bullet::{Bullet,BulletType};
-use crate::state::{State, GameData,World,GameState};
+use crate::state::{State, GameData,GameState};
 use crate::point::Point;
 use crate::vector::Vector;
 use crate::particle::Particle;
@@ -42,7 +44,6 @@ extern crate lazy_static;
 extern "C" {
     fn clear_screen();
     fn draw_player(_: c_double, _: c_double, _: c_double);
-    fn draw_enemy(_: c_double, _: c_double, _: c_double);
     fn draw_bullet(_: c_double, _: c_double);
     fn draw_particle(_: c_double, _: c_double, _: c_double);
     fn draw_hud(_: c_int, _: c_int);
@@ -50,6 +51,16 @@ extern "C" {
 	fn draw_game_over(_: c_int);
 	fn draw_debug(_: c_double, _: c_double, _: c_double, _: c_double);
 	fn draw_bounds(_: c_double, _: c_double, _: c_double, _: c_double);
+
+	// id, 5x5
+	fn init_shield(_: c_int);
+	fn add_shield_state(_: c_int, _: c_int, _: c_int);
+
+	// id, index, state
+	fn update_shield(_: c_int, _: c_int, _: c_int);
+
+	// id, x,y
+	fn draw_shield(_: c_int, _: c_double, _: c_double);
 
 	/*
 	sprite id, frame index, x, y
@@ -69,7 +80,6 @@ const BULLET_RATE: f64 = 1.0 / BULLETS_PER_SECOND;
 /// Generates a new explosion of the given intensity at the given position.
 /// This works best with values between 5 and 25
 pub fn make_explosion(particles: &mut Vec<Particle>, position: &Point, intensity: u8) {
-    use itertools_num;
     for rotation in itertools_num::linspace(0.0, 2.0 * ::std::f64::consts::PI, 30) {
         for ttl in (1..intensity).map(|x| (x as f64) / 10.0) {
             particles.push(Particle::new(Vector::new(position.clone(), rotation), ttl));
@@ -181,8 +191,6 @@ pub extern "C" fn update(dt: c_double) {
 }
 
 unsafe fn draw_swarm(swarm: &Swarm, data: &GameData) {
-	let radius = swarm.radius as f64 * data.game_to_screen;
-
 	// enable to draw bounds
 	// let br = swarm.get_bottom_right();
 	// draw_bounds(data.screen_top_left_offset.x + swarm.top_left.x * data.game_to_screen, data.screen_top_left_offset.y + swarm.top_left.y * data.game_to_screen, 
@@ -208,7 +216,6 @@ unsafe fn draw_swarm(swarm: &Swarm, data: &GameData) {
 			}
 		}
 	}
-	let lowest = swarm.get_lowest_alive().unwrap();
 }
 
 #[no_mangle]
@@ -240,6 +247,18 @@ pub unsafe extern "C" fn resize(width: c_double, height: c_double) -> c_double {
 
 #[no_mangle]
 pub unsafe extern "C" fn init() {
+    let data = &mut DATA.lock().unwrap();
+    let world = &data.state.world;
+
+	for (index,shield) in world.shields.iter().enumerate() {
+		init_shield(index as i32);
+		for i in 0..5 {
+			for j in 0..5 {
+				let state = &shield.b[j][i];
+				add_shield_state(index as i32, (i*5+j) as i32, *state as i32);
+			}
+		}
+	}
 }
 
 #[no_mangle]
@@ -274,6 +293,11 @@ pub unsafe extern "C" fn draw() {
 			draw_player(p.x, p.y, world.player.dir());
 
 			draw_swarm(&world.swarm, data);
+
+			for (index,shield) in world.shields.iter().enumerate() {
+				let screen_pos = data.world_to_screen(&shield.top_left);
+				draw_shield(index as i32,screen_pos.x, screen_pos.y);
+			}
 		},
 		GameState::Death => {
 
@@ -295,7 +319,7 @@ fn int_to_bool(i: c_int) -> bool {
 }
 
 #[no_mangle]
-pub extern "C" fn key_pressed(k: c_char, b: c_int) {
+pub extern "C" fn key_pressed(_: c_char, b: c_int) {
     let data = &mut DATA.lock().unwrap();
     data.input.any = int_to_bool(b);
 }

@@ -21,6 +21,7 @@ We could also run parts of it on C@E for a potential multiplayer version.
 - [ ] end game needs some sort of delay before restart.
 - [ ] enemy bullets need to spawn from the proper spot.
 - [ ] do a size pass on everything.
+- [ ] crash, appears to be when some columns are empty. Bullets maybe?
 
 ### Major Issues/Features
 
@@ -33,6 +34,7 @@ We could also run parts of it on C@E for a potential multiplayer version.
 - [ ] entering high score name.
 - [ ] audio.
 - [ ] scaling when a window is smaller than the game area is problematic.
+- [ ] when I bring up the title bar, the enemies are rendered with a white box.
 
 ### Architecture
 

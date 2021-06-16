@@ -13,13 +13,6 @@ pub struct Player {
 	pub alive: bool,
 }
 
-/// The player is represented as the polygon below
-pub const POLYGON: &'static [[f64; 2]] = &[
-    [0.0, -8.0],
-    [20.0, 0.0],
-    [0.0, 8.0]
-];
-
 lazy_static! {
 	static ref START_LOCATION: Vector = Vector::new(
 		Point::new(500.0,750.0),
@@ -45,7 +38,6 @@ impl Player {
 	pub fn x(&self) -> f64 { self.vector.position.x }
 	pub fn x_mut(&mut self) -> &mut f64 { &mut self.vector.position.x }
 	pub fn y(&self) -> f64 { self.vector.position.y }
-	pub fn y_mut(&mut self) -> &mut f64 { &mut self.vector.position.y }
 
 	pub fn dir(&self) -> f64 { self.vector.direction }
 

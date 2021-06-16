@@ -13,6 +13,7 @@ use crate::bullet::Bullet;
 use crate::point::Point;
 use crate::input::Input;
 use crate::particle::Particle;
+use crate::shield::{BlockState,Shield};
 
 
 
@@ -23,6 +24,7 @@ pub struct World {
 	pub world_size: Size,
 	pub bullets: Vec<Bullet>,
     pub particles: Vec<Particle>,
+	pub shields: Vec<Shield>,
     // pub size: Size
 }
 
@@ -35,6 +37,32 @@ impl World {
 			world_size: world_size,
 			bullets: vec![],
             particles: Vec::with_capacity(1000),
+			shields: vec![
+				Shield::new(Point::new(150.,550.,),
+				[[BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full],
+				[BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty],
+				[BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full],
+				[BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty],
+				[BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty],]),
+				Shield::new(Point::new(350.,550.,),
+				[[BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full],
+				[BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty],
+				[BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full],
+				[BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Full],
+				[BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full],]),
+				Shield::new(Point::new(550.,550.,),
+				[[BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty],
+				[BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty],
+				[BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty],
+				[BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty],
+				[BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full],]),
+				Shield::new(Point::new(750.,550.,),
+				[[BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Full],
+				[BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Full],
+				[BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full],
+				[BlockState::Empty,BlockState::Empty,BlockState::Full,BlockState::Empty,BlockState::Empty],
+				[BlockState::Empty,BlockState::Empty,BlockState::Full,BlockState::Empty,BlockState::Empty],]),
+			],
             // size: size
         }
     }

@@ -42,7 +42,7 @@ const FIRING_COLUMNS : &[usize;10] = &[4,5,3,2,6,8,1,0,7,9];
 impl Swarm {
 
 	pub fn new(x: usize, y: usize, world_size: Size) -> Swarm {
-		let mut ret = Swarm {
+		let ret = Swarm {
 			top_left: START_LOCATION,
 			num_x: x,
 			num_y: y,
@@ -164,7 +164,7 @@ impl Swarm {
 			let mut row = self.num_y - 1;
 
 			let mut found = false;
-			while row >=0 {
+			while row > 0 {
 				if self.alive[row * self.num_x + col] {
 					found = true;
 					break;
@@ -176,7 +176,6 @@ impl Swarm {
 				return Some(self.get_enemy_location_game(col, row) - Point::new(self.radius as f64/2., 0.));
 			}
 		}
-		None
 	}
 
 

@@ -27,7 +27,8 @@ let sprites = [];
       player: document.createElement('canvas'),
       enemy: document.createElement('canvas'),
       bullet: document.createElement('canvas'),
-      particle: document.createElement('canvas')
+      particle: document.createElement('canvas'),
+	  shields: {},
     }
 
     // Particle
@@ -139,7 +140,33 @@ let sprites = [];
 		ctx.stroke();
 	}
 
-	// this just doesn't work
+	function init_shield(id) {
+		res.shields[id] = [];
+	}
+
+	function add_shield_state(id, index, state) {
+		res.shields[id][index] = state;
+	}
+
+	function update_shield(id, index, state) {
+		if (res.shields[id] != "undefined")
+		res.shields[id][index] = state;
+	}
+
+	function draw_shield(id, x, y) {
+		for (var i=0;i<25;++i) {
+			var state = res.shields[id][i];
+			var xoffset = Math.trunc(i / 5) * 20;
+			var yoffset = (i % 5) * 20;
+			ctx.fillStyle = "red";
+			if (state == 1) { // BlockState::Hit
+
+			} else if (state == 2) { // BlockState::Full
+				ctx.fillRect(x + xoffset, y + yoffset, 20, 20);
+			}
+		}
+	}
+
 	function draw_sprite(sprite_id, frame_index, x, y) {
 		if (sprites[sprite_id] != "undefined" && sprites[sprite_id][frame_index] != "undefined") {
 			ctx.putImageData(sprites[sprite_id][frame_index].image_data, x, y);
@@ -157,7 +184,7 @@ let sprites = [];
 	}
 
     // The real loading and running of our wasm starts here
-    let imports = { clear_screen, draw_player, draw_bullet, draw_particle, draw_hud, draw_debug, draw_bounds, draw_intro, draw_game_over, draw_sprite };
+    let imports = { clear_screen, draw_player, draw_bullet, draw_particle, draw_hud, draw_debug, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield };
     imports.Math_atan = Math.atan;
     imports.sin = Math.sin;
     imports.cos = Math.cos;
