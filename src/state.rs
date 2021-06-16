@@ -12,6 +12,7 @@ use crate::size::Size;
 use crate::bullet::Bullet;
 use crate::point::Point;
 use crate::input::Input;
+use crate::particle::Particle;
 
 
 
@@ -21,9 +22,7 @@ pub struct World {
 	pub swarm: Swarm,
 	pub world_size: Size,
 	pub bullets: Vec<Bullet>,
-    // pub particles: Vec<Particle>,
-    // pub bullets: Vec<Bullet>,
-    // pub enemies: Vec<Enemy>,
+    pub particles: Vec<Particle>,
     // pub size: Size
 }
 
@@ -35,9 +34,7 @@ impl World {
 			swarm: Swarm::new(10,5, world_size),
 			world_size: world_size,
 			bullets: vec![],
-            // particles: Vec::with_capacity(1000),
-            // bullets: vec![],
-            // enemies: vec![],
+            particles: Vec::with_capacity(1000),
             // size: size
         }
     }

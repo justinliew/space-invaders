@@ -14,11 +14,12 @@ We could also run parts of it on C@E for a potential multiplayer version.
 - [X] scoring.
 - [X] enemy sprites.
 - [X] ensure bullet collisions are exact.
-- [ ] shields.
+- [X] explosions.
 - [X] add all sprites.
+- [ ] shields.
 - [ ] swarm needs to move the entire way across based on which ones are still alive.
 - [ ] end game needs some sort of delay before restart.
-- [ ] bullets need to spawn from the proper spot.
+- [ ] enemy bullets need to spawn from the proper spot.
 - [ ] do a size pass on everything.
 
 ### Major Issues/Features
@@ -28,7 +29,6 @@ We could also run parts of it on C@E for a potential multiplayer version.
 - [X] player firing and bullets.
 - [X] proper enemy movement, less smooth.
 - [X] enemy firing.
-- [ ] explosions.
 - [ ] mystery UFO.
 - [ ] entering high score name.
 - [ ] audio.

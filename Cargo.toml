@@ -10,3 +10,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 lazy_static = "1.0"
+itertools-num = "0.1.1"

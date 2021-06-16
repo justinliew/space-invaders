@@ -1,3 +1,4 @@
+extern crate itertools_num;
 use std::os::raw::{c_double, c_int, c_char, c_void, c_uint};
 use std::sync::Mutex;
 use std::f64;
@@ -14,6 +15,9 @@ mod player;
 #[path = "./entities/swarm.rs"]
 mod swarm;
 
+#[path = "./entities/particle.rs"]
+mod particle;
+
 #[path = "./core/point.rs"]
 mod point;
 #[path = "./core/vector.rs"]
@@ -28,6 +32,8 @@ use crate::size::Size;
 use crate::bullet::{Bullet,BulletType};
 use crate::state::{State, GameData,World,GameState};
 use crate::point::Point;
+use crate::vector::Vector;
+use crate::particle::Particle;
 
 #[macro_use]
 extern crate lazy_static;
@@ -38,7 +44,7 @@ extern "C" {
     fn draw_player(_: c_double, _: c_double, _: c_double);
     fn draw_enemy(_: c_double, _: c_double, _: c_double);
     fn draw_bullet(_: c_double, _: c_double);
-    // fn draw_particle(_: c_double, _: c_double, _: c_double);
+    fn draw_particle(_: c_double, _: c_double, _: c_double);
     fn draw_hud(_: c_int, _: c_int);
 	fn draw_intro();
 	fn draw_game_over(_: c_int);
@@ -60,11 +66,23 @@ const MOVE_SPEED: f64 = 200.0;
 const BULLETS_PER_SECOND: f64 = 2.0;
 const BULLET_RATE: f64 = 1.0 / BULLETS_PER_SECOND;
 
+/// Generates a new explosion of the given intensity at the given position.
+/// This works best with values between 5 and 25
+pub fn make_explosion(particles: &mut Vec<Particle>, position: &Point, intensity: u8) {
+    use itertools_num;
+    for rotation in itertools_num::linspace(0.0, 2.0 * ::std::f64::consts::PI, 30) {
+        for ttl in (1..intensity).map(|x| (x as f64) / 10.0) {
+            particles.push(Particle::new(Vector::new(position.clone(), rotation), ttl));
+        }
+    }
+}
+
 fn handle_collisions(state: &mut State) -> bool {
 	let world = &mut state.world;
 	let player = &mut world.player;
 	let swarm = &mut world.swarm;
 	let bullets = &mut world.bullets;
+	let particles = &mut world.particles;
 	let num_bullets = bullets.len();
 
 	let mut score_delta = 0;
@@ -72,7 +90,11 @@ fn handle_collisions(state: &mut State) -> bool {
 		let playerhit = player.check_hit(bullet);
 		let swarmhit = swarm.check_hit(bullet);
 		if let Some(points) = swarmhit {
+			make_explosion(particles, &Point::new(bullet.x(), bullet.y()), 5);
 			score_delta += points as i32;
+		}
+		if playerhit {
+			make_explosion(particles, &Point::new(bullet.x(), bullet.y()), 5);
 		}
 		!playerhit && swarmhit.is_none()
 	});
@@ -124,9 +146,20 @@ pub extern "C" fn update(dt: c_double) {
 				let height = data.state.world.world_size.height;
 				let bullets = &mut data.state.world.bullets;
 				bullets.retain(|bullet| {
-					let within = bullet.x() > 0. && bullet.x() < width as f64&&
+					let within = bullet.x() > 0. && bullet.x() < width as f64 &&
 							bullet.y() > 0. && bullet.y() < height as f64;
 					within
+				});
+			}
+
+			// Update particles
+			for particle in &mut data.state.world.particles {
+				particle.update(dt);
+			}
+			{
+				let particles = &mut data.state.world.particles;
+				particles.retain(|particle| {
+					particle.ttl > 0.0
 				});
 			}
 
@@ -217,6 +250,11 @@ pub unsafe extern "C" fn draw() {
 
 
     clear_screen();
+
+	for particle in &world.particles {
+		let world_pos = data.world_to_screen(&particle.vector.position);
+        draw_particle(world_pos.x, world_pos.y, 5.0 * particle.ttl);
+    }
 
 	draw_bounds(data.screen_top_left_offset.x, data.screen_top_left_offset.y,
 				data.state.world.world_size.width as f64 * data.game_to_screen, data.state.world.world_size.height as f64 * data.game_to_screen);
