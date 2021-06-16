@@ -36,6 +36,7 @@ use crate::state::{State, GameData,GameState};
 use crate::point::Point;
 use crate::vector::Vector;
 use crate::particle::Particle;
+use crate::shield::Shield;
 
 #[macro_use]
 extern crate lazy_static;
@@ -59,8 +60,8 @@ extern "C" {
 	// id, index, state
 	fn update_shield(_: c_int, _: c_int, _: c_int);
 
-	// id, x,y
-	fn draw_shield(_: c_int, _: c_double, _: c_double);
+	// id, x,y, dim
+	fn draw_shield(_: c_int, _: c_double, _: c_double, _: c_double);
 
 	/*
 	sprite id, frame index, x, y
@@ -87,34 +88,52 @@ pub fn make_explosion(particles: &mut Vec<Particle>, position: &Point, intensity
     }
 }
 
-fn handle_collisions(state: &mut State) -> bool {
+type DeferredShieldDamage = (usize,usize,usize);
+
+fn handle_collisions(state: &mut State) -> Vec<DeferredShieldDamage> {
 	let world = &mut state.world;
 	let player = &mut world.player;
 	let swarm = &mut world.swarm;
 	let bullets = &mut world.bullets;
 	let particles = &mut world.particles;
-	let num_bullets = bullets.len();
+	let shields = &world.shields;
 
 	let mut score_delta = 0;
+	let mut deferred_shield_damage = vec![];
+
 	bullets.retain(|bullet| {
-		let playerhit = player.check_hit(bullet);
+
+		// shields first
+		for (index,shield) in shields.iter().enumerate() {
+			match shield.check_hit(bullet) {
+				Some((i,j)) => {
+					deferred_shield_damage.push((index,i,j));
+					return false;
+				},
+				None => {},
+			}
+		}
+
 		let swarmhit = swarm.check_hit(bullet);
 		if let Some(points) = swarmhit {
 			make_explosion(particles, &Point::new(bullet.x(), bullet.y()), 5);
 			score_delta += points as i32;
 		}
+
+		let playerhit = player.check_hit(bullet);
 		if playerhit {
 			make_explosion(particles, &Point::new(bullet.x(), bullet.y()), 5);
 		}
 		!playerhit && swarmhit.is_none()
 	});
+
 	state.score += score_delta;
 
-	num_bullets != bullets.len()
+	deferred_shield_damage
 }
 
 #[no_mangle]
-pub extern "C" fn update(dt: c_double) {
+pub unsafe extern "C" fn update(dt: c_double) {
     let data: &mut GameData = &mut DATA.lock().unwrap();
 
 	match &data.state.game_state {
@@ -173,8 +192,17 @@ pub extern "C" fn update(dt: c_double) {
 				});
 			}
 
-			handle_collisions(&mut data.state);
+			let deferred_shield_damage = handle_collisions(&mut data.state);
+			{
+				let mut_shields = &mut data.state.world.shields;
+				for d in deferred_shield_damage {
+					let bs = mut_shields[d.0].damage(d.1,d.2);
+					update_shield(d.0 as i32, (d.1 as f64 + d.2 as f64 * 5.) as i32, bs as i32);
+				}
+			}
 			data.state.update();
+
+
 		},
 		GameState::Death => {
 			// TODO delay
@@ -252,11 +280,9 @@ pub unsafe extern "C" fn init() {
 
 	for (index,shield) in world.shields.iter().enumerate() {
 		init_shield(index as i32);
-		for i in 0..5 {
-			for j in 0..5 {
-				let state = &shield.b[j][i];
-				add_shield_state(index as i32, (i*5+j) as i32, *state as i32);
-			}
+		for i in 0..25 {
+			let state = &shield.b[i];
+			add_shield_state(index as i32, i as i32, *state as i32);
 		}
 	}
 }
@@ -296,7 +322,7 @@ pub unsafe extern "C" fn draw() {
 
 			for (index,shield) in world.shields.iter().enumerate() {
 				let screen_pos = data.world_to_screen(&shield.top_left);
-				draw_shield(index as i32,screen_pos.x, screen_pos.y);
+				draw_shield(index as i32,screen_pos.x, screen_pos.y, Shield::BLOCK_DIM * data.game_to_screen);
 			}
 		},
 		GameState::Death => {

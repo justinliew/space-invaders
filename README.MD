@@ -16,7 +16,7 @@ We could also run parts of it on C@E for a potential multiplayer version.
 - [X] ensure bullet collisions are exact.
 - [X] explosions.
 - [X] add all sprites.
-- [ ] shields.
+- [X] shield collision.
 - [ ] swarm needs to move the entire way across based on which ones are still alive.
 - [ ] end game needs some sort of delay before restart.
 - [ ] enemy bullets need to spawn from the proper spot.
@@ -52,3 +52,5 @@ We could also run parts of it on C@E for a potential multiplayer version.
 ### Polish
 
 - [ ] enemy speed progression.
+- [ ] do we need to do a better shield damaged texture?
+- [ ] ensure shields resize properly

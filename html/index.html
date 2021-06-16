@@ -29,6 +29,7 @@ let sprites = [];
       bullet: document.createElement('canvas'),
       particle: document.createElement('canvas'),
 	  shields: {},
+	  shield_hit: canvas.getContext("2d").createImageData(40,40) // TODO scale shields
     }
 
     // Particle
@@ -153,16 +154,19 @@ let sprites = [];
 		res.shields[id][index] = state;
 	}
 
-	function draw_shield(id, x, y) {
+	function draw_shield(id, x, y, dim) {
+// TODO do we want to do a pattern?
+//		pattern = ctx.createPattern(image, repetition);
 		for (var i=0;i<25;++i) {
 			var state = res.shields[id][i];
-			var xoffset = Math.trunc(i / 5) * 20;
-			var yoffset = (i % 5) * 20;
-			ctx.fillStyle = "red";
+			var xoffset = (i % 5) * dim;
+			var yoffset = Math.trunc(i / 5) * dim;
 			if (state == 1) { // BlockState::Hit
-
+				ctx.fillStyle = "darkred";
+				ctx.fillRect(x + xoffset, y + yoffset, dim, dim);
 			} else if (state == 2) { // BlockState::Full
-				ctx.fillRect(x + xoffset, y + yoffset, 20, 20);
+				ctx.fillStyle = "red";
+				ctx.fillRect(x + xoffset, y + yoffset, dim, dim);
 			}
 		}
 	}
