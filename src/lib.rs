@@ -115,8 +115,10 @@ fn handle_collisions(state: &mut State) -> Vec<DeferredShieldDamage> {
 		}
 
 		let swarmhit = swarm.check_hit(bullet);
-		if let Some(points) = swarmhit {
-			make_explosion(particles, &Point::new(bullet.x(), bullet.y()), 5);
+		if let Some(hit) = swarmhit {
+			let points = hit.0;
+			let loc = hit.1;
+			make_explosion(particles, &Point::new(loc.x,loc.y), 5);
 			score_delta += points as i32;
 		}
 

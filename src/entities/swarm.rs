@@ -32,7 +32,7 @@ I think it starts in the middle
 moves sideways a total of 10 from L to R
 Speeds up as there are fewer and fewer enemies
  */
-const MOVE_AMT: f64 = 20.0;
+const MOVE_AMT: f64 = 0.0;
 const BASE_MOVE_DELAY: f64 = 1.0;
 const START_LOCATION: Point = Point{x: 200.0, y: 50.0};
 // I am having issues with rand packages on the wasm-unknown-unknown target
@@ -173,13 +173,13 @@ impl Swarm {
 			}
 
 			if found {
-				return Some(self.get_enemy_location_game(col, row) - Point::new(self.radius as f64/2., 0.));
-			}
+				return Some(self.get_enemy_location_game(col, row) + Point::new(self.radius as f64/2., self.radius as f64));
+}
 		}
 	}
 
 
-	pub fn check_hit(&mut self, bullet: &Bullet) -> Option<u32> {
+	pub fn check_hit(&mut self, bullet: &Bullet) -> Option<(u32,Point)> {
 		if bullet.bullet_type != BulletType::Player {
 			return None;
 		}
@@ -194,15 +194,16 @@ impl Swarm {
 			if self.alive[hit.0 + (hit.1 as usize)*self.num_x] {
 				self.alive[hit.0 + (hit.1 as usize)*self.num_x] = false;
 				self.num_alive -= 1;
+				let loc = self.get_enemy_location_game(hit.0,hit.1) + Point::new(self.radius as f64/2.,self.radius as f64/2.);
 				return match hit.1 {
 					0 => {
-						Some(30)
+						Some((30,loc))
 					}
 					1|2 => {
-						Some(20)
+						Some((20,loc))
 					},
 					3|4 => {
-						Some(10)
+						Some((10,loc))
 					},
 					_ => {
 						unreachable!()
