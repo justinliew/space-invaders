@@ -122,7 +122,7 @@ fn handle_collisions(state: &mut State) -> Vec<DeferredShieldDamage> {
 
 		let playerhit = player.check_hit(bullet);
 		if playerhit {
-			make_explosion(particles, &Point::new(bullet.x(), bullet.y()), 5);
+			make_explosion(particles, &Point::new(bullet.x(), bullet.y()), 8);
 		}
 		!playerhit && swarmhit.is_none()
 	});
@@ -138,6 +138,14 @@ pub unsafe extern "C" fn update(dt: c_double) {
 
 	match &data.state.game_state {
 		GameState::Intro => {
+			for (index,shield) in data.state.world.shields.iter_mut().enumerate() {
+				shield.reset();
+				init_shield(index as i32);
+				for i in 0..25 {
+					let state = &shield.b[i];
+					add_shield_state(index as i32, i as i32, *state as i32);
+				}
+			}
 			if data.input.any {
 				data.state.game_state = GameState::Playing;
 			}
@@ -156,7 +164,7 @@ pub unsafe extern "C" fn update(dt: c_double) {
 			// Add bullets
 			if data.input.fire && data.current_time - data.input.last_shoot > BULLET_RATE {
 				data.input.last_shoot = data.current_time;
-				data.state.world.bullets.push(Bullet::new(data.state.world.player.vector.clone(), BulletType::Player, 400.));
+				data.state.world.bullets.push(Bullet::new(data.state.world.player.vector.clone(), BulletType::Player, 600.));
 			}
 
 			// udpate enemies
@@ -181,17 +189,6 @@ pub unsafe extern "C" fn update(dt: c_double) {
 				});
 			}
 
-			// Update particles
-			for particle in &mut data.state.world.particles {
-				particle.update(dt);
-			}
-			{
-				let particles = &mut data.state.world.particles;
-				particles.retain(|particle| {
-					particle.ttl > 0.0
-				});
-			}
-
 			let deferred_shield_damage = handle_collisions(&mut data.state);
 			{
 				let mut_shields = &mut data.state.world.shields;
@@ -204,17 +201,38 @@ pub unsafe extern "C" fn update(dt: c_double) {
 
 
 		},
-		GameState::Death => {
-			// TODO delay
-			data.state.post_death_reset();
-			data.state.game_state = GameState::Playing;
+		GameState::Death(_) => {
+			if let GameState::Death(ref mut timer) = data.state.game_state {
+				*timer -= dt;
+				if *timer < 0. {
+					data.state.post_death_reset();
+					data.state.game_state = GameState::Playing;
+				}
+			}
 		},
-		GameState::GameOver => {
-			if data.input.any {
-				data.state.reset();
-				data.state.game_state = GameState::Intro;
+		GameState::GameOver(_) => {
+			if let GameState::GameOver(ref mut timer) = data.state.game_state {
+				if *timer >= 0. {
+					*timer -= dt;
+				} else {
+					if data.input.any {
+						data.state.reset();
+						data.state.game_state = GameState::Intro;
+					}
+				}
 			}
 		}
+	}
+
+	// Update particles
+	for particle in &mut data.state.world.particles {
+		particle.update(dt);
+	}
+	{
+		let particles = &mut data.state.world.particles;
+		particles.retain(|particle| {
+			particle.ttl > 0.0
+		});
 	}
 }
 
@@ -275,16 +293,6 @@ pub unsafe extern "C" fn resize(width: c_double, height: c_double) -> c_double {
 
 #[no_mangle]
 pub unsafe extern "C" fn init() {
-    let data = &mut DATA.lock().unwrap();
-    let world = &data.state.world;
-
-	for (index,shield) in world.shields.iter().enumerate() {
-		init_shield(index as i32);
-		for i in 0..25 {
-			let state = &shield.b[i];
-			add_shield_state(index as i32, i as i32, *state as i32);
-		}
-	}
 }
 
 #[no_mangle]
@@ -308,7 +316,7 @@ pub unsafe extern "C" fn draw() {
 		GameState::Intro => {
 			draw_intro();
 		},
-		GameState::Playing => {
+		GameState::Playing | GameState::Death(_) => {
 			for bullet in &world.bullets {
 				let bp = data.world_to_screen(&Point{x: bullet.x(), y: bullet.y()});
 				draw_bullet(bp.x, bp.y);
@@ -316,7 +324,9 @@ pub unsafe extern "C" fn draw() {
 
 			let p = data.world_to_screen(&Point{x: world.player.x(), y: world.player.y()});
 
-			draw_player(p.x, p.y, world.player.dir());
+			if world.player.alive {
+				draw_player(p.x, p.y, world.player.dir());
+			}
 
 			draw_swarm(&world.swarm, data);
 
@@ -325,10 +335,7 @@ pub unsafe extern "C" fn draw() {
 				draw_shield(index as i32,screen_pos.x, screen_pos.y, Shield::BLOCK_DIM * data.game_to_screen);
 			}
 		},
-		GameState::Death => {
-
-		},
-		GameState::GameOver => {
+		GameState::GameOver(_) => {
 			draw_game_over(data.state.score);
 		},
 	}

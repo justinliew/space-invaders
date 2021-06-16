@@ -71,8 +71,8 @@ impl World {
 pub enum GameState {
 	Intro,
 	Playing,
-	Death,
-	GameOver,
+	Death(f64),
+	GameOver(f64),
 }
 
 /// The data structure that contains the state of the game
@@ -120,7 +120,7 @@ impl State {
 	pub fn update(&mut self) {
 		if let Some(lowest) = self.world.swarm.get_lowest_alive() {
 			if lowest >= self.world.player.vector.position.y {
-				self.game_state = GameState::Death;
+				self.game_state = GameState::GameOver(2.);
 			}
 		} else {
 			// if there are no enemies then we win
@@ -129,9 +129,9 @@ impl State {
 		if !self.world.player.alive {
 			self.lives -= 1;
 			if self.lives == 0 {
-				self.game_state = GameState::GameOver;
+				self.game_state = GameState::GameOver(2.);
 			} else {
-				self.game_state = GameState::Death;
+				self.game_state = GameState::Death(1.);
 			}
 		}
 	}

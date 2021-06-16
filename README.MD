@@ -17,11 +17,20 @@ We could also run parts of it on C@E for a potential multiplayer version.
 - [X] explosions.
 - [X] add all sprites.
 - [X] shield collision.
+- [X] death needs more of a delay too.
+- [X] end game needs some sort of delay before restart.
+- [X] shields need to reset on game over.
 - [ ] swarm needs to move the entire way across based on which ones are still alive.
-- [ ] end game needs some sort of delay before restart.
-- [ ] enemy bullets need to spawn from the proper spot.
-- [ ] do a size pass on everything.
+- [ ] enemy bullets need to spawn from the proper spot, and don't spawn if there's nothing in that row.
+- [ ] enemy explosions should be at the center of the enemy.
 - [ ] crash, appears to be when some columns are empty. Bullets maybe?
+- [ ] do a size pass on everything.
+- [ ] mystery UFO.
+- [ ] scaling when a window is smaller than the game area is problematic.
+- [ ] audio.
+- [ ] when I bring up the title bar, the enemies are rendered with a white box.
+- [ ] longer bullet delay for player?
+- [ ] entering high score name.
 
 ### Major Issues/Features
 
@@ -30,11 +39,6 @@ We could also run parts of it on C@E for a potential multiplayer version.
 - [X] player firing and bullets.
 - [X] proper enemy movement, less smooth.
 - [X] enemy firing.
-- [ ] mystery UFO.
-- [ ] entering high score name.
-- [ ] audio.
-- [ ] scaling when a window is smaller than the game area is problematic.
-- [ ] when I bring up the title bar, the enemies are rendered with a white box.
 
 ### Architecture
 

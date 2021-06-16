@@ -36,7 +36,7 @@ let sprites = [];
     res.particle.width = 20;
     res.particle.height = 20;
     let pCtx = res.particle.getContext('2d');
-    pCtx.fillStyle = "darkviolet";
+    pCtx.fillStyle = "red";
     pCtx.beginPath();
     pCtx.arc(10, 10, 10, 0, 2 * Math.PI);
     pCtx.fill();
@@ -338,7 +338,6 @@ let sprites = [];
 	function init_sprite_frame_js(sprite_id, frame_index, data, scale) {
 
 		let final_size = scale * 12;
-		console.log(final_size);
 
 		if (typeof(sprites[sprite_id]) == "undefined") {
 			sprites[sprite_id] = [];

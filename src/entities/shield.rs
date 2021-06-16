@@ -16,6 +16,7 @@ Each block can be hit twice before disappearing
 pub struct Shield {
 	pub top_left: Point,
 	pub b: [BlockState; 25],
+	pub def: [BlockState; 25],
 }
 
 impl Shield {
@@ -24,7 +25,12 @@ impl Shield {
 		Shield {
 			top_left: top_left,
 			b: state,
+			def: state,
 		}
+	}
+
+	pub fn reset(&mut self) {
+		self.b = self.def;
 	}
 
 	fn get_indices(&self, p: &Point) -> Option<(usize,usize)> {
