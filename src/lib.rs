@@ -18,6 +18,9 @@ mod swarm;
 #[path = "./entities/particle.rs"]
 mod particle;
 
+#[path = "./entities/ufo.rs"]
+mod ufo;
+
 #[path = "./entities/shield.rs"]
 mod shield;
 
@@ -37,6 +40,7 @@ use crate::point::Point;
 use crate::vector::Vector;
 use crate::particle::Particle;
 use crate::shield::Shield;
+use crate::ufo::Ufo;
 
 #[macro_use]
 extern crate lazy_static;
@@ -47,6 +51,7 @@ extern "C" {
     fn draw_player(_: c_double, _: c_double, _: c_double);
     fn draw_bullet(_: c_double, _: c_double);
     fn draw_particle(_: c_double, _: c_double, _: c_double);
+	fn draw_ufo(_: c_double, _: c_double);
     fn draw_hud(_: c_int, _: c_int);
 	fn draw_intro();
 	fn draw_game_over(_: c_int);
@@ -95,6 +100,7 @@ fn handle_collisions(state: &mut State) -> Vec<DeferredShieldDamage> {
 	let bullets = &mut world.bullets;
 	let particles = &mut world.particles;
 	let shields = &world.shields;
+	let ufo = &mut world.ufo;
 
 	let mut deferred_shield_damage = vec![];
 
@@ -134,6 +140,15 @@ fn handle_collisions(state: &mut State) -> Vec<DeferredShieldDamage> {
 
 			let swarmhit = swarm.check_hit(&world.player_bullet);
 			if let Some(hit) = swarmhit {
+				let points = hit.0;
+				let loc = hit.1;
+				make_explosion(particles, &Point::new(loc.x,loc.y), 5);
+				state.score += points as i32;
+				world.player_bullet.bullet_type = BulletType::Player(false);
+			}
+
+			let ufohit = ufo.check_hit(&world.player_bullet);
+			if let Some(hit) = ufohit {
 				let points = hit.0;
 				let loc = hit.1;
 				make_explosion(particles, &Point::new(loc.x,loc.y), 5);
@@ -225,9 +240,7 @@ pub unsafe extern "C" fn update(dt: c_double) {
 					update_shield(d.0 as i32, (d.1 as f64 + d.2 as f64 * 5.) as i32, bs as i32);
 				}
 			}
-			data.state.update();
-
-
+			data.state.update(dt);
 		},
 		GameState::Death(_) => {
 			if let GameState::Death(ref mut timer) = data.state.game_state {
@@ -367,6 +380,11 @@ pub unsafe extern "C" fn draw() {
 			for (index,shield) in world.shields.iter().enumerate() {
 				let screen_pos = data.world_to_screen(&shield.top_left);
 				draw_shield(index as i32,screen_pos.x, screen_pos.y, Shield::BLOCK_DIM * data.game_to_screen);
+			}
+
+			if world.ufo.active {
+				let screen_pos = data.world_to_screen(&world.ufo.position);
+				draw_ufo(screen_pos.x, screen_pos.y);
 			}
 		},
 		GameState::GameOver(_) => {

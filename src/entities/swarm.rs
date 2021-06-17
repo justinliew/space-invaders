@@ -195,7 +195,6 @@ impl Swarm {
 
 
 	pub fn check_hit(&mut self, bullet: &Bullet) -> Option<(u32,Point)> {
-		// TODO check if player bullet is active
 		if bullet.bullet_type != BulletType::Player(true) {
 			return None;
 		}

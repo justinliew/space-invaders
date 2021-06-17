@@ -15,6 +15,7 @@ use crate::input::Input;
 use crate::particle::Particle;
 use crate::shield::{BlockState,Shield};
 use crate::vector::Vector;
+use crate::ufo::Ufo;
 
 
 
@@ -27,7 +28,7 @@ pub struct World {
 	pub bullets: Vec<Bullet>,
     pub particles: Vec<Particle>,
 	pub shields: Vec<Shield>,
-    // pub size: Size
+	pub ufo: Ufo,
 }
 
 impl World {
@@ -66,6 +67,7 @@ impl World {
 				BlockState::Empty,BlockState::Empty,BlockState::Full,BlockState::Empty,BlockState::Empty,
 				BlockState::Empty,BlockState::Empty,BlockState::Full,BlockState::Empty,BlockState::Empty]),
 			],
+			ufo: Ufo::new(world_size),
             // size: size
         }
     }
@@ -120,7 +122,7 @@ impl State {
 
 	}
 
-	pub fn update(&mut self) {
+	pub fn update(&mut self, dt: f64) {
 		if let Some(lowest) = self.world.swarm.get_lowest_alive() {
 			if lowest >= self.world.player.vector.position.y {
 				self.game_state = GameState::GameOver(2.);
@@ -137,6 +139,8 @@ impl State {
 				self.game_state = GameState::Death(1.);
 			}
 		}
+
+		self.world.ufo.update(dt);
 	}
 }
 

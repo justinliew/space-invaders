@@ -99,6 +99,9 @@ let sprites = [];
       //ctx.fillRect(x - 17, y - 12, 4, 4);
     }
 
+	function draw_ufo(x, y) {
+		ctx.putImageData(sprites[99][0].image_data, x, y);
+    }
 
     function draw_bullet(x, y) {
       ctx.drawImage(res.bullet, x - 3, y - 3);
@@ -188,7 +191,7 @@ let sprites = [];
 	}
 
     // The real loading and running of our wasm starts here
-    let imports = { clear_screen, draw_player, draw_bullet, draw_particle, draw_hud, draw_debug, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield };
+    let imports = { clear_screen, draw_player, draw_bullet, draw_particle, draw_hud, draw_debug, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo };
     imports.Math_atan = Math.atan;
     imports.sin = Math.sin;
     imports.cos = Math.cos;
@@ -327,17 +330,37 @@ let sprites = [];
 			0,0,0,0,0,0,0,0,0,0,0,0,
 		];
 
-		init_sprite_frame_js(0, 0, enemy0_0, scale*3);
-		init_sprite_frame_js(0, 1, enemy0_1, scale*3);
-		init_sprite_frame_js(1, 0, enemy1_0, scale*3);
-		init_sprite_frame_js(1, 1, enemy1_1, scale*3);
-		init_sprite_frame_js(2, 0, enemy2_0, scale*3);
-		init_sprite_frame_js(2, 1, enemy2_1, scale*3);
+		let ufo = [
+			0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,
+			0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,
+			0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,
+			0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,
+			1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+			0,0,1,1,1,0,0,1,1,0,0,1,1,1,0,0,
+			0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+		];
+
+		init_sprite_frame_js(0, 0, enemy0_0, 12, scale*3);
+		init_sprite_frame_js(0, 1, enemy0_1, 12, scale*3);
+		init_sprite_frame_js(1, 0, enemy1_0, 12, scale*3);
+		init_sprite_frame_js(1, 1, enemy1_1, 12, scale*3);
+		init_sprite_frame_js(2, 0, enemy2_0, 12, scale*3);
+		init_sprite_frame_js(2, 1, enemy2_1, 12, scale*3);
+		init_sprite_frame_js(99,0, ufo, 16, scale*3);
 	}
 
-	function init_sprite_frame_js(sprite_id, frame_index, data, scale) {
+	function init_sprite_frame_js(sprite_id, frame_index, data, orig, scale) {
 
-		let final_size = Math.floor(scale * 12);
+		let final_size = Math.floor(scale * orig);
 
 		if (typeof(sprites[sprite_id]) == "undefined") {
 			sprites[sprite_id] = [];
@@ -352,7 +375,7 @@ let sprites = [];
 		for (var j=0;j<final_size;++j) {
 			for (var i=0;i<final_size;++i) {
 				var dest_index = i + j*final_size;
-				var source_index = Math.floor(i/scale) + Math.floor(j/scale) * 12;
+				var source_index = Math.floor(i/scale) + Math.floor(j/scale) * orig;
 				var value = data[source_index] > 0 ? 255 : 0;
 				sprites[sprite_id][frame_index].image_data.data[4*dest_index] = 0;
 				sprites[sprite_id][frame_index].image_data.data[4*dest_index+1] = value;
