@@ -34,7 +34,7 @@ Speeds up as there are fewer and fewer enemies
  */
 const MOVE_AMT: f64 = 20.0;
 const BASE_MOVE_DELAY: f64 = 1.0;
-const START_LOCATION: Point = Point{x: 200.0, y: 50.0};
+const START_LOCATION: Point = Point{x: 200.0, y: 60.0};
 // I am having issues with rand packages on the wasm-unknown-unknown target
 // so I am just using a hard coded list of columns that repeats
 const FIRING_COLUMNS : &[usize;10] = &[4,5,3,2,6,8,1,0,7,9];

@@ -38,9 +38,8 @@ use crate::bullet::{BulletType};
 use crate::state::{State, GameData,GameState};
 use crate::point::Point;
 use crate::vector::Vector;
-use crate::particle::Particle;
+use crate::particle::{ColourIndex,Particle};
 use crate::shield::Shield;
-use crate::ufo::Ufo;
 
 #[macro_use]
 extern crate lazy_static;
@@ -50,7 +49,8 @@ extern "C" {
     fn clear_screen();
     fn draw_player(_: c_double, _: c_double, _: c_double);
     fn draw_bullet(_: c_double, _: c_double);
-    fn draw_particle(_: c_double, _: c_double, _: c_double);
+	fn draw_player_bullet(_: c_double, _: c_double);
+    fn draw_particle(_: c_double, _: c_double, _: c_double, _: c_int);
 	fn draw_ufo(_: c_double, _: c_double);
     fn draw_hud(_: c_int, _: c_int);
 	fn draw_intro();
@@ -83,10 +83,10 @@ const MOVE_SPEED: f64 = 200.0;
 
 /// Generates a new explosion of the given intensity at the given position.
 /// This works best with values between 5 and 25
-pub fn make_explosion(particles: &mut Vec<Particle>, position: &Point, intensity: u8) {
+pub fn make_explosion(particles: &mut Vec<Particle>, position: &Point, intensity: u8, colour_index: ColourIndex) {
     for rotation in itertools_num::linspace(0.0, 2.0 * ::std::f64::consts::PI, 30) {
         for ttl in (1..intensity).map(|x| (x as f64) / 10.0) {
-            particles.push(Particle::new(Vector::new(position.clone(), rotation), ttl));
+            particles.push(Particle::new(Vector::new(position.clone(), rotation), ttl, colour_index));
         }
     }
 }
@@ -119,7 +119,7 @@ fn handle_collisions(state: &mut State) -> Vec<DeferredShieldDamage> {
 
 		let playerhit = player.check_hit(bullet);
 		if playerhit {
-			make_explosion(particles, &Point::new(bullet.x(), bullet.y()), 8);
+			make_explosion(particles, &Point::new(bullet.x(), bullet.y()), 8, ColourIndex::RED);
 		}
 		!playerhit
 	});
@@ -142,7 +142,7 @@ fn handle_collisions(state: &mut State) -> Vec<DeferredShieldDamage> {
 			if let Some(hit) = swarmhit {
 				let points = hit.0;
 				let loc = hit.1;
-				make_explosion(particles, &Point::new(loc.x,loc.y), 5);
+				make_explosion(particles, &Point::new(loc.x,loc.y), 5, ColourIndex::WHITE);
 				state.score += points as i32;
 				world.player_bullet.bullet_type = BulletType::Player(false);
 			}
@@ -151,7 +151,7 @@ fn handle_collisions(state: &mut State) -> Vec<DeferredShieldDamage> {
 			if let Some(hit) = ufohit {
 				let points = hit.0;
 				let loc = hit.1;
-				make_explosion(particles, &Point::new(loc.x,loc.y), 5);
+				make_explosion(particles, &Point::new(loc.x,loc.y), 5, ColourIndex::BLUE);
 				state.score += points as i32;
 				world.player_bullet.bullet_type = BulletType::Player(false);
 			}
@@ -347,7 +347,7 @@ pub unsafe extern "C" fn draw() {
 
 	for particle in &world.particles {
 		let world_pos = data.world_to_screen(&particle.vector.position);
-        draw_particle(world_pos.x, world_pos.y, 5.0 * particle.ttl);
+        draw_particle(world_pos.x, world_pos.y, 5.0 * particle.ttl, particle.get_colour_index());
     }
 
 	// draw_bounds(data.screen_top_left_offset.x, data.screen_top_left_offset.y,
@@ -365,7 +365,7 @@ pub unsafe extern "C" fn draw() {
 			if let BulletType::Player(alive) = world.player_bullet.bullet_type {
 				if alive {
 					let bp = data.world_to_screen(&world.player_bullet.location.position);
-					draw_bullet(bp.x, bp.y);
+					draw_player_bullet(bp.x, bp.y);
 				}
 			}
 

@@ -55,13 +55,6 @@ impl Player {
 		}
 		hit
 	}
-
-    // Returns the front of the rocket
-    // pub fn front(&self) -> Point {
-    //     Point::new(POLYGON[1][0], POLYGON[1][1])
-    //         .rotate(self.direction())
-    //         .translate(&self.position())
-    // }
 }
 
 // impl Collide for Player {

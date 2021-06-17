@@ -27,6 +27,7 @@ let sprites = [];
       player: document.createElement('canvas'),
       enemy: document.createElement('canvas'),
       bullet: document.createElement('canvas'),
+      player_bullet: document.createElement('canvas'),
       particle: document.createElement('canvas'),
 	  shields: {},
 	  shield_hit: canvas.getContext("2d").createImageData(40,40) // TODO scale shields
@@ -35,20 +36,25 @@ let sprites = [];
     // Particle
     res.particle.width = 20;
     res.particle.height = 20;
-    let pCtx = res.particle.getContext('2d');
-    pCtx.fillStyle = "red";
-    pCtx.beginPath();
-    pCtx.arc(10, 10, 10, 0, 2 * Math.PI);
-    pCtx.fill();
 
     // Bullet
     res.bullet.width = 6;
     res.bullet.height = 6;
     let bCtx = res.bullet.getContext('2d');
-    bCtx.fillStyle = "blue";
+    bCtx.fillStyle = "white";
     bCtx.beginPath();
     bCtx.arc(3, 3, 3, 0, 2 * Math.PI);
     bCtx.fill();
+
+	res.player_bullet.width = 2;
+    res.player_bullet.height = 40;
+    let bpCtx = res.player_bullet.getContext('2d');
+    bpCtx.fillStyle = "red";
+	bpCtx.beginPath();
+    bpCtx.lineTo(2, 40);
+    bpCtx.lineTo(4, 0);
+    bpCtx.lineTo(0, 0);
+    bpCtx.fill();
 
 	// Enemy
     res.enemy.width = 20;
@@ -107,7 +113,22 @@ let sprites = [];
       ctx.drawImage(res.bullet, x - 3, y - 3);
     }
 
-    function draw_particle(x, y, radius) {
+	function draw_player_bullet(x, y) {
+      ctx.drawImage(res.player_bullet, x - 3, y - 3);
+    }
+
+    function draw_particle(x, y, radius, color) {
+	let pCtx = res.particle.getContext('2d');
+	if (color == 1) {
+		pCtx.fillStyle = "blue";
+	} else if (color == 2) {
+		pCtx.fillStyle = "red";
+	} else {
+		pCtx.fillStyle = "white";
+	}
+    pCtx.beginPath();
+    pCtx.arc(10, 10, 10, 0, 2 * Math.PI);
+    pCtx.fill();
       ctx.drawImage(res.particle, x - radius, y - radius, 2 * radius, 2 * radius);
     }
 
@@ -191,7 +212,7 @@ let sprites = [];
 	}
 
     // The real loading and running of our wasm starts here
-    let imports = { clear_screen, draw_player, draw_bullet, draw_particle, draw_hud, draw_debug, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo };
+    let imports = { clear_screen, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_debug, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo };
     imports.Math_atan = Math.atan;
     imports.sin = Math.sin;
     imports.cos = Math.cos;
@@ -349,18 +370,18 @@ let sprites = [];
 			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 		];
 
-		init_sprite_frame_js(0, 0, enemy0_0, 12, scale*3);
-		init_sprite_frame_js(0, 1, enemy0_1, 12, scale*3);
-		init_sprite_frame_js(1, 0, enemy1_0, 12, scale*3);
-		init_sprite_frame_js(1, 1, enemy1_1, 12, scale*3);
-		init_sprite_frame_js(2, 0, enemy2_0, 12, scale*3);
-		init_sprite_frame_js(2, 1, enemy2_1, 12, scale*3);
-		init_sprite_frame_js(99,0, ufo, 16, scale*3);
+		init_sprite_frame(0, 0, enemy0_0, 12, scale*3, 255, 255, 255);
+		init_sprite_frame(0, 1, enemy0_1, 12, scale*3, 255, 255, 255);
+		init_sprite_frame(1, 0, enemy1_0, 12, scale*3, 255, 255, 255);
+		init_sprite_frame(1, 1, enemy1_1, 12, scale*3, 255, 255, 255);
+		init_sprite_frame(2, 0, enemy2_0, 12, scale*3, 255, 255, 255);
+		init_sprite_frame(2, 1, enemy2_1, 12, scale*3, 255, 255, 255);
+		init_sprite_frame(99,0, ufo, 16, scale*3, 0, 0, 255);
 	}
 
-	function init_sprite_frame_js(sprite_id, frame_index, data, orig, scale) {
+	function init_sprite_frame(sprite_id, frame_index, data, orig_dim, scale, r, g, b) {
 
-		let final_size = Math.floor(scale * orig);
+		let final_size = Math.floor(scale * orig_dim);
 
 		if (typeof(sprites[sprite_id]) == "undefined") {
 			sprites[sprite_id] = [];
@@ -375,11 +396,10 @@ let sprites = [];
 		for (var j=0;j<final_size;++j) {
 			for (var i=0;i<final_size;++i) {
 				var dest_index = i + j*final_size;
-				var source_index = Math.floor(i/scale) + Math.floor(j/scale) * orig;
-				var value = data[source_index] > 0 ? 255 : 0;
-				sprites[sprite_id][frame_index].image_data.data[4*dest_index] = 0;
-				sprites[sprite_id][frame_index].image_data.data[4*dest_index+1] = value;
-				sprites[sprite_id][frame_index].image_data.data[4*dest_index+2] = 0;
+				var source_index = Math.floor(i/scale) + Math.floor(j/scale) * orig_dim;
+				sprites[sprite_id][frame_index].image_data.data[4*dest_index] = data[source_index] > 0 ? r : 0;
+				sprites[sprite_id][frame_index].image_data.data[4*dest_index+1] = data[source_index] > 0 ? g : 0;
+				sprites[sprite_id][frame_index].image_data.data[4*dest_index+2] = data[source_index] > 0 ? b : 0;
 				sprites[sprite_id][frame_index].image_data.data[4*dest_index+3] = 255;
 			}
 		}

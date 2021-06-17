@@ -2,6 +2,13 @@ use crate::vector::Vector;
 
 //use geometry::Advance;
 
+#[derive(Clone,Copy)]
+pub enum ColourIndex {
+	WHITE,
+	BLUE,
+	RED,
+}
+
 /// A model representing a particle
 ///
 /// Particles are visible objects that have a time to live and move around
@@ -9,15 +16,16 @@ use crate::vector::Vector;
 /// player or an enemy is killed
 pub struct Particle {
     pub vector: Vector,
-    pub ttl: f64
+    pub ttl: f64,
+	pub colour_index: ColourIndex,
 }
 
 //derive_position_direction!(Particle);
 
 impl Particle {
     /// Create a particle with the given vector and time to live in seconds
-    pub fn new(vector: Vector, ttl: f64) -> Particle {
-        Particle { vector: vector, ttl: ttl }
+    pub fn new(vector: Vector, ttl: f64, colour_index: ColourIndex) -> Particle {
+        Particle { vector: vector, ttl: ttl, colour_index: colour_index }
     }
 
 	// TODO derive_position_direction
@@ -34,6 +42,14 @@ impl Particle {
         let speed = 1000.0 * self.ttl * self.ttl;
         self.advance(elapsed_time * speed);
     }
+
+	pub fn get_colour_index(&self) -> i32 {
+		match self.colour_index {
+			ColourIndex::BLUE => 1,
+			ColourIndex::RED => 2,
+			ColourIndex::WHITE => 0,
+		}
+	}
 
     fn advance(&mut self, units: f64) {
         *self.x_mut() += self.dir().cos() * units;

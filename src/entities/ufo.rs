@@ -1,5 +1,4 @@
 use crate::point::Point;
-use crate::vector::Vector;
 use crate::bullet::{Bullet,BulletType};
 use crate::size::Size;
 
@@ -64,12 +63,12 @@ impl Ufo {
 					StartLocation::LEFT => {
 						self.start = StartLocation::RIGHT;
 						self.position.x = self.world_size.width as f64;
-						self.position.y = 0.;
+						self.position.y = 10.;
 					},
 					StartLocation::RIGHT => {
 						self.start = StartLocation::LEFT;
 						self.position.x = 0.;
-						self.position.y = 0.;
+						self.position.y = 10.;
 					}
 				}
 			}
