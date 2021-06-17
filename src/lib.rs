@@ -50,8 +50,8 @@ extern "C" {
     fn draw_hud(_: c_int, _: c_int);
 	fn draw_intro();
 	fn draw_game_over(_: c_int);
-	fn draw_debug(_: c_double, _: c_double, _: c_double, _: c_double);
-	fn draw_bounds(_: c_double, _: c_double, _: c_double, _: c_double);
+	// fn draw_debug(_: c_double, _: c_double, _: c_double, _: c_double);
+	// fn draw_bounds(_: c_double, _: c_double, _: c_double, _: c_double);
 
 	// id, 5x5
 	fn init_shield(_: c_int);
@@ -311,8 +311,8 @@ pub unsafe extern "C" fn draw() {
         draw_particle(world_pos.x, world_pos.y, 5.0 * particle.ttl);
     }
 
-	draw_bounds(data.screen_top_left_offset.x, data.screen_top_left_offset.y,
-				data.state.world.world_size.width as f64 * data.game_to_screen, data.state.world.world_size.height as f64 * data.game_to_screen);
+	// draw_bounds(data.screen_top_left_offset.x, data.screen_top_left_offset.y,
+	// 			data.state.world.world_size.width as f64 * data.game_to_screen, data.state.world.world_size.height as f64 * data.game_to_screen);
 
 	match &data.state.game_state {
 		GameState::Intro => {
@@ -343,10 +343,6 @@ pub unsafe extern "C" fn draw() {
 	}
 
 	draw_hud(data.state.score, data.state.lives);
-	match world.player.alive {
-		true => draw_debug(1.,0.,0.,0.),
-		false => draw_debug(0.,0.,0.,0.),
-	}
 }
 
 fn int_to_bool(i: c_int) -> bool {

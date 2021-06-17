@@ -51,7 +51,7 @@ impl Swarm {
 			radius: 36,
 			alive: vec![true;x * y],
 			num_alive: x*y,
-			movement: Movement::LEFT,
+			movement: Movement::RIGHT,
 			world_size: world_size,
 			time_to_move: BASE_MOVE_DELAY,
 			fire_column: 0,
@@ -64,37 +64,52 @@ impl Swarm {
 		self.top_left = START_LOCATION;
 		self.alive = vec![true;self.num_x*self.num_y];
 		self.num_alive = self.num_x * self.num_y;
-		self.movement = Movement::LEFT;
+		self.movement = Movement::RIGHT;
 		self.time_to_move = BASE_MOVE_DELAY;
 		self.fire_column = 0;
 	}
 
 	pub fn update(&mut self, dt: f64) -> Option<Bullet> {
-		let rhs = self.top_left.x as usize + self.num_x * self.spacing_x;
+
 		self.time_to_move -= dt;
 		if self.time_to_move > 0.0 {
 			return None;
 		}
 
+		let mut lhs = self.top_left.x;
+		let mut rhs = self.top_left.x as usize + self.num_x * self.spacing_x;
+		for l in 0..self.num_x {
+			if !self.get_lowest_in_column(l).is_none() {
+				lhs = self.top_left.x + (l * (self.radius + self.spacing_x)) as f64;
+				break;
+			}
+		}
+		for r in (0..self.num_x).rev() {
+			if !self.get_lowest_in_column(r).is_none() {
+				rhs = self.top_left.x as usize + r * (self.radius + self.spacing_x);
+				break;
+			}
+		}
+
 		self.time_to_move = BASE_MOVE_DELAY * (self.num_alive as f64 / (self.num_x * self.num_y) as f64);
 		match self.movement {
-			Movement::LEFT => {
-				if rhs < self.world_size.width - self.top_left.x as usize {
+			Movement::RIGHT => {
+				if self.world_size.width - rhs > 50 {
 					self.top_left.x += MOVE_AMT;
 				} else {
 					self.movement = Movement::DOWN(true);
 				}
 			},
-			Movement::DOWN(left) => {
+			Movement::DOWN(right) => {
 				self.top_left.y += MOVE_AMT;
-				if left {
-					self.movement = Movement::RIGHT;
-				} else {
+				if right {
 					self.movement = Movement::LEFT;
+				} else {
+					self.movement = Movement::RIGHT;
 				}
 			}
-			Movement::RIGHT => {
-				if self.top_left.x > 100. {
+			Movement::LEFT => {
+				if lhs > 50. {
 					self.top_left.x -= MOVE_AMT;
 				} else {
 					self.movement = Movement::DOWN(false);
@@ -130,6 +145,19 @@ impl Swarm {
 		data.world_to_screen(&self.get_enemy_location_game(x,y))
 	}
 
+	pub fn get_lowest_in_column(&self, col: usize) -> Option<usize> {
+		// find an alive enemy
+		let mut row = self.num_y - 1;
+
+		while row > 0 {
+			if self.alive[row * self.num_x + col] {
+				return Some(row);
+			}
+			row -= 1;
+		}
+		None
+	}
+
 	pub fn is_hit(&self, x: f64, y: f64) -> Option<(usize,usize)> {
 		let bucket_x = (x - self.top_left.x) / (self.radius + self.spacing_x) as f64;
 		let bucket_y = (y - self.top_left.y) / (self.radius + self.spacing_y) as f64;
@@ -159,19 +187,7 @@ impl Swarm {
 		}
 		let col = FIRING_COLUMNS[self.fire_column];
 
-		// find an alive enemy
-		let mut row = self.num_y - 1;
-
-		let mut found = false;
-		while row > 0 {
-			if self.alive[row * self.num_x + col] {
-				found = true;
-				break;
-			}
-			row -= 1;
-		}
-
-		if found {
+		if let Some(row) = self.get_lowest_in_column(col) {
 			return Some(self.get_enemy_location_game(col, row) + Point::new(self.radius as f64/2., self.radius as f64));
 		}
 		None
