@@ -31,7 +31,7 @@ mod size;
 
 use crate::swarm::Swarm;
 use crate::size::Size;
-use crate::bullet::{Bullet,BulletType};
+use crate::bullet::{BulletType};
 use crate::state::{State, GameData,GameState};
 use crate::point::Point;
 use crate::vector::Vector;
@@ -75,8 +75,6 @@ lazy_static! {
 }
 
 const MOVE_SPEED: f64 = 200.0;
-const BULLETS_PER_SECOND: f64 = 2.0;
-const BULLET_RATE: f64 = 1.0 / BULLETS_PER_SECOND;
 
 /// Generates a new explosion of the given intensity at the given position.
 /// This works best with values between 5 and 25
@@ -98,7 +96,6 @@ fn handle_collisions(state: &mut State) -> Vec<DeferredShieldDamage> {
 	let particles = &mut world.particles;
 	let shields = &world.shields;
 
-	let mut score_delta = 0;
 	let mut deferred_shield_damage = vec![];
 
 	bullets.retain(|bullet| {
@@ -114,22 +111,38 @@ fn handle_collisions(state: &mut State) -> Vec<DeferredShieldDamage> {
 			}
 		}
 
-		let swarmhit = swarm.check_hit(bullet);
-		if let Some(hit) = swarmhit {
-			let points = hit.0;
-			let loc = hit.1;
-			make_explosion(particles, &Point::new(loc.x,loc.y), 5);
-			score_delta += points as i32;
-		}
-
 		let playerhit = player.check_hit(bullet);
 		if playerhit {
 			make_explosion(particles, &Point::new(bullet.x(), bullet.y()), 8);
 		}
-		!playerhit && swarmhit.is_none()
+		!playerhit
 	});
 
-	state.score += score_delta;
+	if let BulletType::Player(alive) = world.player_bullet.bullet_type {
+		if alive {
+			// shields first
+			for (index,shield) in shields.iter().enumerate() {
+				match shield.check_hit(&world.player_bullet) {
+					Some((i,j)) => {
+						deferred_shield_damage.push((index,i,j));
+						world.player_bullet.bullet_type = BulletType::Player(false);
+						break;
+					},
+					None => {},
+				}
+			}
+
+			let swarmhit = swarm.check_hit(&world.player_bullet);
+			if let Some(hit) = swarmhit {
+				let points = hit.0;
+				let loc = hit.1;
+				make_explosion(particles, &Point::new(loc.x,loc.y), 5);
+				state.score += points as i32;
+				world.player_bullet.bullet_type = BulletType::Player(false);
+			}
+		}
+	}
+
 
 	deferred_shield_damage
 }
@@ -153,7 +166,6 @@ pub unsafe extern "C" fn update(dt: c_double) {
 			}
 		},
 		GameState::Playing => {
-			data.current_time += dt;
 			let radius = data.state.world.swarm.radius;
 
 			if data.input.left && data.state.world.player.x() > radius as f64 {
@@ -164,12 +176,15 @@ pub unsafe extern "C" fn update(dt: c_double) {
 			};
 
 			// Add bullets
-			if data.input.fire && data.current_time - data.input.last_shoot > BULLET_RATE {
-				data.input.last_shoot = data.current_time;
-				data.state.world.bullets.push(Bullet::new(data.state.world.player.vector.clone(), BulletType::Player, 600.));
+			if data.input.fire {
+				if let BulletType::Player(alive) = data.state.world.player_bullet.bullet_type {
+					if !alive {
+						data.state.world.player_bullet.inplace_new(data.state.world.player.vector.clone(), BulletType::Player(true), 600.);
+					}
+				}
 			}
 
-			// udpate enemies
+			// update enemies
 			if let Some(bullet) = data.state.world.swarm.update(dt) {
 				data.state.world.bullets.push(bullet);
 			}
@@ -177,6 +192,12 @@ pub unsafe extern "C" fn update(dt: c_double) {
 			// update bullets
 			for bullet in &mut data.state.world.bullets {
 				bullet.update(dt);
+			}
+
+			if let BulletType::Player(alive) = data.state.world.player_bullet.bullet_type {
+				if alive {
+					data.state.world.player_bullet.update(dt);
+				}
 			}
 
 			// Remove bullets outside the viewport
@@ -189,6 +210,11 @@ pub unsafe extern "C" fn update(dt: c_double) {
 							bullet.y() > 0. && bullet.y() < height as f64;
 					within
 				});
+
+				if data.state.world.player_bullet.x() < 0. || data.state.world.player_bullet.x() > width as f64 ||
+				data.state.world.player_bullet.y() < 0. || data.state.world.player_bullet.y() > height as f64 {
+					data.state.world.player_bullet.bullet_type = BulletType::Player(false);
+				}
 			}
 
 			let deferred_shield_damage = handle_collisions(&mut data.state);
@@ -320,8 +346,14 @@ pub unsafe extern "C" fn draw() {
 		},
 		GameState::Playing | GameState::Death(_) => {
 			for bullet in &world.bullets {
-				let bp = data.world_to_screen(&Point{x: bullet.x(), y: bullet.y()});
+				let bp = data.world_to_screen(&bullet.location.position);
 				draw_bullet(bp.x, bp.y);
+			}
+			if let BulletType::Player(alive) = world.player_bullet.bullet_type {
+				if alive {
+					let bp = data.world_to_screen(&world.player_bullet.location.position);
+					draw_bullet(bp.x, bp.y);
+				}
 			}
 
 			let p = data.world_to_screen(&Point{x: world.player.x(), y: world.player.y()});

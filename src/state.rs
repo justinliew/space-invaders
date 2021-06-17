@@ -9,11 +9,12 @@
 use crate::player::{Player};
 use crate::swarm::Swarm;
 use crate::size::Size;
-use crate::bullet::Bullet;
+use crate::bullet::{Bullet,BulletType};
 use crate::point::Point;
 use crate::input::Input;
 use crate::particle::Particle;
 use crate::shield::{BlockState,Shield};
+use crate::vector::Vector;
 
 
 
@@ -22,6 +23,7 @@ pub struct World {
     pub player: Player,
 	pub swarm: Swarm,
 	pub world_size: Size,
+	pub player_bullet: Bullet,
 	pub bullets: Vec<Bullet>,
     pub particles: Vec<Particle>,
 	pub shields: Vec<Shield>,
@@ -35,6 +37,7 @@ impl World {
             player: Player::new(),
 			swarm: Swarm::new(10,5, world_size),
 			world_size: world_size,
+			player_bullet: Bullet::new(Vector::default(), BulletType::Player(false), 0.),
 			bullets: vec![],
             particles: Vec::with_capacity(1000),
 			shields: vec![
@@ -140,15 +143,10 @@ impl State {
 pub struct GameData {
 	pub state: State,
 	pub input: Input,
-	pub current_time: f64,
-//	screen_size: Size,
 	pub screen_top_left_offset: Point,
 	pub game_to_screen: f64,
 	pub width: usize,
 	pub height: usize,
-    // state: GameState,
-    // actions: Actions,
-    // time_controller: TimeController<Pcg32Basic>
 }
 
 impl GameData {
@@ -156,13 +154,10 @@ impl GameData {
 		GameData {
 			state: State::new(world_size),
 			input: Input::default(),
-			current_time: 0.0,
 			screen_top_left_offset: Point::new(0.0,0.0),
 			game_to_screen: 1.,
 			width: 1024,
 			height: 768,
-			// actions: Actions::default(),
-			// time_controller: TimeController::new(Pcg32Basic::from_seed([42, 42]))
 		}
 	}
 

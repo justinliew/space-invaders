@@ -4,7 +4,7 @@ use crate::vector::Vector;
 
 #[derive(PartialEq)]
 pub enum BulletType {
-	Player,
+	Player(bool),
 	Swarm,
 }
 
@@ -22,6 +22,12 @@ impl Bullet {
 			bullet_type: bullet_type,
 			speed: speed,
 		}
+	}
+
+	pub fn inplace_new(&mut self, spawn_location: Vector, bullet_type: BulletType, speed: f64) {
+		self.location = spawn_location;
+		self.bullet_type = bullet_type;
+		self.speed = speed;
 	}
 
 	// TODO derive_position_direction
