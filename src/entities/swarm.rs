@@ -32,7 +32,7 @@ I think it starts in the middle
 moves sideways a total of 10 from L to R
 Speeds up as there are fewer and fewer enemies
  */
-const MOVE_AMT: f64 = 0.0;
+const MOVE_AMT: f64 = 20.0;
 const BASE_MOVE_DELAY: f64 = 1.0;
 const START_LOCATION: Point = Point{x: 200.0, y: 50.0};
 // I am having issues with rand packages on the wasm-unknown-unknown target
