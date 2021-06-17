@@ -12,14 +12,14 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 - [ ] win state and transition to new
 - [ ] entering high score name.
-- [X] mystery UFO.
+- [ ] UX overhaul. draw leaderboard.
+- [ ] draw title menu.
 - [ ] scaling when a window is smaller than the game area is problematic.
 - [ ] audio.
-- [ ] encapsulate the sim for verification on C@E.
-- [ ] player sizing, radius for collision, etc. Should the player be bigger?
 
 ### Architecture
 
+- [ ] encapsulate the sim for verification on C@E.
 - [ ] encapsulate relevant game state for picture-in-picture for multiplayer.
 - [ ] network story.
 - [ ] proper ECS type structures for more generic collisions, movement, etc.
@@ -35,9 +35,11 @@ We could also run parts of it on C@E for a potential multiplayer version.
 - [ ] enemy speed progression.
 - [ ] do we need to do a better shield damaged texture?
 - [ ] ensure shields resize properly if the screen size changes
+- [ ] player sizing, radius for collision, etc. Should the player be bigger?
 
 ### Done
 
+- [X] mystery UFO.
 - [X] player lives. We need a soft reset that resets the player.
 - [X] scoring.
 - [X] enemy sprites.
