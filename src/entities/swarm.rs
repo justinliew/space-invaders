@@ -151,31 +151,30 @@ impl Swarm {
 	}
 
 	fn get_bullet_spawn_location(&mut self) -> Option<Point> {
-		loop {
-			// get the next column
-			if self.fire_column >= self.num_x-1 {
-				self.fire_column = 0;
-			} else {
-				self.fire_column += 1;
-			}
-			let col = FIRING_COLUMNS[self.fire_column];
-
-			// find an alive enemy
-			let mut row = self.num_y - 1;
-
-			let mut found = false;
-			while row > 0 {
-				if self.alive[row * self.num_x + col] {
-					found = true;
-					break;
-				}
-				row -= 1;
-			}
-
-			if found {
-				return Some(self.get_enemy_location_game(col, row) + Point::new(self.radius as f64/2., self.radius as f64));
-}
+		// get the next column
+		if self.fire_column >= self.num_x-1 {
+			self.fire_column = 0;
+		} else {
+			self.fire_column += 1;
 		}
+		let col = FIRING_COLUMNS[self.fire_column];
+
+		// find an alive enemy
+		let mut row = self.num_y - 1;
+
+		let mut found = false;
+		while row > 0 {
+			if self.alive[row * self.num_x + col] {
+				found = true;
+				break;
+			}
+			row -= 1;
+		}
+
+		if found {
+			return Some(self.get_enemy_location_game(col, row) + Point::new(self.radius as f64/2., self.radius as f64));
+		}
+		None
 	}
 
 
