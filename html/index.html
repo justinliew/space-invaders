@@ -337,7 +337,7 @@ let sprites = [];
 
 	function init_sprite_frame_js(sprite_id, frame_index, data, scale) {
 
-		let final_size = scale * 12;
+		let final_size = Math.floor(scale * 12);
 
 		if (typeof(sprites[sprite_id]) == "undefined") {
 			sprites[sprite_id] = [];

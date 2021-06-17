@@ -23,13 +23,13 @@ We could also run parts of it on C@E for a potential multiplayer version.
 - [ ] swarm needs to move the entire way across based on which ones are still alive.
 - [X] enemy bullets need to spawn from the proper spot, and don't spawn if there's nothing in that row.
 - [X] enemy explosions should be at the center of the enemy.
-- [ ] enemy bullet spawn times should change as there are fewer enemies.
-- [ ] crash, appears to be when some columns are empty. Bullets maybe?
+- [X] enemy bullet spawn times should change as there are fewer enemies.
+- [X] crash, appears to be when some columns are empty. Bullets maybe?
 - [ ] do a size pass on everything.
 - [ ] mystery UFO.
 - [ ] scaling when a window is smaller than the game area is problematic.
+- [X] when I bring up the title bar, the enemies are rendered with a white box.
 - [ ] audio.
-- [ ] when I bring up the title bar, the enemies are rendered with a white box.
 - [ ] longer bullet delay for player?
 - [ ] entering high score name.
 
