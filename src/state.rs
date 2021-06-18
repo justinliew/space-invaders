@@ -17,7 +17,11 @@ use crate::shield::{BlockState,Shield};
 use crate::vector::Vector;
 use crate::ufo::Ufo;
 
-
+#[derive(PartialEq)]
+pub enum ResetType {
+	New,
+	Next,
+}
 
 /// A model that contains the other models and renders them
 pub struct World {
@@ -77,6 +81,7 @@ pub enum GameState {
 	Intro,
 	Playing,
 	Death(f64),
+	Win(f64),
 	GameOver(f64),
 }
 
@@ -88,6 +93,8 @@ pub struct State {
     pub score: i32,
 	/// Number of lives
 	pub lives: i32,
+	/// Number of waves
+	pub wave: i32,
 	/// state of the game
 	pub game_state: GameState,
 }
@@ -99,19 +106,26 @@ impl State {
             world: World::new(world_size),
             score: 0,
 			lives: 3,
+			wave: 1,
 			game_state: GameState::Intro,
         }
     }
 
     /// Reset our game-state
-    pub fn reset(&mut self) {
+    pub fn reset(&mut self, reset_type: ResetType) {
 
-        self.score = 0;
-		self.lives = 3;
+		if reset_type == ResetType::New {
+			self.score = 0;
+			self.lives = 3;
+			self.wave = 0;
+		}
+		if reset_type == ResetType::Next {
+			self.wave += 1;
+		}
 
         // Remove all enemies and bullets
         self.world.bullets.clear();
-		self.world.swarm.reset();
+		self.world.swarm.reset(reset_type);
 		self.world.player.alive = true;
     }
 
@@ -128,7 +142,7 @@ impl State {
 				self.game_state = GameState::GameOver(2.);
 			}
 		} else {
-			// if there are no enemies then we win
+			self.game_state = GameState::Win(2.);
 		}
 
 		if !self.world.player.alive {

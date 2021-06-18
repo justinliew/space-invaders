@@ -35,7 +35,7 @@ mod size;
 use crate::swarm::Swarm;
 use crate::size::Size;
 use crate::bullet::{BulletType};
-use crate::state::{State, GameData,GameState};
+use crate::state::{State,GameData,GameState, ResetType};
 use crate::point::Point;
 use crate::vector::Vector;
 use crate::particle::{ColourIndex,Particle};
@@ -52,7 +52,7 @@ extern "C" {
 	fn draw_player_bullet(_: c_double, _: c_double);
     fn draw_particle(_: c_double, _: c_double, _: c_double, _: c_int);
 	fn draw_ufo(_: c_double, _: c_double);
-    fn draw_hud(_: c_int, _: c_int);
+    fn draw_hud(_: c_int, _: c_int, _: c_int);
 	fn draw_intro();
 	fn draw_game_over(_: c_int);
 	// fn draw_debug(_: c_double, _: c_double, _: c_double, _: c_double);
@@ -251,13 +251,23 @@ pub unsafe extern "C" fn update(dt: c_double) {
 				}
 			}
 		},
+		GameState::Win(_) => {
+			if let GameState::Win(ref mut timer) = data.state.game_state {
+				if *timer >= 0. {
+					*timer -= dt;
+				} else {
+					data.state.reset(ResetType::Next);
+					data.state.game_state = GameState::Playing;
+				}
+			}
+		},
 		GameState::GameOver(_) => {
 			if let GameState::GameOver(ref mut timer) = data.state.game_state {
 				if *timer >= 0. {
 					*timer -= dt;
 				} else {
 					if data.input.any {
-						data.state.reset();
+						data.state.reset(ResetType::New);
 						data.state.game_state = GameState::Intro;
 					}
 				}
@@ -357,7 +367,7 @@ pub unsafe extern "C" fn draw() {
 		GameState::Intro => {
 			draw_intro();
 		},
-		GameState::Playing | GameState::Death(_) => {
+		GameState::Playing | GameState::Death(_) | GameState::Win(_) => {
 			for bullet in &world.bullets {
 				let bp = data.world_to_screen(&bullet.location.position);
 				draw_bullet(bp.x, bp.y);
@@ -392,7 +402,7 @@ pub unsafe extern "C" fn draw() {
 		},
 	}
 
-	draw_hud(data.state.score, data.state.lives);
+	draw_hud(data.state.score, data.state.lives, data.state.wave);
 }
 
 fn int_to_bool(i: c_int) -> bool {

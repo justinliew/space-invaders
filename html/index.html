@@ -11,11 +11,22 @@
         overflow: hidden; /*  Disable scrollbars */
         display: block;  /* No floating content on sides */
       }
+	  #topbar {
+		  background-color: black;
+	  }
+	  #leaderboard {
+		  background-color: black;
+		  color: red;
+		  font-family: courier;
+	  }
       </style>
   </head>
 
   <body>
-    <canvas id="canvas" style='position:absolute; left:0px; top:0px; width: 100%'></canvas>
+    <canvas id="topbar" style='position:absolute; left:0px; top:0px; width: 100%; height: 10%'></canvas>
+    <canvas id="gamearea" style='position:absolute; left:0px; top:10%; width: 80%; height: 90%'></canvas>
+    <!-- <canvas id="leaderboard" style='position:absolute; left:80%; top:10%; width: 80%; height: 100%'></canvas> -->
+	<div id="leaderboard" style='position:absolute; left:80%; top:10%; width: 80%; height: 100%'></div>
 
 <script>
 
@@ -25,15 +36,20 @@ let sprites = [];
   function resources() {
     let res = {
       player: document.createElement('canvas'),
-      enemy: document.createElement('canvas'),
       bullet: document.createElement('canvas'),
       player_bullet: document.createElement('canvas'),
       particle: document.createElement('canvas'),
 	  shields: {},
-	  shield_hit: canvas.getContext("2d").createImageData(40,40) // TODO scale shields
+	  shield_hit: gamearea.getContext("2d").createImageData(40,40), // TODO scale shields
+	  title_img: new Image(),
+	  leaderboard: document.createElement('table'),
     }
 
-    // Particle
+	res.title_img.src = 'title.png';
+	res.title_img.alt = 'Fastronauts Title Screen';
+//	document.body.appendChild(res.title_img);
+
+	// Particle
     res.particle.width = 20;
     res.particle.height = 20;
 
@@ -56,15 +72,6 @@ let sprites = [];
     bpCtx.lineTo(0, 0);
     bpCtx.fill();
 
-	// Enemy
-    res.enemy.width = 20;
-    res.enemy.height = 20;
-    let eCtx = res.enemy.getContext('2d');
-    eCtx.fillStyle = "yellow";
-    eCtx.beginPath();
-    eCtx.arc(10, 10, 10, 0, 2 * Math.PI);
-    eCtx.fill();
-
     // Player
     res.player.width = 20;
     res.player.height = 16;
@@ -76,21 +83,45 @@ let sprites = [];
     plCtx.lineTo(0, 0);
     plCtx.fill();
 
+	res.leaderboard.style.width = '30%';
+	var tbdy = document.createElement('tbody');
+	// this is the number of leaderboard entries (rows)
+	for (var i = 0; i < 10; i++) {
+		var tr = document.createElement('tr');
+		// this is the number of columns
+			var td = document.createElement('td');
+			td.appendChild(document.createTextNode('Name'))
+			tr.appendChild(td)
+			td = document.createElement('td');
+			td.appendChild(document.createTextNode('Score'))
+			tr.appendChild(td)
+		tbdy.appendChild(tr);
+	}
+	res.leaderboard.appendChild(tbdy);
+
     return res;
   }
 
   // We create this here because it will be used from within `imports`
-  let canvas = document.getElementById('canvas');
+  let gamearea = document.getElementById('gamearea');
+  let leaderboard = document.getElementById('leaderboard');
+  let topbar = document.getElementById('topbar');
 
   // Returns an object containing functions that will be linked to our wasm model
   // This means that they can be called from Rust
   function imports() {
     const res = resources();
-    var ctx = canvas.getContext("2d");
+    var ctx = gamearea.getContext("2d");
+	var topbar_ctx = topbar.getContext("2d");
+//	var leaderboard_ctx = leaderboard.getContext("2d");
 
     function clear_screen() {
       ctx.fillStyle = "black";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, gamearea.width, gamearea.height);
+    //   leaderboard_ctx.fillStyle = "black";
+    //   leaderboard_ctx.fillRect(0, 0, leaderboard.width, leaderboard.height);
+      topbar_ctx.fillStyle = "black";
+      topbar_ctx.fillRect(0, 0, topbar.width, topbar.height);
     }
 
     function draw_player(x, y, angle) {
@@ -118,41 +149,49 @@ let sprites = [];
     }
 
     function draw_particle(x, y, radius, color) {
-	let pCtx = res.particle.getContext('2d');
-	if (color == 1) {
-		pCtx.fillStyle = "blue";
-	} else if (color == 2) {
-		pCtx.fillStyle = "red";
-	} else {
-		pCtx.fillStyle = "white";
-	}
-    pCtx.beginPath();
-    pCtx.arc(10, 10, 10, 0, 2 * Math.PI);
-    pCtx.fill();
-      ctx.drawImage(res.particle, x - radius, y - radius, 2 * radius, 2 * radius);
+		let pCtx = res.particle.getContext('2d');
+		if (color == 1) {
+			pCtx.fillStyle = "blue";
+		} else if (color == 2) {
+			pCtx.fillStyle = "red";
+		} else {
+			pCtx.fillStyle = "white";
+		}
+		pCtx.beginPath();
+		pCtx.arc(10, 10, 10, 0, 2 * Math.PI);
+		pCtx.fill();
+		ctx.drawImage(res.particle, x - radius, y - radius, 2 * radius, 2 * radius);
     }
 
 	function draw_intro() {
-      ctx.fillStyle = "orange";
-      ctx.textBaseline = "top";
-      ctx.font = "20px sans-serif";
-      ctx.fillText('Press any key to start', canvas.width/2, canvas.height/2)
+		ctx.drawImage(res.title_img, 0,0, gamearea.width, gamearea.height);
+    //   ctx.fillStyle = "orange";
+    //   ctx.textBaseline = "top";
+    //   ctx.font = "20px sans-serif";
+    //   ctx.fillText('Press any key to start', gamearea.width/2, gamearea.height/2)
+
 	}
 
 	function draw_game_over(score) {
       ctx.fillStyle = "orange";
       ctx.textBaseline = "top";
       ctx.font = "20px sans-serif";
-      ctx.fillText('Game over! Final score: ' + score, canvas.width/2, canvas.height/2)
+      ctx.fillText('Game over! Final score: ' + score, gamearea.width/2, gamearea.height/2)
 	}
 
-    function draw_hud(score,lives) {
-      ctx.fillStyle = "orange";
-      ctx.textBaseline = "top";
-      ctx.font = "20px sans-serif";
-      ctx.fillText('Score: ' + score, 10, 10)
-      ctx.fillText('Lives: ' + lives, 10, 30)
+    function draw_hud(score,lives, wave) {
+	  // draw hud
+      topbar_ctx.fillStyle = "red";
+      topbar_ctx.textBaseline = "top";
+      topbar_ctx.font = "20px courier";
+	  topbar_ctx.fillText("Score: " + score, 20, 20);
+	  topbar_ctx.fillText("Lives: " + lives, 220, 20);
+	  topbar_ctx.fillText("Wave: " + wave, 420, 20);
+
+	  // draw leaderboard
+	  leaderboard.appendChild(res.leaderboard);
     }
+
 
 	function draw_bounds(x,y,w,h) {
 		ctx.strokeStyle = "orange";
@@ -389,7 +428,7 @@ let sprites = [];
 
 		// TODO does this leak if we call this multiple times?
 		sprites[sprite_id][frame_index] = {
-			image_data: canvas.getContext("2d").createImageData(final_size,final_size),
+			image_data: gamearea.getContext("2d").createImageData(final_size,final_size),
 			w: final_size,
 			h: final_size
 		}
@@ -407,10 +446,14 @@ let sprites = [];
 
     // Resizing
     function resize() {
-      // We make the canvas somewhat smaller to get some zooming
-      canvas.width = window.innerWidth * 1;
-      canvas.height = window.innerHeight * 1;
-      let scale = module.resize(canvas.width, canvas.height);
+      // We make the gamearea somewhat smaller to get some zooming
+      gamearea.width = window.innerWidth * 0.8;
+      gamearea.height = window.innerHeight * 0.9;
+      topbar.width = window.innerWidth;
+      topbar.height = window.innerHeight * 0.1;
+      leaderboard.width = window.innerWidth * 0.2;
+      leaderboard.height = window.innerHeight * 0.9;
+      let scale = module.resize(gamearea.width, gamearea.height);
 	  init_sprites(scale);
     }
     window.addEventListener('resize', () => {

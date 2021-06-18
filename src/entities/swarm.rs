@@ -4,6 +4,7 @@ use crate::size::Size;
 use crate::bullet::{Bullet,BulletType};
 use crate::state::GameData;
 use crate::vector::Vector;
+use crate::state::{ResetType};
 
 enum Movement {
 	LEFT,
@@ -60,8 +61,12 @@ impl Swarm {
 		ret
 	}
 
-	pub fn reset(&mut self) {
-		self.top_left = START_LOCATION;
+	pub fn reset(&mut self, reset_type: ResetType) {
+		if reset_type == ResetType::Next {
+			self.top_left = START_LOCATION + Point::new(0.,10.);
+		} else {
+			self.top_left = START_LOCATION;
+		}
 		self.alive = vec![true;self.num_x*self.num_y];
 		self.num_alive = self.num_x * self.num_y;
 		self.movement = Movement::RIGHT;
@@ -70,6 +75,7 @@ impl Swarm {
 	}
 
 	pub fn update(&mut self, dt: f64) -> Option<Bullet> {
+
 
 		self.time_to_move -= dt;
 		if self.time_to_move > 0.0 {

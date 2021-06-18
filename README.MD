@@ -10,17 +10,22 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ### High Priority
 
-- [ ] win state and transition to new
+- [X] win state and transition to new
 - [ ] entering high score name.
-- [ ] UX overhaul. draw leaderboard.
-- [ ] draw title menu.
+- [X] UX overhaul. draw leaderboard.
+- [X] draw title menu.
 - [ ] scaling when a window is smaller than the game area is problematic.
 - [ ] audio.
+- [ ] better title screen.
+- [ ] inputs should have pressed/release plus "changed"
+- [ ] stub in leaderboard POST functions.
+- [ ] stub in leaderboard GET functions.
 
 ### Architecture
 
 - [ ] encapsulate the sim for verification on C@E.
 - [ ] encapsulate relevant game state for picture-in-picture for multiplayer.
+- [ ] do we need to render to framebuffer so we can easily do that on C@E?
 - [ ] network story.
 - [ ] proper ECS type structures for more generic collisions, movement, etc.
 - [ ] ECS (entity-component-system) story for better design/reuse/extensibility.
@@ -32,6 +37,7 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ### Polish
 
+- [ ] lives gained when hitting score thresholds.
 - [ ] enemy speed progression.
 - [ ] do we need to do a better shield damaged texture?
 - [ ] ensure shields resize properly if the screen size changes
