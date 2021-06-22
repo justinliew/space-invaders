@@ -14,7 +14,7 @@
 	  #topbar {
 		  background-color: black;
 	  }
-	  #leaderboard {
+	  #leaderboard, tr {
 		  background-color: black;
 		  color: red;
 		  font-family: courier;
@@ -25,12 +25,12 @@
   <body>
     <canvas id="topbar" style='position:absolute; left:0px; top:0px; width: 100%; height: 10%'></canvas>
     <canvas id="gamearea" style='position:absolute; left:0px; top:10%; width: 80%; height: 90%'></canvas>
-    <!-- <canvas id="leaderboard" style='position:absolute; left:80%; top:10%; width: 80%; height: 100%'></canvas> -->
-	<div id="leaderboard" style='position:absolute; left:80%; top:10%; width: 80%; height: 100%'></div>
+	<div id="leaderboard" style='position:absolute; left:80%; top:10%; width: 50%; height: 100%'></div>
 
 <script>
 
 let sprites = [];
+let module = {};
 
   // Returns an object containing resources that will be used later for drawing
   function resources() {
@@ -85,18 +85,6 @@ let sprites = [];
 
 	res.leaderboard.style.width = '30%';
 	var tbdy = document.createElement('tbody');
-	// this is the number of leaderboard entries (rows)
-	for (var i = 0; i < 10; i++) {
-		var tr = document.createElement('tr');
-		// this is the number of columns
-			var td = document.createElement('td');
-			td.appendChild(document.createTextNode('Name'))
-			tr.appendChild(td)
-			td = document.createElement('td');
-			td.appendChild(document.createTextNode('Score'))
-			tr.appendChild(td)
-		tbdy.appendChild(tr);
-	}
 	res.leaderboard.appendChild(tbdy);
 
     return res;
@@ -118,8 +106,6 @@ let sprites = [];
     function clear_screen() {
       ctx.fillStyle = "black";
       ctx.fillRect(0, 0, gamearea.width, gamearea.height);
-    //   leaderboard_ctx.fillStyle = "black";
-    //   leaderboard_ctx.fillRect(0, 0, leaderboard.width, leaderboard.height);
       topbar_ctx.fillStyle = "black";
       topbar_ctx.fillRect(0, 0, topbar.width, topbar.height);
     }
@@ -130,10 +116,7 @@ let sprites = [];
       ctx.translate(0, -8);
       ctx.drawImage(res.player, 0, 0);
       ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-
       ctx.fillStyle = "black";
-      //ctx.fillRect(x - 17, y - 12, 4, 4);
     }
 
 	function draw_ufo(x, y) {
@@ -165,10 +148,6 @@ let sprites = [];
 
 	function draw_intro() {
 		ctx.drawImage(res.title_img, 0,0, gamearea.width, gamearea.height);
-    //   ctx.fillStyle = "orange";
-    //   ctx.textBaseline = "top";
-    //   ctx.font = "20px sans-serif";
-    //   ctx.fillText('Press any key to start', gamearea.width/2, gamearea.height/2)
 
 	}
 
@@ -188,7 +167,7 @@ let sprites = [];
 	  topbar_ctx.fillText("Lives: " + lives, 220, 20);
 	  topbar_ctx.fillText("Wave: " + wave, 420, 20);
 
-	  // draw leaderboard
+	// draw leaderboard
 	  leaderboard.appendChild(res.leaderboard);
     }
 
@@ -250,21 +229,60 @@ let sprites = [];
       ctx.fillText('Debug: ' + d, 10, 110)
 	}
 
+	function updateTable(leaderboard, index, fields) {
+		let newRow = leaderboard.insertRow(index);
+		for (var i=0;i<fields.length;++i) {
+			let newCell = newRow.insertCell(i);
+			let newText = document.createTextNode(fields[i]);
+			newCell.appendChild(newText);
+		}
+	}
+
+	function update_leaderboard_entry(index, rank, score, nameptr) {
+		let name = copyCStr(module, nameptr);
+		updateTable(res.leaderboard, index, [rank, name, score]);
+	}
+
+	function clear_leaderboard() {
+		res.leaderboard.innerHTML = "";
+		var tbdy = document.createElement('tbody');
+		res.leaderboard.appendChild(tbdy);
+	}
+
     // The real loading and running of our wasm starts here
-    let imports = { clear_screen, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_debug, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo };
+    let imports = { clear_screen, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_debug, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, clear_leaderboard, update_leaderboard_entry };
     imports.Math_atan = Math.atan;
     imports.sin = Math.sin;
     imports.cos = Math.cos;
     return imports;
   }
 
+// Copy a nul-terminated string from the buffer pointed to.
+// Consumes the old data and thus deallocated it.
+function copyCStr(module, ptr) {
+  let orig_ptr = ptr;
+  const collectCString = function* () {
+	let memory = new Uint8Array(module.memory.buffer);
+	while (memory[ptr] !== 0) {
+      if (memory[ptr] === undefined) { throw new Error("Tried to read undef mem") }
+      yield memory[ptr]
+      ptr += 1
+    }
+  }
+
+  const buffer_as_u8 = new Uint8Array(collectCString())
+  const utf8Decoder = new TextDecoder("UTF-8");
+  const buffer_as_utf8 = utf8Decoder.decode(buffer_as_u8);
+  module.dealloc_str(orig_ptr);
+  return buffer_as_utf8
+}
+
   // Fetch and instantiate our wasm module
-  fetch("program.wasm").then(response =>
+  fetch("space_invaders.wasm").then(response =>
     response.arrayBuffer()
   ).then(bytes =>
     WebAssembly.instantiate(bytes, { env: imports() })
   ).then(results => {
-    let module = {};
     let mod = results.instance;
     module.update = mod.exports.update;
 	module.key_pressed = mod.exports.key_pressed;
@@ -274,6 +292,10 @@ let sprites = [];
     module.resize = mod.exports.resize;
     module.draw = mod.exports.draw;
 	module.init = mod.exports.init;
+	module.alloc = mod.exports.alloc;
+	module.dealloc = mod.exports.dealloc;
+	module.dealloc_str = mod.exports.dealloc_str;
+	module.memory = mod.exports.memory;
 
 	module.init();
 

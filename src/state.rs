@@ -1,11 +1,3 @@
-// use pcg_rand::Pcg32Basic;
-// use rand::SeedableRng;
-
-// use geometry::{Position, Size};
-// use models::World;
-
-// use rand::Rng;
-
 use crate::player::{Player};
 use crate::swarm::Swarm;
 use crate::size::Size;
@@ -16,6 +8,7 @@ use crate::particle::Particle;
 use crate::shield::{BlockState,Shield};
 use crate::vector::Vector;
 use crate::ufo::Ufo;
+use crate::leaderboard::LeaderboardEntry;
 
 #[derive(PartialEq)]
 pub enum ResetType {
@@ -97,6 +90,8 @@ pub struct State {
 	pub wave: i32,
 	/// state of the game
 	pub game_state: GameState,
+
+	pub leaderboard: Vec<LeaderboardEntry>,
 }
 
 impl State {
@@ -108,6 +103,7 @@ impl State {
 			lives: 3,
 			wave: 1,
 			game_state: GameState::Intro,
+			leaderboard: vec![],
         }
     }
 

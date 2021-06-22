@@ -5,6 +5,7 @@ use std::f64;
 
 mod input;
 mod state;
+mod leaderboard;
 
 #[path = "./entities/bullet.rs"]
 mod bullet;
@@ -40,6 +41,7 @@ use crate::point::Point;
 use crate::vector::Vector;
 use crate::particle::{ColourIndex,Particle};
 use crate::shield::Shield;
+use crate::leaderboard::{get_leaderboard_entries,prep_leaderboard_entries, push_leaderboard_entries};
 
 #[macro_use]
 extern crate lazy_static;
@@ -93,7 +95,7 @@ pub fn make_explosion(particles: &mut Vec<Particle>, position: &Point, intensity
 
 type DeferredShieldDamage = (usize,usize,usize);
 
-fn handle_collisions(state: &mut State) -> Vec<DeferredShieldDamage> {
+unsafe fn handle_collisions(state: &mut State) -> Vec<DeferredShieldDamage> {
 	let world = &mut state.world;
 	let player = &mut world.player;
 	let swarm = &mut world.swarm;
@@ -144,6 +146,8 @@ fn handle_collisions(state: &mut State) -> Vec<DeferredShieldDamage> {
 				let loc = hit.1;
 				make_explosion(particles, &Point::new(loc.x,loc.y), 5, ColourIndex::WHITE);
 				state.score += points as i32;
+				prep_leaderboard_entries(&mut state.leaderboard, "Justin", state.score);
+				push_leaderboard_entries(&state.leaderboard);
 				world.player_bullet.bullet_type = BulletType::Player(false);
 			}
 
@@ -153,6 +157,8 @@ fn handle_collisions(state: &mut State) -> Vec<DeferredShieldDamage> {
 				let loc = hit.1;
 				make_explosion(particles, &Point::new(loc.x,loc.y), 5, ColourIndex::BLUE);
 				state.score += points as i32;
+				prep_leaderboard_entries(&mut state.leaderboard, "Justin", state.score);
+				push_leaderboard_entries(&state.leaderboard);
 				world.player_bullet.bullet_type = BulletType::Player(false);
 			}
 		}
@@ -344,6 +350,11 @@ pub unsafe extern "C" fn resize(width: c_double, height: c_double) -> c_double {
 
 #[no_mangle]
 pub unsafe extern "C" fn init() {
+    let data = &mut DATA.lock().unwrap();
+	let score = data.state.score;
+	get_leaderboard_entries(&mut data.state.leaderboard);
+	prep_leaderboard_entries(&mut data.state.leaderboard, "Justin", score);
+	push_leaderboard_entries(&data.state.leaderboard);
 }
 
 #[no_mangle]

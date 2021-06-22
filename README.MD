@@ -10,16 +10,12 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ### High Priority
 
-- [X] win state and transition to new
+- [ ] stub in leaderboard POST functions.
+- [ ] fix rank for local player.
 - [ ] entering high score name.
-- [X] UX overhaul. draw leaderboard.
-- [X] draw title menu.
-- [ ] scaling when a window is smaller than the game area is problematic.
 - [ ] audio.
 - [ ] better title screen.
 - [ ] inputs should have pressed/release plus "changed"
-- [ ] stub in leaderboard POST functions.
-- [ ] stub in leaderboard GET functions.
 
 ### Architecture
 
@@ -37,6 +33,7 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ### Polish
 
+- [ ] scaling when a window is smaller than the game area is problematic.
 - [ ] lives gained when hitting score thresholds.
 - [ ] enemy speed progression.
 - [ ] do we need to do a better shield damaged texture?
@@ -45,6 +42,10 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ### Done
 
+- [X] stub in leaderboard GET functions.
+- [X] win state and transition to new
+- [X] UX overhaul. draw leaderboard.
+- [X] draw title menu.
 - [X] mystery UFO.
 - [X] player lives. We need a soft reset that resets the player.
 - [X] scoring.
