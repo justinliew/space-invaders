@@ -2,15 +2,19 @@ extern crate itertools_num;
 use std::os::raw::{c_double, c_int, c_char, c_uint};
 use std::sync::Mutex;
 use std::f64;
+use std::sync::mpsc;
 
 mod input;
 mod render;
-mod state;
+mod game;
 
 mod leaderboard;
 
 #[path = "./entities/bullet.rs"]
 mod bullet;
+
+#[path = "./entities/particle.rs"]
+mod particle;
 
 #[path = "./entities/player.rs"]
 mod player;
@@ -18,8 +22,8 @@ mod player;
 #[path = "./entities/swarm.rs"]
 mod swarm;
 
-#[path = "./entities/particle.rs"]
-mod particle;
+#[path = "./entities/world.rs"]
+mod world;
 
 #[path = "./entities/ufo.rs"]
 mod ufo;
@@ -42,7 +46,7 @@ mod size;
 use crate::swarm::Swarm;
 use crate::size::{WorldSize};
 use crate::bullet::{BulletType};
-use crate::state::{GameData,GameState};
+use crate::game::{GameData,GameState};
 use crate::point::Point;
 use crate::shield::Shield;
 use crate::leaderboard::{get_leaderboard_entries,prep_leaderboard_entries, push_leaderboard_entries};
@@ -79,14 +83,14 @@ lazy_static! {
 pub unsafe extern "C" fn update(dt: c_double) {
     let data: &mut GameData = &mut DATA.lock().unwrap();
 
-	data.state.update(&data.input, dt);
+	data.game.update(&data.input, dt);
 
 	// Update particles
-	for particle in &mut data.state.world.particles {
+	for particle in &mut data.game.world.particles {
 		particle.update(dt);
 	}
 	{
-		let particles = &mut data.state.world.particles;
+		let particles = &mut data.game.world.particles;
 		particles.retain(|particle| {
 			particle.ttl > 0.0
 		});
@@ -126,7 +130,7 @@ unsafe fn draw_swarm(swarm: &Swarm, data: &GameData) {
 #[no_mangle]
 pub unsafe extern "C" fn resize(width: c_double, height: c_double) -> c_double {
 	let data = &mut DATA.lock().unwrap();
-	let world_size = data.state.world.world_size;
+	let world_size = data.game.world.world_size;
 	let render = &mut data.render;
 
 	render.resize(world_size, width, height)
@@ -135,16 +139,18 @@ pub unsafe extern "C" fn resize(width: c_double, height: c_double) -> c_double {
 #[no_mangle]
 pub unsafe extern "C" fn init() {
     let data = &mut DATA.lock().unwrap();
-	let score = data.state.score;
-	get_leaderboard_entries(&mut data.state.leaderboard);
-	prep_leaderboard_entries(&mut data.state.leaderboard, "Justin", score);
-	push_leaderboard_entries(&data.state.leaderboard);
+	let score = data.game.score;
+	get_leaderboard_entries(&mut data.game.leaderboard);
+	prep_leaderboard_entries(&mut data.game.leaderboard, "Justin", score);
+	push_leaderboard_entries(&data.game.leaderboard);
+
+//	let (tx, rx) = mpsc::channel();
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn draw() {
     let data = &mut DATA.lock().unwrap();
-    let world = &data.state.world;
+    let world = &data.game.world;
 	let render = &data.render;
 
     clear_screen();
@@ -154,7 +160,7 @@ pub unsafe extern "C" fn draw() {
         draw_particle(world_pos.x, world_pos.y, 5.0 * particle.ttl, particle.get_colour_index());
     }
 
-	match &data.state.game_state {
+	match &data.game.game_state {
 		GameState::Intro => {
 			draw_intro();
 		},
@@ -189,11 +195,11 @@ pub unsafe extern "C" fn draw() {
 			}
 		},
 		GameState::GameOver(_) => {
-			draw_game_over(data.state.score);
+			draw_game_over(data.game.score);
 		},
 	}
 
-	draw_hud(data.state.score, data.state.lives, data.state.wave);
+	draw_hud(data.game.score, data.game.lives, data.game.wave);
 }
 
 fn int_to_bool(i: c_int) -> bool {

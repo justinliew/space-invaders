@@ -3,7 +3,7 @@ use crate::point::Point;
 use crate::size::WorldSize;
 use crate::bullet::{Bullet,BulletType};
 use crate::vector::Vector;
-use crate::state::{ResetType};
+use crate::game::{ResetType};
 
 enum Movement {
 	LEFT,

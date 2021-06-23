@@ -3,11 +3,11 @@ use crate::leaderboard::{prep_leaderboard_entries};
 
 use crate::bullet::BulletType;
 
-use crate::state::{State};
+use crate::game::{Game};
 
 type DeferredShieldDamage = (usize,usize,usize);
 
-pub unsafe fn handle_collisions(state: &mut State) -> Vec<DeferredShieldDamage> {
+pub unsafe fn handle_collisions(state: &mut Game) -> Vec<DeferredShieldDamage> {
 	let world = &mut state.world;
 	let player = &mut world.player;
 	let swarm = &mut world.swarm;

@@ -1,18 +1,13 @@
-use crate::player::{Player};
-use crate::swarm::Swarm;
+use std::os::raw::{c_double, c_int, c_char, c_uint};
+use std::sync::mpsc;
+
 use crate::size::WorldSize;
-use crate::bullet::{Bullet,BulletType};
-use crate::point::Point;
+use crate::bullet::{BulletType};
 use crate::input::Input;
-use crate::particle::Particle;
-use crate::shield::{BlockState,Shield};
-use crate::vector::Vector;
-use crate::ufo::Ufo;
 use crate::leaderboard::LeaderboardEntry;
 use crate::render::RenderData;
 use crate::collision::handle_collisions;
-use std::os::raw::{c_double, c_int, c_char, c_uint};
-
+use crate::world::World;
 
 const MOVE_SPEED: f64 = 200.0;
 
@@ -30,60 +25,6 @@ pub enum ResetType {
 	Next,
 }
 
-/// A model that contains the other models and renders them
-pub struct World {
-    pub player: Player,
-	pub swarm: Swarm,
-	pub world_size: WorldSize,
-	pub player_bullet: Bullet,
-	pub bullets: Vec<Bullet>,
-    pub particles: Vec<Particle>,
-	pub shields: Vec<Shield>,
-	pub ufo: Ufo,
-}
-
-impl World {
-    /// Returns a new world of the given size
-    pub fn new(world_size: WorldSize) -> World {
-        World {
-            player: Player::new(),
-			swarm: Swarm::new(10,5, world_size),
-			world_size: world_size,
-			player_bullet: Bullet::new(Vector::default(), BulletType::Player(false), 0.),
-			bullets: vec![],
-            particles: Vec::with_capacity(1000),
-			shields: vec![
-				Shield::new(Point::new(150.,550.,),
-				[BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,
-				BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty,
-				BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,
-				BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty,
-				BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty]),
-				Shield::new(Point::new(350.,550.,),
-				[BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,
-				BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty,
-				BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,
-				BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Full,
-				BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full]),
-				Shield::new(Point::new(550.,550.,),
-				[BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty,
-				BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty,
-				BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty,
-				BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Empty,
-				BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full]),
-				Shield::new(Point::new(750.,550.,),
-				[BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Full,
-				BlockState::Full,BlockState::Empty,BlockState::Empty,BlockState::Empty,BlockState::Full,
-				BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,
-				BlockState::Empty,BlockState::Empty,BlockState::Full,BlockState::Empty,BlockState::Empty,
-				BlockState::Empty,BlockState::Empty,BlockState::Full,BlockState::Empty,BlockState::Empty]),
-			],
-			ufo: Ufo::new(world_size),
-            // size: size
-        }
-    }
-}
-
 pub enum GameState {
 	Intro,
 	Playing,
@@ -93,7 +34,7 @@ pub enum GameState {
 }
 
 /// The data structure that contains the state of the game
-pub struct State {
+pub struct Game {
     /// The world contains everything that needs to be drawn
     pub world: World,
     /// The current score of the player
@@ -108,10 +49,10 @@ pub struct State {
 	pub leaderboard: Vec<LeaderboardEntry>,
 }
 
-impl State {
-    /// Returns a new `State` containing a `World` of the given `Size`
-    pub fn new(world_size: WorldSize) -> State {
-        State {
+impl Game {
+    /// Returns a new `Game` containing a `World` of the given `Size`
+    pub fn new(world_size: WorldSize) -> Game {
+        Game {
             world: World::new(world_size),
             score: 0,
 			lives: 3,
@@ -276,7 +217,7 @@ impl State {
 }
 
 pub struct GameData {
-	pub state: State,
+	pub game: Game,
 	pub input: Input,
 	pub render: RenderData,
 }
@@ -284,7 +225,7 @@ pub struct GameData {
 impl GameData {
 	pub fn new(world_size: WorldSize) -> GameData {
 		GameData {
-			state: State::new(world_size),
+			game: Game::new(world_size),
 			input: Input::default(),
 			render: RenderData::new(),
 		}
