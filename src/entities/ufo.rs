@@ -44,7 +44,7 @@ impl Ufo {
 			match self.start {
 				StartLocation::LEFT => {
 					self.position.x += Ufo::UFO_SPEED;
-					if self.position.x > self.world_size.width as f64 {
+					if self.position.x > self.world_size.width {
 						self.reset();
 					}
 				},
@@ -62,7 +62,7 @@ impl Ufo {
 				match self.start {
 					StartLocation::LEFT => {
 						self.start = StartLocation::RIGHT;
-						self.position.x = self.world_size.width as f64;
+						self.position.x = self.world_size.width;
 						self.position.y = 10.;
 					},
 					StartLocation::RIGHT => {

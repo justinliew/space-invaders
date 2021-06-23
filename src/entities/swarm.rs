@@ -160,10 +160,10 @@ impl Swarm {
 	}
 
 	pub fn is_hit(&self, x: f64, y: f64) -> Option<(usize,usize)> {
-		let bucket_x = (x - self.top_left.x) / (self.radius + self.spacing_x) as f64;
-		let bucket_y = (y - self.top_left.y) / (self.radius + self.spacing_y) as f64;
-		let fract_in_x = self.radius as f64 / (self.radius + self.spacing_x) as f64;
-		let fract_in_y = self.radius as f64 / (self.radius + self.spacing_y) as f64;
+		let bucket_x = (x - self.top_left.x) / (self.radius + self.spacing_x);
+		let bucket_y = (y - self.top_left.y) / (self.radius + self.spacing_y);
+		let fract_in_x = self.radius as f64 / (self.radius + self.spacing_x);
+		let fract_in_y = self.radius as f64 / (self.radius + self.spacing_y);
 
 		if bucket_x.fract() > fract_in_x || bucket_y.fract() > fract_in_y {
 			return None;
@@ -207,10 +207,10 @@ impl Swarm {
 		}
 
 		if let Some(hit) = self.is_hit(bullet.x(), bullet.y()) {
-			if self.alive[hit.0 + (hit.1 as usize)*self.num_x] {
-				self.alive[hit.0 + (hit.1 as usize)*self.num_x] = false;
+			if self.alive[hit.0 + hit.1 * self.num_x] {
+				self.alive[hit.0 + hit.1 * self.num_x] = false;
 				self.num_alive -= 1;
-				let loc = self.get_enemy_location(hit.0,hit.1) + Point::new(self.radius as f64/2.,self.radius as f64/2.);
+				let loc = self.get_enemy_location(hit.0,hit.1) + Point::new(self.radius / 2.,self.radius / 2.);
 				return match hit.1 {
 					0 => {
 						Some((30,loc))

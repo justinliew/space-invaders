@@ -10,6 +10,19 @@ use crate::vector::Vector;
 use crate::ufo::Ufo;
 use crate::leaderboard::LeaderboardEntry;
 use crate::render::RenderData;
+use crate::collision::handle_collisions;
+use std::os::raw::{c_double, c_int, c_char, c_uint};
+
+
+const MOVE_SPEED: f64 = 200.0;
+
+extern "C" {
+	fn init_shield(_: c_int);
+	fn add_shield_state(_: c_int, _: c_int, _: c_int);
+
+	// id, index, state
+	fn update_shield(_: c_int, _: c_int, _: c_int);
+}
 
 #[derive(PartialEq)]
 pub enum ResetType {
@@ -133,25 +146,132 @@ impl State {
 
 	}
 
-	pub fn update(&mut self, dt: f64) {
-		if let Some(lowest) = self.world.swarm.get_lowest_alive() {
-			if lowest >= self.world.player.vector.position.y {
-				self.game_state = GameState::GameOver(2.);
-			}
-		} else {
-			self.game_state = GameState::Win(2.);
-		}
+	pub unsafe fn update(&mut self, input: &Input, dt: f64) {
+		match self.game_state {
+			GameState::Intro => {
+				for (index,shield) in self.world.shields.iter_mut().enumerate() {
+					shield.reset();
+					init_shield(index as i32);
+					for i in 0..25 {
+						let state = &shield.b[i];
+						add_shield_state(index as i32, i as i32, *state as i32);
+					}
+				}
+				if input.any {
+					self.game_state = GameState::Playing;
+				}
+			},
+			GameState::Playing => {
+				let radius = self.world.swarm.radius;
 
-		if !self.world.player.alive {
-			self.lives -= 1;
-			if self.lives == 0 {
-				self.game_state = GameState::GameOver(2.);
-			} else {
-				self.game_state = GameState::Death(1.);
+				if input.left && self.world.player.x() > radius {
+					*self.world.player.x_mut() -= MOVE_SPEED * dt;
+				}
+				if input.right && self.world.player.x() < (self.world.world_size.width-radius) {
+					*self.world.player.x_mut() += MOVE_SPEED * dt;
+				};
+
+				// Add bullets
+				if input.fire {
+					if let BulletType::Player(alive) = self.world.player_bullet.bullet_type {
+						if !alive {
+							self.world.player_bullet.inplace_new(self.world.player.vector.clone(), BulletType::Player(true), 600.);
+						}
+					}
+				}
+
+				// update enemies
+				if let Some(bullet) = self.world.swarm.update(dt) {
+					self.world.bullets.push(bullet);
+				}
+
+				// update bullets
+				for bullet in &mut self.world.bullets {
+					bullet.update(dt);
+				}
+
+				if let BulletType::Player(alive) = self.world.player_bullet.bullet_type {
+					if alive {
+						self.world.player_bullet.update(dt);
+					}
+				}
+
+				// Remove bullets outside the viewport
+				{
+					let width = self.world.world_size.width;
+					let height = self.world.world_size.height;
+					let bullets = &mut self.world.bullets;
+					bullets.retain(|bullet| {
+						let within = bullet.x() > 0. && bullet.x() < width &&
+								bullet.y() > 0. && bullet.y() < height;
+						within
+					});
+
+					if self.world.player_bullet.x() < 0. || self.world.player_bullet.x() > width ||
+					self.world.player_bullet.y() < 0. || self.world.player_bullet.y() > height {
+						self.world.player_bullet.bullet_type = BulletType::Player(false);
+					}
+				}
+
+				let deferred_shield_damage = handle_collisions(self);
+				{
+					let mut_shields = &mut self.world.shields;
+					for d in deferred_shield_damage {
+						let bs = mut_shields[d.0].damage(d.1,d.2);
+						update_shield(d.0 as i32, (d.1 as f64 + d.2 as f64 * 5.) as i32, bs as i32);
+					}
+				}
+				if let Some(lowest) = self.world.swarm.get_lowest_alive() {
+					if lowest >= self.world.player.vector.position.y {
+						self.game_state = GameState::GameOver(2.);
+					}
+				} else {
+					self.game_state = GameState::Win(2.);
+				}
+
+				if !self.world.player.alive {
+					self.lives -= 1;
+					if self.lives == 0 {
+						self.game_state = GameState::GameOver(2.);
+					} else {
+						self.game_state = GameState::Death(1.);
+					}
+				}
+
+				self.world.ufo.update(dt);
+			},
+			GameState::Death(_) => {
+				if let GameState::Death(ref mut timer) = self.game_state {
+					*timer -= dt;
+					if *timer < 0. {
+						self.post_death_reset();
+						self.game_state = GameState::Playing;
+					}
+				}
+			},
+			GameState::Win(_) => {
+				if let GameState::Win(ref mut timer) = self.game_state {
+					if *timer >= 0. {
+						*timer -= dt;
+					} else {
+						self.reset(ResetType::Next);
+						self.game_state = GameState::Playing;
+					}
+				}
+			},
+			GameState::GameOver(_) => {
+				if let GameState::GameOver(ref mut timer) = self.game_state {
+					if *timer >= 0. {
+						*timer -= dt;
+					} else {
+						if input.any {
+							self.reset(ResetType::New);
+							self.game_state = GameState::Intro;
+						}
+					}
+				}
 			}
 		}
-
-		self.world.ufo.update(dt);
 	}
 }
 

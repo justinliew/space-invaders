@@ -34,7 +34,6 @@ impl Player {
 		self.vector = START_LOCATION.clone();
 	}
 
-	// TODO derive_position_direction
 	pub fn x(&self) -> f64 { self.vector.position.x }
 	pub fn x_mut(&mut self) -> &mut f64 { &mut self.vector.position.x }
 	pub fn y(&self) -> f64 { self.vector.position.y }
@@ -56,7 +55,3 @@ impl Player {
 		hit
 	}
 }
-
-// impl Collide for Player {
-//     fn radius(&self) -> f64 { 6.0 }
-// }

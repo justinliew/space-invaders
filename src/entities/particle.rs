@@ -1,4 +1,5 @@
 use crate::vector::Vector;
+use crate::point::Point;
 
 //use geometry::Advance;
 
@@ -28,7 +29,6 @@ impl Particle {
         Particle { vector: vector, ttl: ttl, colour_index: colour_index }
     }
 
-	// TODO derive_position_direction
 	pub fn x(&self) -> f64 { self.vector.position.x }
 	pub fn x_mut(&mut self) -> &mut f64 { &mut self.vector.position.x }
 	pub fn y(&self) -> f64 { self.vector.position.y }
@@ -54,5 +54,15 @@ impl Particle {
     fn advance(&mut self, units: f64) {
         *self.x_mut() += self.dir().cos() * units;
         *self.y_mut() += self.dir().sin() * units;
+    }
+}
+
+/// Generates a new explosion of the given intensity at the given position.
+/// This works best with values between 5 and 25
+pub fn make_explosion(particles: &mut Vec<Particle>, position: &Point, intensity: u8, colour_index: ColourIndex) {
+    for rotation in itertools_num::linspace(0.0, 2.0 * ::std::f64::consts::PI, 30) {
+        for ttl in (1..intensity).map(|x| (x as f64) / 10.0) {
+            particles.push(Particle::new(Vector::new(position.clone(), rotation), ttl, colour_index));
+        }
     }
 }

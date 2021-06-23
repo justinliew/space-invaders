@@ -30,7 +30,6 @@ impl Bullet {
 		self.speed = speed;
 	}
 
-	// TODO derive_position_direction
 	pub fn x(&self) -> f64 { self.location.position.x }
 	pub fn y(&self) -> f64 { self.location.position.y }
 
@@ -39,7 +38,3 @@ impl Bullet {
         self.location.position.y += self.location.direction.sin() * dt * self.speed;
 	}
 }
-
-// impl Collide for Player {
-//     fn radius(&self) -> f64 { 6.0 }
-// }

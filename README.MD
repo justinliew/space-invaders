@@ -19,6 +19,10 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ### Architecture
 
+- [X] f64 vs usize for point, vector, size.
+- [ ] some sort of ecent system for emitting events from game.
+- [ ] explosions.
+- [ ] leaderboards updating after score update.
 - [ ] encapsulate the sim for verification on C@E.
 - [ ] encapsulate relevant game state for picture-in-picture for multiplayer.
 - [ ] do we need to render to framebuffer so we can easily do that on C@E?
@@ -27,7 +31,6 @@ We could also run parts of it on C@E for a potential multiplayer version.
 - [ ] ECS (entity-component-system) story for better design/reuse/extensibility.
 
 ### Code Cleanup
-- [ ] f64 vs usize for point, vector, size.
 - [ ] proper functions instead of data.state.world.world_size.x for example.
 - [ ] bottom right calculation for swarm is incorrect
 
