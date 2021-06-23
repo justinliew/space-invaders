@@ -4,7 +4,9 @@ use std::sync::Mutex;
 use std::f64;
 
 mod input;
+mod render;
 mod state;
+
 mod leaderboard;
 
 #[path = "./entities/bullet.rs"]
@@ -34,7 +36,7 @@ mod vector;
 mod size;
 
 use crate::swarm::Swarm;
-use crate::size::Size;
+use crate::size::{WorldSize};
 use crate::bullet::{BulletType};
 use crate::state::{State,GameData,GameState, ResetType};
 use crate::point::Point;
@@ -60,7 +62,6 @@ extern "C" {
 	// fn draw_debug(_: c_double, _: c_double, _: c_double, _: c_double);
 	// fn draw_bounds(_: c_double, _: c_double, _: c_double, _: c_double);
 
-	// id, 5x5
 	fn init_shield(_: c_int);
 	fn add_shield_state(_: c_int, _: c_int, _: c_int);
 
@@ -70,15 +71,13 @@ extern "C" {
 	// id, x,y, dim
 	fn draw_shield(_: c_int, _: c_double, _: c_double, _: c_double);
 
-	/*
-	sprite id, frame index, x, y
-	 */
+	// sprite id, frame index, x, y
 	fn draw_sprite(_: c_uint, _: c_uint, _: c_uint, _: c_uint);
 }
 
 lazy_static! {
 	// these have to be multiples of 12
-    static ref DATA: Mutex<GameData> = Mutex::new(GameData::new(Size{width: 1008, height: 804}));
+    static ref DATA: Mutex<GameData> = Mutex::new(GameData::new(WorldSize{width: 1008., height: 804.}));
 }
 
 const MOVE_SPEED: f64 = 200.0;
@@ -163,8 +162,6 @@ unsafe fn handle_collisions(state: &mut State) -> Vec<DeferredShieldDamage> {
 			}
 		}
 	}
-
-
 	deferred_shield_damage
 }
 
@@ -294,6 +291,8 @@ pub unsafe extern "C" fn update(dt: c_double) {
 }
 
 unsafe fn draw_swarm(swarm: &Swarm, data: &GameData) {
+	let render = &data.render;
+
 	// enable to draw bounds
 	// let br = swarm.get_bottom_right();
 	// draw_bounds(data.screen_top_left_offset.x + swarm.top_left.x * data.game_to_screen, data.screen_top_left_offset.y + swarm.top_left.y * data.game_to_screen, 
@@ -302,7 +301,7 @@ unsafe fn draw_swarm(swarm: &Swarm, data: &GameData) {
 	for i in 0..swarm.num_x {
 		for j in 0..swarm.num_y {
 			if swarm.alive[j*swarm.num_x+i] {
-				let p = swarm.get_enemy_location_screen(i,j, data);
+				let p = render.world_to_screen(&swarm.get_enemy_location(i,j));
 				let index = match j {
 					0 => {
 						1
@@ -321,31 +320,36 @@ unsafe fn draw_swarm(swarm: &Swarm, data: &GameData) {
 	}
 }
 
+// TODO - we need to add a screensize member and replace this function with those
+// then move this to renderdata
 #[no_mangle]
 pub unsafe extern "C" fn resize(width: c_double, height: c_double) -> c_double {
 	let data = &mut DATA.lock().unwrap();
-	data.width = width.trunc() as usize;
-	data.height = height.trunc() as usize;
+	let world_size = data.state.world.world_size;
+	let render = &mut data.render;
 
-	if (data.state.world.world_size.width as f64) < width && (data.state.world.world_size.height as f64) < height {
-		data.screen_top_left_offset.x = (width - data.state.world.world_size.width as f64) / 2.;
-		data.screen_top_left_offset.y = (height - data.state.world.world_size.height as f64) / 2.;
-		data.game_to_screen = 1.;
-		return data.game_to_screen;
+	render.width = width.trunc() as usize;
+	render.height = height.trunc() as usize;
+
+	if world_size.width < width && world_size.height < height {
+		render.screen_top_left_offset.x = (width - world_size.width) / 2.;
+		render.screen_top_left_offset.y = (height - world_size.height) / 2.;
+		render.game_to_screen = 1.;
+		return render.game_to_screen;
 	}
 
 	// this stuff doesn't work very well...
-	if data.state.world.world_size.width as f64 > width {
-		data.game_to_screen = width / data.state.world.world_size.width as f64;
+	if world_size.width > width {
+		render.game_to_screen = width / world_size.width;
 		// this isn't quite right; it needs some sort of scaling
-		data.screen_top_left_offset.y = (height - data.state.world.world_size.height as f64) / 2.;
+		render.screen_top_left_offset.y = (height - world_size.height) / 2.;
 	}
-	else if data.state.world.world_size.height as f64 > height {
-		data.game_to_screen = height / data.state.world.world_size.height as f64;
+	else if world_size.height > height {
+		render.game_to_screen = height / world_size.height;
 		// this isn't quite right; it needs some sort of scaling
-		data.screen_top_left_offset.x = (width - data.state.world.world_size.width as f64) / 2.;
+		render.screen_top_left_offset.x = (width - world_size.width) / 2.;
 	}
-	data.game_to_screen
+	render.game_to_screen
 }
 
 #[no_mangle]
@@ -362,12 +366,12 @@ pub unsafe extern "C" fn draw() {
 		// use geometry::{Advance, Position};
     let data = &mut DATA.lock().unwrap();
     let world = &data.state.world;
-
+	let render = &data.render;
 
     clear_screen();
 
 	for particle in &world.particles {
-		let world_pos = data.world_to_screen(&particle.vector.position);
+		let world_pos = render.world_to_screen(&particle.vector.position);
         draw_particle(world_pos.x, world_pos.y, 5.0 * particle.ttl, particle.get_colour_index());
     }
 
@@ -380,17 +384,17 @@ pub unsafe extern "C" fn draw() {
 		},
 		GameState::Playing | GameState::Death(_) | GameState::Win(_) => {
 			for bullet in &world.bullets {
-				let bp = data.world_to_screen(&bullet.location.position);
+				let bp = render.world_to_screen(&bullet.location.position);
 				draw_bullet(bp.x, bp.y);
 			}
 			if let BulletType::Player(alive) = world.player_bullet.bullet_type {
 				if alive {
-					let bp = data.world_to_screen(&world.player_bullet.location.position);
+					let bp = render.world_to_screen(&world.player_bullet.location.position);
 					draw_player_bullet(bp.x, bp.y);
 				}
 			}
 
-			let p = data.world_to_screen(&Point{x: world.player.x(), y: world.player.y()});
+			let p = render.world_to_screen(&Point{x: world.player.x(), y: world.player.y()});
 
 			if world.player.alive {
 				draw_player(p.x, p.y, world.player.dir());
@@ -399,12 +403,12 @@ pub unsafe extern "C" fn draw() {
 			draw_swarm(&world.swarm, data);
 
 			for (index,shield) in world.shields.iter().enumerate() {
-				let screen_pos = data.world_to_screen(&shield.top_left);
-				draw_shield(index as i32,screen_pos.x, screen_pos.y, Shield::BLOCK_DIM * data.game_to_screen);
+				let screen_pos = render.world_to_screen(&shield.top_left);
+				draw_shield(index as i32, screen_pos.x, screen_pos.y, Shield::BLOCK_DIM * data.render.game_to_screen);
 			}
 
 			if world.ufo.active {
-				let screen_pos = data.world_to_screen(&world.ufo.position);
+				let screen_pos = render.world_to_screen(&world.ufo.position);
 				draw_ufo(screen_pos.x, screen_pos.y);
 			}
 		},

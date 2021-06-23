@@ -1,6 +1,6 @@
 use crate::point::Point;
 use crate::bullet::{Bullet,BulletType};
-use crate::size::Size;
+use crate::size::WorldSize;
 
 enum StartLocation {
 	LEFT,
@@ -12,7 +12,7 @@ pub struct Ufo {
 	pub spawn_cooldown: f64,
 	pub active: bool,
 	start: StartLocation,
-	world_size: Size,
+	world_size: WorldSize,
 }
 
 impl Ufo {
@@ -21,7 +21,7 @@ impl Ufo {
 	pub const SPAWN_COOLDOWN: f64 = 5.;
 	pub const UFO_SPEED: f64 = 3.;
 
-	pub fn new(world_size: Size) -> Ufo {
+	pub fn new(world_size: WorldSize) -> Ufo {
 		Ufo {
 			position: Point::default(),
 			spawn_cooldown: Ufo::SPAWN_COOLDOWN,

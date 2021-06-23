@@ -1,8 +1,7 @@
 
 use crate::point::Point;
-use crate::size::Size;
+use crate::size::WorldSize;
 use crate::bullet::{Bullet,BulletType};
-use crate::state::GameData;
 use crate::vector::Vector;
 use crate::state::{ResetType};
 
@@ -16,13 +15,13 @@ pub struct Swarm {
     pub top_left: Point,
 	pub num_x: usize,
 	pub num_y: usize,
-	pub spacing_x: usize,
-	pub spacing_y: usize,
-	pub radius: usize,
+	pub spacing_x: f64,
+	pub spacing_y: f64,
+	pub radius: f64,
 	pub alive: Vec<bool>,
 	num_alive: usize,
 	movement: Movement,
-	pub world_size: Size,
+	pub world_size: WorldSize,
 	time_to_move: f64,
 	pub fire_column: usize,
 	pub frame: u32,
@@ -42,14 +41,14 @@ const FIRING_COLUMNS : &[usize;10] = &[4,5,3,2,6,8,1,0,7,9];
 
 impl Swarm {
 
-	pub fn new(x: usize, y: usize, world_size: Size) -> Swarm {
+	pub fn new(x: usize, y: usize, world_size: WorldSize) -> Swarm {
 		let ret = Swarm {
 			top_left: START_LOCATION,
 			num_x: x,
 			num_y: y,
-			spacing_x: 20,
-			spacing_y: 20,
-			radius: 36,
+			spacing_x: 20.,
+			spacing_y: 20.,
+			radius: 36.,
 			alive: vec![true;x * y],
 			num_alive: x*y,
 			movement: Movement::RIGHT,
@@ -83,16 +82,16 @@ impl Swarm {
 		}
 
 		let mut lhs = self.top_left.x;
-		let mut rhs = self.top_left.x as usize + self.num_x * self.spacing_x;
+		let mut rhs = self.top_left.x + self.num_x as f64 * self.spacing_x;
 		for l in 0..self.num_x {
 			if !self.get_lowest_in_column(l).is_none() {
-				lhs = self.top_left.x + (l * (self.radius + self.spacing_x)) as f64;
+				lhs = self.top_left.x + (l as f64) * (self.radius + self.spacing_x);
 				break;
 			}
 		}
 		for r in (0..self.num_x).rev() {
 			if !self.get_lowest_in_column(r).is_none() {
-				rhs = self.top_left.x as usize + r * (self.radius + self.spacing_x);
+				rhs = self.top_left.x + (r as f64) * (self.radius + self.spacing_x);
 				break;
 			}
 		}
@@ -100,7 +99,7 @@ impl Swarm {
 		self.time_to_move = BASE_MOVE_DELAY * (self.num_alive as f64 / (self.num_x * self.num_y) as f64);
 		match self.movement {
 			Movement::RIGHT => {
-				if self.world_size.width - rhs > 50 {
+				if self.world_size.width - rhs > 50. {
 					self.top_left.x += MOVE_AMT;
 				} else {
 					self.movement = Movement::DOWN(true);
@@ -140,15 +139,11 @@ impl Swarm {
 		}
 	}
 
-	fn get_enemy_location_game(&self, x: usize, y: usize) -> Point {
+	pub fn get_enemy_location(&self, x: usize, y: usize) -> Point {
 		Point{
-			x: self.top_left.x + (x * (self.radius + self.spacing_x)) as f64,
-			y: self.top_left.y + (y * (self.radius + self.spacing_y)) as f64,
+			x: self.top_left.x + x as f64 * (self.radius + self.spacing_x),
+			y: self.top_left.y + y as f64 * (self.radius + self.spacing_y),
 		}
-	}
-
-	pub fn get_enemy_location_screen(&self, x: usize, y: usize, data: &GameData) -> Point {
-		data.world_to_screen(&self.get_enemy_location_game(x,y))
 	}
 
 	pub fn get_lowest_in_column(&self, col: usize) -> Option<usize> {
@@ -179,8 +174,8 @@ impl Swarm {
 
 	pub fn get_bottom_right(&self) -> Point {
 		Point{
-			x: self.top_left.x + (self.num_x * self.radius) as f64 + (self.num_x-1) as f64 * self.spacing_x as f64,
-			y: self.top_left.y + (self.num_y * self.radius) as f64 + (self.num_y-1) as f64 * self.spacing_y as f64,
+			x: self.top_left.x + self.num_x as f64 * self.radius + ((self.num_x-1) as f64) * self.spacing_x,
+			y: self.top_left.y + self.num_y as f64 * self.radius + ((self.num_y-1) as f64) * self.spacing_y,
 		}
 	}
 
@@ -194,7 +189,7 @@ impl Swarm {
 		let col = FIRING_COLUMNS[self.fire_column];
 
 		if let Some(row) = self.get_lowest_in_column(col) {
-			return Some(self.get_enemy_location_game(col, row) + Point::new(self.radius as f64/2., self.radius as f64));
+			return Some(self.get_enemy_location(col, row) + Point::new(self.radius as f64/2., self.radius as f64));
 		}
 		None
 	}
@@ -215,7 +210,7 @@ impl Swarm {
 			if self.alive[hit.0 + (hit.1 as usize)*self.num_x] {
 				self.alive[hit.0 + (hit.1 as usize)*self.num_x] = false;
 				self.num_alive -= 1;
-				let loc = self.get_enemy_location_game(hit.0,hit.1) + Point::new(self.radius as f64/2.,self.radius as f64/2.);
+				let loc = self.get_enemy_location(hit.0,hit.1) + Point::new(self.radius as f64/2.,self.radius as f64/2.);
 				return match hit.1 {
 					0 => {
 						Some((30,loc))
@@ -239,7 +234,7 @@ impl Swarm {
 		for (index, alive) in self.alive.iter().enumerate().rev() {
 			if *alive {
 				let row = index / self.num_x;
-				let y = self.top_left.y + (self.radius * (row+1)) as f64 + (self.spacing_y * row) as f64;
+				let y = self.top_left.y + self.radius * ((row+1) as f64) + self.spacing_y * (row as f64);
 				return Some(y);
 			}
 		}

@@ -1,6 +1,6 @@
 use crate::player::{Player};
 use crate::swarm::Swarm;
-use crate::size::Size;
+use crate::size::WorldSize;
 use crate::bullet::{Bullet,BulletType};
 use crate::point::Point;
 use crate::input::Input;
@@ -9,6 +9,7 @@ use crate::shield::{BlockState,Shield};
 use crate::vector::Vector;
 use crate::ufo::Ufo;
 use crate::leaderboard::LeaderboardEntry;
+use crate::render::RenderData;
 
 #[derive(PartialEq)]
 pub enum ResetType {
@@ -20,7 +21,7 @@ pub enum ResetType {
 pub struct World {
     pub player: Player,
 	pub swarm: Swarm,
-	pub world_size: Size,
+	pub world_size: WorldSize,
 	pub player_bullet: Bullet,
 	pub bullets: Vec<Bullet>,
     pub particles: Vec<Particle>,
@@ -30,7 +31,7 @@ pub struct World {
 
 impl World {
     /// Returns a new world of the given size
-    pub fn new(world_size: Size) -> World {
+    pub fn new(world_size: WorldSize) -> World {
         World {
             player: Player::new(),
 			swarm: Swarm::new(10,5, world_size),
@@ -96,7 +97,7 @@ pub struct State {
 
 impl State {
     /// Returns a new `State` containing a `World` of the given `Size`
-    pub fn new(world_size: Size) -> State {
+    pub fn new(world_size: WorldSize) -> State {
         State {
             world: World::new(world_size),
             score: 0,
@@ -157,29 +158,15 @@ impl State {
 pub struct GameData {
 	pub state: State,
 	pub input: Input,
-	pub screen_top_left_offset: Point,
-	pub game_to_screen: f64,
-	pub width: usize,
-	pub height: usize,
+	pub render: RenderData,
 }
 
 impl GameData {
-	pub fn new(world_size: Size) -> GameData {
+	pub fn new(world_size: WorldSize) -> GameData {
 		GameData {
 			state: State::new(world_size),
 			input: Input::default(),
-			screen_top_left_offset: Point::new(0.0,0.0),
-			game_to_screen: 1.,
-			width: 1024,
-			height: 768,
+			render: RenderData::new(),
 		}
 	}
-
-	pub fn world_to_screen(&self, in_point: &Point) -> Point {
-		Point{
-			x: (in_point.x + self.screen_top_left_offset.x) * self.game_to_screen,
-			y: (in_point.y + self.screen_top_left_offset.y) * self.game_to_screen,
-		}
-	}
-
 }
