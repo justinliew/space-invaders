@@ -497,7 +497,7 @@ function copyCStr(module, ptr) {
       // Update and draw
       let progress = (timestamp - prevTimestamp) / 1000;
       module.update(progress);
-      module.draw();
+      module.draw(progress);
 
       // Some bookkeeping
       prevTimestamp = timestamp;

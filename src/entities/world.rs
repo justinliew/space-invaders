@@ -3,7 +3,6 @@ use crate::swarm::Swarm;
 use crate::size::WorldSize;
 use crate::bullet::{Bullet,BulletType};
 use crate::point::Point;
-use crate::particle::Particle;
 use crate::shield::{BlockState,Shield};
 use crate::vector::Vector;
 use crate::ufo::Ufo;
@@ -14,7 +13,6 @@ pub struct World {
 	pub world_size: WorldSize,
 	pub player_bullet: Bullet,
 	pub bullets: Vec<Bullet>,
-    pub particles: Vec<Particle>,
 	pub shields: Vec<Shield>,
 	pub ufo: Ufo,
 }
@@ -28,7 +26,6 @@ impl World {
 			world_size: world_size,
 			player_bullet: Bullet::new(Vector::default(), BulletType::Player(false), 0.),
 			bullets: vec![],
-            particles: Vec::with_capacity(1000),
 			shields: vec![
 				Shield::new(Point::new(150.,550.,),
 				[BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,

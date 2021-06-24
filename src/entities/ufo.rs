@@ -75,7 +75,7 @@ impl Ufo {
 		}
 	}
 
-	pub fn check_hit(&mut self, bullet: &Bullet) -> Option<(u32,Point)> {
+	pub fn check_hit(&mut self, bullet: &Bullet) -> Option<(i32,Point)> {
 		if bullet.bullet_type != BulletType::Player(true) {
 			return None;
 		}

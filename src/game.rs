@@ -1,13 +1,12 @@
-use std::os::raw::{c_double, c_int, c_char, c_uint};
+use std::os::raw::{c_int};
 use std::sync::mpsc;
+use std::sync::mpsc::{Sender,Receiver};
 
 use crate::size::WorldSize;
 use crate::bullet::{BulletType};
 use crate::input::Input;
-use crate::leaderboard::LeaderboardEntry;
-use crate::render::RenderData;
-use crate::collision::handle_collisions;
 use crate::world::World;
+use crate::point::Point;
 
 const MOVE_SPEED: f64 = 200.0;
 
@@ -25,12 +24,26 @@ pub enum ResetType {
 	Next,
 }
 
+#[derive(Clone,Copy)]
 pub enum GameState {
 	Intro,
 	Playing,
 	Death(f64),
 	Win(f64),
 	GameOver(f64),
+}
+
+pub enum GameEvent {
+	ScoreChanged(i32),
+	EntityDied(Point, ColourIndex)
+}
+
+// TODO - I don't know if this should live here
+#[derive(Clone,Copy)]
+pub enum ColourIndex {
+	WHITE,
+	BLUE,
+	RED,
 }
 
 /// The data structure that contains the state of the game
@@ -46,19 +59,20 @@ pub struct Game {
 	/// state of the game
 	pub game_state: GameState,
 
-	pub leaderboard: Vec<LeaderboardEntry>,
+	/// Events to other parts of the system
+	sender: Sender<GameEvent>,
 }
 
 impl Game {
     /// Returns a new `Game` containing a `World` of the given `Size`
-    pub fn new(world_size: WorldSize) -> Game {
+    pub fn new(world_size: WorldSize, tx: Sender<GameEvent>) -> Game {
         Game {
             world: World::new(world_size),
             score: 0,
 			lives: 3,
 			wave: 1,
 			game_state: GameState::Intro,
-			leaderboard: vec![],
+			sender: tx,
         }
     }
 
@@ -84,7 +98,10 @@ impl Game {
         self.world.bullets.clear();
 		self.world.player.alive = true;
 		self.world.player.reset_location();
+	}
 
+	pub fn send_game_event(&mut self, event: GameEvent) {
+		self.sender.send(event).expect("Wasn't able to send event");
 	}
 
 	pub unsafe fn update(&mut self, input: &Input, dt: f64) {
@@ -154,7 +171,7 @@ impl Game {
 					}
 				}
 
-				let deferred_shield_damage = handle_collisions(self);
+				let deferred_shield_damage = self.handle_collisions();
 				{
 					let mut_shields = &mut self.world.shields;
 					for d in deferred_shield_damage {
@@ -219,15 +236,14 @@ impl Game {
 pub struct GameData {
 	pub game: Game,
 	pub input: Input,
-	pub render: RenderData,
 }
 
 impl GameData {
-	pub fn new(world_size: WorldSize) -> GameData {
+	pub fn new(world_size: WorldSize, tx: Sender<GameEvent>) -> GameData {
+		let game = Game::new(world_size, tx);
 		GameData {
-			game: Game::new(world_size),
+			game: game,
 			input: Input::default(),
-			render: RenderData::new(),
 		}
 	}
 }

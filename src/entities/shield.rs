@@ -21,11 +21,11 @@ pub struct Shield {
 
 impl Shield {
 	pub const BLOCK_DIM : f64 = 20.;
-	pub fn new(top_left: Point, state: [BlockState; 25]) -> Self {
+	pub fn new(top_left: Point, block_state: [BlockState; 25]) -> Self {
 		Shield {
 			top_left: top_left,
-			b: state,
-			def: state,
+			b: block_state,
+			def: block_state,
 		}
 	}
 

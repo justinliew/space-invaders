@@ -1,14 +1,6 @@
 use crate::vector::Vector;
 use crate::point::Point;
-
-//use geometry::Advance;
-
-#[derive(Clone,Copy)]
-pub enum ColourIndex {
-	WHITE,
-	BLUE,
-	RED,
-}
+use crate::game::ColourIndex;
 
 /// A model representing a particle
 ///
