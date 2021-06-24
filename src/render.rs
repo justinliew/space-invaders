@@ -120,7 +120,7 @@ impl RenderData {
 			},
 			GameEvent::EntityDied(p,c) => {
 				let particles = &mut self.particles;
-				make_explosion(particles, &p, 8, c);
+				make_explosion(particles, &p, 6, c);
 			}
 		}
 	}
