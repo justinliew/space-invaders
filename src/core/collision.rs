@@ -60,8 +60,8 @@ impl Game {
 					let points = hit.0;
 					let loc = hit.1;
 					queued_events.push(GameEvent::EntityDied(loc, ColourIndex::WHITE));
-					queued_events.push(GameEvent::ScoreChanged(points));
 					self.score += points as i32;
+					queued_events.push(GameEvent::ScoreChanged(self.score));
 					world.player_bullet.bullet_type = BulletType::Player(false);
 				}
 
@@ -71,7 +71,7 @@ impl Game {
 					let loc = hit.1;
 					queued_events.push(GameEvent::EntityDied(loc, ColourIndex::BLUE));
 					self.score += points as i32;
-					queued_events.push(GameEvent::ScoreChanged(points));
+					queued_events.push(GameEvent::ScoreChanged(self.score));
 					world.player_bullet.bullet_type = BulletType::Player(false);
 				}
 			}

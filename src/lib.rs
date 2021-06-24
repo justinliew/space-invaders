@@ -41,9 +41,6 @@ mod vector;
 #[path = "./core/size.rs"]
 mod size;
 
-// TODO
-mod stubs;
-
 use crate::size::WorldSize;
 use crate::game::{GameData,GameEvent};
 use crate::render::RenderData;

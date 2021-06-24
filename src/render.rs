@@ -129,7 +129,7 @@ impl RenderData {
 		let world = &game.world;
 		clear_screen();
 
-		match self.receiver.recv() {
+		match self.receiver.try_recv() {
 			Ok(event) => {
 				self.handle_game_event(event);
 			},
