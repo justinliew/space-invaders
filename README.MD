@@ -10,21 +10,14 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ### High Priority
 
-- [ ] encapsulate the sim for verification on C@E.
-- [ ] ufo collision doesn't work.
-- [ ] stub in leaderboard POST functions.
 - [ ] fix rank for local player.
 - [ ] entering high score name.
-- [ ] audio.
-- [ ] better title screen.
 - [ ] inputs should have pressed/release plus "changed"
+- [ ] leaderboard.
 
 ### Architecture
 
-- [X] f64 vs usize for point, vector, size.
-- [X] some sort of event system for emitting events from game.
-- [X] explosions.
-- [X] leaderboards updating after score update.
+- [ ] encapsulate the sim for verification on C@E.
 - [ ] encapsulate relevant game state for picture-in-picture for multiplayer.
 - [ ] do we need to render to framebuffer so we can easily do that on C@E?
 - [ ] network story.
@@ -37,6 +30,7 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ### Polish
 
+- [ ] audio.
 - [ ] after the separation refactor, explosions seem slower. Is this worth addressing?
 - [ ] scaling when a window is smaller than the game area is problematic.
 - [ ] lives gained when hitting score thresholds.
@@ -75,3 +69,7 @@ We could also run parts of it on C@E for a potential multiplayer version.
 - [X] proper enemy movement, less smooth.
 - [X] enemy firing.
 - [X] longer bullet delay for player
+- [X] f64 vs usize for point, vector, size.
+- [X] some sort of event system for emitting events from game.
+- [X] explosions.
+- [X] leaderboards updating after score update.
