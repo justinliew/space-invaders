@@ -8,21 +8,23 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ## TODO
 
-### High Priority
+### For Release
+
+- [X] fix crash.
+- [ ] fix rank for local player.
+- [ ] entering high score name.
+- [ ] hook up proper leaderboard.
+
+### Architecture
+
+- [ ] encapsulate the sim for verification on C@E.
+
+### Architecture
 
 - [ ] we need a way to save and load state.
 - [ ] we need a way to verify/checksum the state.
 - [ ] we need to keep a frame number/count.
 - [ ] we need to figure out how to encapsulate input.
-- [ ] stub in leaderboard POST functions.
-- [ ] fix rank for local player.
-- [ ] entering high score name.
-- [ ] inputs should have pressed/release plus "changed"
-- [ ] leaderboard.
-
-### Architecture
-
-- [ ] encapsulate the sim for verification on C@E.
 - [ ] encapsulate relevant game state for picture-in-picture for multiplayer.
 - [ ] do we need to render to framebuffer so we can easily do that on C@E?
 - [ ] network story.
@@ -30,12 +32,15 @@ We could also run parts of it on C@E for a potential multiplayer version.
 - [ ] ECS (entity-component-system) story for better design/reuse/extensibility.
 
 ### Code Cleanup
+
 - [ ] proper functions instead of data.game.world.world_size.x for example.
 - [ ] bottom right calculation for swarm is incorrect
+- [ ] inputs should have pressed/release plus "changed". This will help our UI transitions.
 
 ### Polish
 
 - [ ] audio.
+- [ ] better title screen with proper title.
 - [ ] scaling when a window is smaller than the game area is problematic.
 - [ ] lives gained when hitting score thresholds.
 - [ ] enemy speed progression.

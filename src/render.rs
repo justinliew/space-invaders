@@ -155,7 +155,7 @@ impl RenderData {
 		}
 
 		match game_state {
-			GameState::Intro => {
+			GameState::Intro(_) => {
 				draw_intro();
 			},
 			GameState::Playing | GameState::Death(_) | GameState::Win(_) => {

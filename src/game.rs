@@ -26,7 +26,7 @@ pub enum ResetType {
 
 #[derive(Clone,Copy)]
 pub enum GameState {
-	Intro,
+	Intro(f64),
 	Playing,
 	Death(f64),
 	Win(f64),
@@ -71,7 +71,7 @@ impl Game {
             score: 0,
 			lives: 3,
 			wave: 1,
-			game_state: GameState::Intro,
+			game_state: GameState::Intro(.5),
 			sender: tx,
         }
     }
@@ -106,17 +106,23 @@ impl Game {
 
 	pub unsafe fn update(&mut self, input: &Input, dt: f64) {
 		match self.game_state {
-			GameState::Intro => {
-				for (index,shield) in self.world.shields.iter_mut().enumerate() {
-					shield.reset();
-					init_shield(index as i32);
-					for i in 0..25 {
-						let state = &shield.b[i];
-						add_shield_state(index as i32, i as i32, *state as i32);
+			GameState::Intro(_) => {
+				if let GameState::Intro(ref mut timer) = self.game_state {
+					if *timer >= 0. {
+						*timer -= dt;
+					} else {
+						for (index,shield) in self.world.shields.iter_mut().enumerate() {
+							shield.reset();
+							init_shield(index as i32);
+							for i in 0..25 {
+								let state = &shield.b[i];
+								add_shield_state(index as i32, i as i32, *state as i32);
+							}
+						}
+						if input.any {
+							self.game_state = GameState::Playing;
+						}
 					}
-				}
-				if input.any {
-					self.game_state = GameState::Playing;
 				}
 			},
 			GameState::Playing => {
@@ -224,7 +230,7 @@ impl Game {
 					} else {
 						if input.any {
 							self.reset(ResetType::New);
-							self.game_state = GameState::Intro;
+							self.game_state = GameState::Intro(2.);
 						}
 					}
 				}
