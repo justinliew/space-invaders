@@ -71,7 +71,7 @@ impl Game {
             score: 0,
 			lives: 3,
 			wave: 1,
-			game_state: GameState::Intro(.5),
+			game_state: GameState::Intro(0.5),
 			sender: tx,
         }
     }
