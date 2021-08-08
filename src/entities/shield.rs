@@ -34,10 +34,10 @@ impl Shield {
 	}
 
 	fn get_indices(&self, p: &Point) -> Option<(usize,usize)> {
-		if p.x < self.top_left.x || p.x > self.top_left.x + 5.*Shield::BLOCK_DIM {
+		if p.x < self.top_left.x || p.x >= self.top_left.x + 5.*Shield::BLOCK_DIM {
 			return None;
 		}
-		if p.y < self.top_left.y || p.y > self.top_left.y + 5.*Shield::BLOCK_DIM {
+		if p.y < self.top_left.y || p.y >= self.top_left.y + 5.*Shield::BLOCK_DIM {
 			return None;
 		}
 		Some((((p.x - self.top_left.x) / Shield::BLOCK_DIM).trunc() as usize,
