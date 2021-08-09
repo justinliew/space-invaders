@@ -16,6 +16,8 @@ extern "C" {
 
 	// id, index, state
 	fn update_shield(_: c_int, _: c_int, _: c_int);
+
+	fn new_session();
 }
 
 #[derive(PartialEq)]
@@ -120,6 +122,7 @@ impl Game {
 							}
 						}
 						if input.any {
+							new_session();
 							self.game_state = GameState::Playing;
 						}
 					}

@@ -16,7 +16,7 @@
 	  }
 	  #leaderboard, tr {
 		  background-color: black;
-		  color: red;
+		  color: green;
 		  font-family: courier;
 	  }
       </style>
@@ -31,6 +31,74 @@
 
 let sprites = [];
 let module = {};
+let leaderboard_table = {};
+let leaderboard = [];
+let local_score = {};
+let local_id = "";
+
+function updateTable(table, index, fields, local) {
+		let newRow = table.insertRow(index);
+		for (var i=0;i<fields.length;++i) {
+			let newCell = newRow.insertCell(i);
+			if (local)
+				newCell.style.color = "rgb(200, 0, 0)";
+			let newText = document.createTextNode(fields[i]);
+			newCell.appendChild(newText);
+		}
+	}
+
+function update_leaderboard_entry(index, rank, score, name, local) {
+	updateTable(leaderboard_table, index, [rank, name, score], local);
+}
+
+/*
+Flow is:
+/new_session to get id
+/update_listing to update score
+
+these get leaderboard entries
+/around_me
+/global
+*/
+
+// TODO for now this is drawing all entries. We will need to restrict this somehow later
+function render_leaderboard() {
+	leaderboard_table.innerHTML = "";
+	var tbdy = document.createElement('tbody');
+	var rendered_local = false;
+	leaderboard_table.appendChild(tbdy);
+	leaderboard.forEach((entry,i) => {
+
+		if (Object.keys(local_score).length != 0) {
+			if (!rendered_local && local_score.score > entry.score) {
+				update_leaderboard_entry(i, i, local_score.score, local_score.name, true);
+				rendered_local = true;
+			}
+		}
+		index = rendered_local ? i+1 : i;
+		update_leaderboard_entry(index, index, entry.score, entry.name, false);
+	});
+	if (Object.keys(local_score).length != 0) {
+		if (!rendered_local) {
+			update_leaderboard_entry(leaderboard.length, leaderboard.length, local_score.score, local_score.name, true);
+		}
+	}
+}
+
+function get_leaderboard_entries() {
+	var leaderboard_req = new XMLHttpRequest();
+	leaderboard_req.onload = function(oEvent) {
+		var entries = JSON.parse(leaderboard_req.response);
+		leaderboard = [];
+		entries.forEach((entry,i) => {
+			leaderboard[i] = entry;
+			console.log("Entry ", i, " is ", entry);
+		});
+		render_leaderboard();
+	}
+	leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/global", true);
+	leaderboard_req.send();
+}
 
   // Returns an object containing resources that will be used later for drawing
   function resources() {
@@ -42,7 +110,6 @@ let module = {};
 	  shields: {},
 	  shield_hit: gamearea.getContext("2d").createImageData(40,40), // TODO scale shields
 	  title_img: new Image(),
-	  leaderboard: document.createElement('table'),
     }
 
 	res.title_img.src = 'title.png';
@@ -83,16 +150,17 @@ let module = {};
     plCtx.lineTo(0, 0);
     plCtx.fill();
 
-	res.leaderboard.style.width = '30%';
+	leaderboard_table = document.createElement('table');
+	leaderboard_table.style.width = '30%';
 	var tbdy = document.createElement('tbody');
-	res.leaderboard.appendChild(tbdy);
+	leaderboard_table.appendChild(tbdy);
 
     return res;
   }
 
   // We create this here because it will be used from within `imports`
   let gamearea = document.getElementById('gamearea');
-  let leaderboard = document.getElementById('leaderboard');
+  let leaderboard_elem = document.getElementById('leaderboard');
   let topbar = document.getElementById('topbar');
 
   // Returns an object containing functions that will be linked to our wasm model
@@ -101,7 +169,16 @@ let module = {};
     const res = resources();
     var ctx = gamearea.getContext("2d");
 	var topbar_ctx = topbar.getContext("2d");
-//	var leaderboard_ctx = leaderboard.getContext("2d");
+
+	function new_session() {
+		var session_req = new XMLHttpRequest();
+		session_req.onload = function(oEvent) {
+			local_id = session_req.response;
+
+		}
+		session_req.open("GET", "https://leaderboard.edgecompute.app/new_session", true);
+		session_req.send();
+	}
 
     function clear_screen() {
       ctx.fillStyle = "black";
@@ -168,7 +245,7 @@ let module = {};
 	  topbar_ctx.fillText("Wave: " + wave, 420, 20);
 
 	// draw leaderboard
-	  leaderboard.appendChild(res.leaderboard);
+	leaderboard_elem.appendChild(leaderboard_table);
     }
 
 
@@ -197,8 +274,6 @@ let module = {};
 	}
 
 	function draw_shield(id, x, y, dim) {
-// TODO do we want to do a pattern?
-//		pattern = ctx.createPattern(image, repetition);
 		for (var i=0;i<25;++i) {
 			var state = res.shields[id][i];
 			var xoffset = (i % 5) * dim;
@@ -229,28 +304,23 @@ let module = {};
       ctx.fillText('Debug: ' + d, 10, 110)
 	}
 
-	function updateTable(leaderboard, index, fields) {
-		let newRow = leaderboard.insertRow(index);
-		for (var i=0;i<fields.length;++i) {
-			let newCell = newRow.insertCell(i);
-			let newText = document.createTextNode(fields[i]);
-			newCell.appendChild(newText);
-		}
-	}
-
-	function update_leaderboard_entry(index, rank, score, nameptr) {
+	function update_local_score(score, nameptr) {
 		let name = copyCStr(module, nameptr);
-		updateTable(res.leaderboard, index, [rank, name, score]);
-	}
+		local_score.name = name;
+		local_score.score = score;
+		render_leaderboard();
 
-	function clear_leaderboard() {
-		res.leaderboard.innerHTML = "";
-		var tbdy = document.createElement('tbody');
-		res.leaderboard.appendChild(tbdy);
+		var listing_req = new XMLHttpRequest();
+		listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
+		listing_req.setRequestHeader("id",local_id);
+		listing_req.setRequestHeader("name",name);
+		listing_req.setRequestHeader("score",score);
+		listing_req.send();
+
 	}
 
     // The real loading and running of our wasm starts here
-    let imports = { clear_screen, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_debug, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, clear_leaderboard, update_leaderboard_entry };
+    let imports = { clear_screen, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_debug, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
     imports.Math_atan = Math.atan;
     imports.sin = Math.sin;
     imports.cos = Math.cos;
@@ -298,6 +368,8 @@ function copyCStr(module, ptr) {
 	module.memory = mod.exports.memory;
 
 	module.init();
+
+	get_leaderboard_entries();
 
     // Input processing
     function processKey(key, b) {
@@ -473,8 +545,8 @@ function copyCStr(module, ptr) {
       gamearea.height = window.innerHeight * 0.9;
       topbar.width = window.innerWidth;
       topbar.height = window.innerHeight * 0.1;
-      leaderboard.width = window.innerWidth * 0.2;
-      leaderboard.height = window.innerHeight * 0.9;
+      leaderboard_elem.width = window.innerWidth * 0.2;
+      leaderboard_elem.height = window.innerHeight * 0.9;
       let scale = module.resize(gamearea.width, gamearea.height);
 	  init_sprites(scale);
     }

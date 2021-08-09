@@ -6,8 +6,6 @@ mod input;
 mod render;
 mod game;
 
-mod leaderboard;
-
 #[path = "./entities/bullet.rs"]
 mod bullet;
 
@@ -44,7 +42,6 @@ mod size;
 use crate::size::WorldSize;
 use crate::game::{GameData,GameEvent};
 use crate::render::RenderData;
-use crate::leaderboard::{get_leaderboard_entries,prep_leaderboard_entries, push_leaderboard_entries};
 
 #[macro_use]
 extern crate lazy_static;
@@ -73,13 +70,9 @@ pub unsafe extern "C" fn resize(width: c_double, height: c_double) -> c_double {
 
 #[no_mangle]
 pub unsafe extern "C" fn init() {
+	// TODO - these have to be here. Why?
     let data = &mut GAME.lock().unwrap();
 	let render = &mut RENDER.lock().unwrap();
-
-	let score = data.game.score;
-	get_leaderboard_entries(&mut render.leaderboard);
-	prep_leaderboard_entries(&mut render.leaderboard, "Justin", score);
-	push_leaderboard_entries(&render.leaderboard);
 }
 
 #[no_mangle]

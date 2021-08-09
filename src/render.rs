@@ -1,4 +1,4 @@
-use std::os::raw::{c_double, c_int, c_uint};
+use std::os::raw::{c_double, c_int, c_uint, c_char};
 
 use crate::point::Point;
 use crate::size::WorldSize;
@@ -7,10 +7,10 @@ use crate::bullet::BulletType;
 use crate::swarm::Swarm;
 use crate::shield::Shield;
 use crate::particle::{make_explosion, Particle};
-use crate::leaderboard::{LeaderboardEntry,get_leaderboard_entries,prep_leaderboard_entries, push_leaderboard_entries};
 
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver,Sender};
+use std::ffi::CString;
 
 extern "C" {
     fn clear_screen();
@@ -30,7 +30,17 @@ extern "C" {
 	// sprite id, frame index, x, y
 	fn draw_sprite(_: c_uint, _: c_uint, _: c_uint, _: c_uint);
 
+	fn update_local_score(_: c_int, _: *mut c_char);
+
 }
+
+#[no_mangle]
+extern "C" fn dealloc_str(ptr: *mut c_char) {
+    unsafe {
+        let _ = CString::from_raw(ptr);
+    }
+}
+
 
 pub struct RenderData {
 	pub screen_top_left_offset: Point,
@@ -40,7 +50,6 @@ pub struct RenderData {
     pub particles: Vec<Particle>,
 	receiver: Receiver<GameEvent>,
 	pub sender: Sender<GameEvent>,
-	pub leaderboard: Vec<LeaderboardEntry>,
 }
 
 impl RenderData {
@@ -54,7 +63,6 @@ impl RenderData {
             particles: Vec::with_capacity(1000),
 			receiver: rx,
 			sender: tx,
-			leaderboard: vec![],
 		}
 	}
 
@@ -115,8 +123,9 @@ impl RenderData {
 	unsafe fn handle_game_event(&mut self, event: GameEvent) {
 		match event {
 			GameEvent::ScoreChanged(i) => {
-				prep_leaderboard_entries(&mut self.leaderboard, "Justin", i);
-				push_leaderboard_entries(&self.leaderboard);
+				let s = CString::new("Justin").unwrap();
+				let name = s.into_raw();
+				update_local_score(i, name);
 			},
 			GameEvent::EntityDied(p,c) => {
 				let particles = &mut self.particles;
