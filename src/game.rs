@@ -83,7 +83,7 @@ impl Game {
 		if reset_type == ResetType::New {
 			self.score = 0;
 			self.lives = 3;
-			self.wave = 0;
+			self.wave = 1;
 		}
 		if reset_type == ResetType::Next {
 			self.wave += 1;
