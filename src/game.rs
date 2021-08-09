@@ -1,6 +1,5 @@
 use std::os::raw::{c_int};
-use std::sync::mpsc;
-use std::sync::mpsc::{Sender,Receiver};
+use std::sync::mpsc::{Sender};
 
 use crate::size::WorldSize;
 use crate::bullet::{BulletType};

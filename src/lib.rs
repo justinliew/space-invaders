@@ -40,7 +40,7 @@ mod vector;
 mod size;
 
 use crate::size::WorldSize;
-use crate::game::{GameData,GameEvent};
+use crate::game::{GameData};
 use crate::render::RenderData;
 
 #[macro_use]
@@ -71,8 +71,8 @@ pub unsafe extern "C" fn resize(width: c_double, height: c_double) -> c_double {
 #[no_mangle]
 pub unsafe extern "C" fn init() {
 	// TODO - these have to be here. Why?
-    let data = &mut GAME.lock().unwrap();
-	let render = &mut RENDER.lock().unwrap();
+    let _data = &mut GAME.lock().unwrap();
+	let _render = &mut RENDER.lock().unwrap();
 }
 
 #[no_mangle]

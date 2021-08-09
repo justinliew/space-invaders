@@ -10,10 +10,17 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ### For Release
 
-- [X] fix crash.
-- [ ] fix rank for local player.
+- [X] get global and around me if relevant.
+- [ ] ranks for leaderboard.
+- [ ] name the 2 leaderboards.
+- [ ] don't show me in the global leaderboard if I'm not in rank.
+leaderboard. Rank 5 seems to be it.
 - [ ] entering high score name.
-- [ ] hook up proper leaderboard.
+- [X] aroundme leaderboard issue when we move up the - [X] show local score differently.
+- [X] proper POST of score.
+- [X] hook up proper leaderboard.
+- [X] fix crash.
+- [ ] implement redis for leaderboard.
 
 ### Architecture
 

@@ -123,7 +123,7 @@ impl RenderData {
 	unsafe fn handle_game_event(&mut self, event: GameEvent) {
 		match event {
 			GameEvent::ScoreChanged(i) => {
-				let s = CString::new("Justin").unwrap();
+				let s = CString::new("Local Player").unwrap();
 				let name = s.into_raw();
 				update_local_score(i, name);
 			},
@@ -142,7 +142,7 @@ impl RenderData {
 			Ok(event) => {
 				self.handle_game_event(event);
 			},
-			Err(e) => {
+			Err(_) => {
 
 			}
 		}

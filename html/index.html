@@ -19,18 +19,26 @@
 		  color: green;
 		  font-family: courier;
 	  }
+	  #leaderboardglobal, tr {
+		  background-color: black;
+		  color: green;
+		  font-family: courier;
+	  }
       </style>
   </head>
 
   <body>
     <canvas id="topbar" style='position:absolute; left:0px; top:0px; width: 100%; height: 10%'></canvas>
     <canvas id="gamearea" style='position:absolute; left:0px; top:10%; width: 80%; height: 90%'></canvas>
-	<div id="leaderboard" style='position:absolute; left:80%; top:10%; width: 50%; height: 100%'></div>
+	<div id="leaderboardglobal" style='position:absolute; left:80%; top:10%; width: 50%; height: 50%'></div>
+	<div id="leaderboard" style='position:absolute; left:80%; top:60%; width: 50%; height: 50%'></div>
 
 <script>
 
 let sprites = [];
 let module = {};
+let leaderboardglobal_table = {};
+let leaderboardglobal = [];
 let leaderboard_table = {};
 let leaderboard = [];
 let local_score = {};
@@ -47,8 +55,8 @@ function updateTable(table, index, fields, local) {
 		}
 	}
 
-function update_leaderboard_entry(index, rank, score, name, local) {
-	updateTable(leaderboard_table, index, [rank, name, score], local);
+function update_leaderboard_entry(table, index, rank, score, name, local) {
+	updateTable(table, index, [rank, name, score], local);
 }
 
 /*
@@ -61,25 +69,25 @@ these get leaderboard entries
 /topten
 */
 
-function render_leaderboard() {
-	leaderboard_table.innerHTML = "";
+function render_leaderboard(table, lb) {
+	table.innerHTML = "";
 	var tbdy = document.createElement('tbody');
 	var rendered_local = false;
-	leaderboard_table.appendChild(tbdy);
-	leaderboard.forEach((entry,i) => {
+	table.appendChild(tbdy);
+	lb.forEach((entry,i) => {
 
 		if (Object.keys(local_score).length != 0) {
 			if (!rendered_local && local_score.score > entry.score) {
-				update_leaderboard_entry(i, i, local_score.score, local_score.name, true);
+				update_leaderboard_entry(table, i, i, local_score.score, local_score.name, true);
 				rendered_local = true;
 			}
 		}
 		index = rendered_local ? i+1 : i;
-		update_leaderboard_entry(index, index, entry.score, entry.name, false);
+		update_leaderboard_entry(table, index, index, entry.score, entry.name, false);
 	});
 	if (Object.keys(local_score).length != 0) {
 		if (!rendered_local) {
-			update_leaderboard_entry(leaderboard.length, leaderboard.length, local_score.score, local_score.name, true);
+			update_leaderboard_entry(table, lb.length, lb.length, local_score.score, local_score.name, true);
 		}
 	}
 }
@@ -88,14 +96,27 @@ function get_leaderboard_entries() {
 	var leaderboard_req = new XMLHttpRequest();
 	leaderboard_req.onload = function(oEvent) {
 		var entries = JSON.parse(leaderboard_req.response);
+		leaderboardglobal = [];
+		entries.forEach((entry,i) => {
+			leaderboardglobal[i] = entry;
+		});
+		render_leaderboard(leaderboardglobal_table,leaderboardglobal);
+	}
+	leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/topten", true);
+	leaderboard_req.send();
+
+	var leaderboardaroundme_req = new XMLHttpRequest();
+	leaderboardaroundme_req.onload = function(oEvent) {
+		var entries = JSON.parse(leaderboardaroundme_req.response);
 		leaderboard = [];
 		entries.forEach((entry,i) => {
 			leaderboard[i] = entry;
 		});
-		render_leaderboard();
+		render_leaderboard(leaderboard_table, leaderboard);
 	}
-	leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/topten", true);
-	leaderboard_req.send();
+	leaderboardaroundme_req.open("GET", "https://leaderboard.edgecompute.app/around_me", true);
+	leaderboardaroundme_req.setRequestHeader("score",local_score.score);
+	leaderboardaroundme_req.send();
 }
 
   // Returns an object containing resources that will be used later for drawing
@@ -148,6 +169,11 @@ function get_leaderboard_entries() {
     plCtx.lineTo(0, 0);
     plCtx.fill();
 
+	leaderboardglobal_table = document.createElement('table');
+	leaderboardglobal_table.style.width = '30%';
+	var tbdy = document.createElement('tbody');
+	leaderboardglobal_table.appendChild(tbdy);
+
 	leaderboard_table = document.createElement('table');
 	leaderboard_table.style.width = '30%';
 	var tbdy = document.createElement('tbody');
@@ -158,6 +184,7 @@ function get_leaderboard_entries() {
 
   // We create this here because it will be used from within `imports`
   let gamearea = document.getElementById('gamearea');
+  let leaderboardglobal_elem = document.getElementById('leaderboardglobal');
   let leaderboard_elem = document.getElementById('leaderboard');
   let topbar = document.getElementById('topbar');
 
@@ -243,6 +270,7 @@ function get_leaderboard_entries() {
 	  topbar_ctx.fillText("Wave: " + wave, 420, 20);
 
 	// draw leaderboard
+	leaderboardglobal_elem.appendChild(leaderboardglobal_table);
 	leaderboard_elem.appendChild(leaderboard_table);
     }
 
@@ -304,9 +332,11 @@ function get_leaderboard_entries() {
 
 	function update_local_score(score, nameptr) {
 		let name = copyCStr(module, nameptr);
+		console.log("update_local_score name ", name);
 		local_score.name = name;
 		local_score.score = score;
-		render_leaderboard();
+		render_leaderboard(leaderboardglobal_table,leaderboardglobal);
+		render_leaderboard(leaderboard_table,leaderboard);
 
 		var listing_req = new XMLHttpRequest();
 		listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
@@ -315,6 +345,7 @@ function get_leaderboard_entries() {
 		listing_req.setRequestHeader("score",score);
 		listing_req.send();
 
+		get_leaderboard_entries();
 	}
 
     // The real loading and running of our wasm starts here
@@ -367,7 +398,9 @@ function copyCStr(module, ptr) {
 
 	module.init();
 
+	local_score.score = 0;
 	get_leaderboard_entries();
+	// TODO set timer for get_leaderboard_entries
 
     // Input processing
     function processKey(key, b) {
@@ -543,6 +576,8 @@ function copyCStr(module, ptr) {
       gamearea.height = window.innerHeight * 0.9;
       topbar.width = window.innerWidth;
       topbar.height = window.innerHeight * 0.1;
+      leaderboardglobal_elem.width = window.innerWidth * 0.2;
+      leaderboardglobal_elem.height = window.innerHeight * 0.9;
       leaderboard_elem.width = window.innerWidth * 0.2;
       leaderboard_elem.height = window.innerHeight * 0.9;
       let scale = module.resize(gamearea.width, gamearea.height);
