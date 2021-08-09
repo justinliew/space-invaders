@@ -74,22 +74,21 @@ function render_leaderboard(table, lb) {
 	var tbdy = document.createElement('tbody');
 	var rendered_local = false;
 	table.appendChild(tbdy);
-	lb.forEach((entry,i) => {
+	var i = 0;
+	lb.forEach(entry => {
 
 		if (Object.keys(local_score).length != 0) {
 			if (!rendered_local && local_score.score > entry.score) {
 				update_leaderboard_entry(table, i, i, local_score.score, local_score.name, true);
+				i += 1;
 				rendered_local = true;
 			}
 		}
-		index = rendered_local ? i+1 : i;
-		update_leaderboard_entry(table, index, index, entry.score, entry.name, false);
-	});
-	if (Object.keys(local_score).length != 0) {
-		if (!rendered_local) {
-			update_leaderboard_entry(table, lb.length, lb.length, local_score.score, local_score.name, true);
+		if (entry.id != local_id) {
+			update_leaderboard_entry(table, i, i, entry.score, entry.name, false);
+			i += 1;
 		}
-	}
+	});
 }
 
 function get_leaderboard_entries() {
