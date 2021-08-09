@@ -69,7 +69,7 @@ these get leaderboard entries
 /topten
 */
 
-function render_leaderboard(table, lb) {
+function render_leaderboard(table, lb, alwayslocal) {
 	table.innerHTML = "";
 	var tbdy = document.createElement('tbody');
 	var rendered_local = false;
@@ -89,6 +89,9 @@ function render_leaderboard(table, lb) {
 			i += 1;
 		}
 	});
+	if (Object.keys(local_score).length != 0 && !rendered_local && alwayslocal) {
+		update_leaderboard_entry(table, i, i, local_score.score, local_score.name, true);
+	}
 }
 
 function get_leaderboard_entries() {
@@ -99,7 +102,7 @@ function get_leaderboard_entries() {
 		entries.forEach((entry,i) => {
 			leaderboardglobal[i] = entry;
 		});
-		render_leaderboard(leaderboardglobal_table,leaderboardglobal);
+		render_leaderboard(leaderboardglobal_table,leaderboardglobal, false);
 	}
 	leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/topten", true);
 	leaderboard_req.send();
@@ -111,7 +114,7 @@ function get_leaderboard_entries() {
 		entries.forEach((entry,i) => {
 			leaderboard[i] = entry;
 		});
-		render_leaderboard(leaderboard_table, leaderboard);
+		render_leaderboard(leaderboard_table, leaderboard, true);
 	}
 	leaderboardaroundme_req.open("GET", "https://leaderboard.edgecompute.app/around_me", true);
 	leaderboardaroundme_req.setRequestHeader("score",local_score.score);
@@ -334,8 +337,8 @@ function get_leaderboard_entries() {
 		console.log("update_local_score name ", name);
 		local_score.name = name;
 		local_score.score = score;
-		render_leaderboard(leaderboardglobal_table,leaderboardglobal);
-		render_leaderboard(leaderboard_table,leaderboard);
+		render_leaderboard(leaderboardglobal_table,leaderboardglobal, false);
+		render_leaderboard(leaderboard_table,leaderboard, true);
 
 		var listing_req = new XMLHttpRequest();
 		listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
@@ -398,6 +401,7 @@ function copyCStr(module, ptr) {
 	module.init();
 
 	local_score.score = 0;
+	local_score.name = "Local";
 	get_leaderboard_entries();
 	// TODO set timer for get_leaderboard_entries
 
