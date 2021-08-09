@@ -14,6 +14,11 @@
 	  #topbar {
 		  background-color: black;
 	  }
+	  #nameinput {
+		  background-color: black;
+		  font-family: courier;
+		  color: red;
+	  }
 	  #leaderboard, tr {
 		  background-color: black;
 		  color: green;
@@ -28,10 +33,19 @@
   </head>
 
   <body>
+	<div id="gamediv">
     <canvas id="topbar" style='position:absolute; left:0px; top:0px; width: 100%; height: 10%'></canvas>
     <canvas id="gamearea" style='position:absolute; left:0px; top:10%; width: 80%; height: 90%'></canvas>
 	<div id="leaderboardglobal" style='position:absolute; left:80%; top:10%; width: 50%; height: 50%'></div>
 	<div id="leaderboard" style='position:absolute; left:80%; top:60%; width: 50%; height: 50%'></div>
+	</div>
+
+	<div id="introdiv">
+		<div id="nameinput" style='position:absolute; left:0px; top: 0%; width: 100%; height: 10%'>
+		Enter Player Name: <input id="player_name" value="" />
+		</div>
+		<canvas id="introarea" style='position:absolute; left:0px; top:10%; width: 100%; height: 90%'></canvas>
+	</div>
 
 <script>
 
@@ -43,6 +57,20 @@ let leaderboard_table = {};
 let leaderboard = [];
 let local_score = {};
 let local_id = "";
+let playername = "";
+
+function get_value_from_cookie(key) {
+	var value;
+	var row = document.cookie
+		.split('; ')
+		.find(row => row.startsWith(key));
+		if (typeof row != "undefined") {
+			value = row.split('=')[1];
+		} else {
+			value = "";
+		}
+	return value;
+}
 
 function updateTable(table, index, fields, local) {
 		let newRow = table.insertRow(index);
@@ -69,29 +97,35 @@ these get leaderboard entries
 /topten
 */
 
-function render_leaderboard(table, lb, alwayslocal) {
+function render_leaderboard(table, lb, alwayslocal, name) {
 	table.innerHTML = "";
 	var tbdy = document.createElement('tbody');
 	var rendered_local = false;
 	table.appendChild(tbdy);
 	var i = 0;
-	lb.forEach(entry => {
+	var lastrank = 1;
 
+	lb.forEach(entry => {
 		if (Object.keys(local_score).length != 0) {
 			if (!rendered_local && local_score.score > entry.score) {
-				update_leaderboard_entry(table, i, i, local_score.score, local_score.name, true);
+				update_leaderboard_entry(table, i, lastrank, local_score.score, local_score.name, true); // TODO local rank how
 				i += 1;
 				rendered_local = true;
 			}
 		}
 		if (entry.id != local_id) {
-			update_leaderboard_entry(table, i, i, entry.score, entry.name, false);
+			update_leaderboard_entry(table, i, entry.rank, entry.score, entry.name, false);
+			lastrank = entry.rank;
 			i += 1;
 		}
 	});
 	if (Object.keys(local_score).length != 0 && !rendered_local && alwayslocal) {
-		update_leaderboard_entry(table, i, i, local_score.score, local_score.name, true);
+		update_leaderboard_entry(table, i, lastrank, local_score.score, local_score.name, true); // TODO local rank how
 	}
+	var header = table.createTHead();
+	var row = header.insertRow(0);
+	var cell = row.insertCell(0);
+	cell.innerHTML = "<b>" + name + "</b>";
 }
 
 function get_leaderboard_entries() {
@@ -102,7 +136,7 @@ function get_leaderboard_entries() {
 		entries.forEach((entry,i) => {
 			leaderboardglobal[i] = entry;
 		});
-		render_leaderboard(leaderboardglobal_table,leaderboardglobal, false);
+		render_leaderboard(leaderboardglobal_table,leaderboardglobal, false, "Global");
 	}
 	leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/topten", true);
 	leaderboard_req.send();
@@ -114,7 +148,7 @@ function get_leaderboard_entries() {
 		entries.forEach((entry,i) => {
 			leaderboard[i] = entry;
 		});
-		render_leaderboard(leaderboard_table, leaderboard, true);
+		render_leaderboard(leaderboard_table, leaderboard, true, "Near Me");
 	}
 	leaderboardaroundme_req.open("GET", "https://leaderboard.edgecompute.app/around_me", true);
 	leaderboardaroundme_req.setRequestHeader("score",local_score.score);
@@ -332,13 +366,10 @@ function get_leaderboard_entries() {
       ctx.fillText('Debug: ' + d, 10, 110)
 	}
 
-	function update_local_score(score, nameptr) {
-		let name = copyCStr(module, nameptr);
-		console.log("update_local_score name ", name);
-		local_score.name = name;
+	function update_local_score(score) {
 		local_score.score = score;
-		render_leaderboard(leaderboardglobal_table,leaderboardglobal, false);
-		render_leaderboard(leaderboard_table,leaderboard, true);
+		render_leaderboard(leaderboardglobal_table,leaderboardglobal, false, "Global");
+		render_leaderboard(leaderboard_table,leaderboard, true, "Near Me");
 
 		var listing_req = new XMLHttpRequest();
 		listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
@@ -400,8 +431,29 @@ function copyCStr(module, ptr) {
 
 	module.init();
 
+	playername = get_value_from_cookie('playername');
+	if (playername == "") {
+		document.getElementById('gamediv').style.display = 'none';
+		document.getElementById('introdiv').style.display = 'block';
+		let introarea = document.getElementById('introarea');
+		var introctx = introarea.getContext("2d");
+		var title_img = new Image();
+		title_img.src = 'title.png';
+		title_img.alt = 'Fastronauts Title Screen';
+		introctx.drawImage(title_img, 0, 0, gamearea.width, gamearea.height);
+		document.getElementById("player_name").onchange = function() {
+			local_score.name = document.getElementById("player_name").value;
+			document.cookie = "playername="+local_score.name;
+			document.getElementById('gamediv').style.display = 'block';
+			document.getElementById('introdiv').style.display = 'none';
+		}
+	} else {
+		local_score.name = playername;
+		document.getElementById('gamediv').style.display = 'block';
+		document.getElementById('introdiv').style.display = 'none';
+	}
+
 	local_score.score = 0;
-	local_score.name = "Local";
 	get_leaderboard_entries();
 	// TODO set timer for get_leaderboard_entries
 

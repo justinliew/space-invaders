@@ -1,4 +1,4 @@
-use std::os::raw::{c_double, c_int, c_uint, c_char};
+use std::os::raw::{c_double, c_int, c_uint};
 
 use crate::point::Point;
 use crate::size::WorldSize;
@@ -10,7 +10,6 @@ use crate::particle::{make_explosion, Particle};
 
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver,Sender};
-use std::ffi::CString;
 
 extern "C" {
     fn clear_screen();
@@ -30,17 +29,9 @@ extern "C" {
 	// sprite id, frame index, x, y
 	fn draw_sprite(_: c_uint, _: c_uint, _: c_uint, _: c_uint);
 
-	fn update_local_score(_: c_int, _: *mut c_char);
+	fn update_local_score(_: c_int);
 
 }
-
-#[no_mangle]
-extern "C" fn dealloc_str(ptr: *mut c_char) {
-    unsafe {
-        let _ = CString::from_raw(ptr);
-    }
-}
-
 
 pub struct RenderData {
 	pub screen_top_left_offset: Point,
@@ -123,9 +114,7 @@ impl RenderData {
 	unsafe fn handle_game_event(&mut self, event: GameEvent) {
 		match event {
 			GameEvent::ScoreChanged(i) => {
-				let s = CString::new("Local Player").unwrap();
-				let name = s.into_raw();
-				update_local_score(i, name);
+				update_local_score(i);
 			},
 			GameEvent::EntityDied(p,c) => {
 				let particles = &mut self.particles;

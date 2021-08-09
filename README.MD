@@ -10,12 +10,13 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ### For Release
 
+- [X] ranks for leaderboard.
+- [X] name the 2 leaderboards.
+- [X] entering high score name.
+- [X] after dying once the wave gets set to 0, not 1. I fixed this but it doesn't seem to work.
+- [X] don't show me in the global leaderboard if I'm not in rank.
+- [X] dedup local player.
 - [X] get global and around me if relevant.
-- [ ] ranks for leaderboard.
-- [ ] name the 2 leaderboards.
-- [ ] don't show me in the global leaderboard if I'm not in rank.
-leaderboard. Rank 5 seems to be it.
-- [ ] entering high score name.
 - [X] aroundme leaderboard issue when we move up the - [X] show local score differently.
 - [X] proper POST of score.
 - [X] hook up proper leaderboard.
