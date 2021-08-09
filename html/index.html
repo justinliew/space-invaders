@@ -25,7 +25,7 @@
   <body>
     <canvas id="topbar" style='position:absolute; left:0px; top:0px; width: 100%; height: 10%'></canvas>
     <canvas id="gamearea" style='position:absolute; left:0px; top:10%; width: 80%; height: 90%'></canvas>
-	<div id="leaderboard" style='position:absolute; left:80%; top:10%; width: 50%; height: 80%'></div>
+	<div id="leaderboard" style='position:absolute; left:80%; top:10%; width: 50%; height: 100%'></div>
 
 <script>
 
@@ -58,10 +58,9 @@ Flow is:
 
 these get leaderboard entries
 /around_me
-/global
+/topten
 */
 
-// TODO for now this is drawing all entries. We will need to restrict this somehow later
 function render_leaderboard() {
 	leaderboard_table.innerHTML = "";
 	var tbdy = document.createElement('tbody');
@@ -92,11 +91,10 @@ function get_leaderboard_entries() {
 		leaderboard = [];
 		entries.forEach((entry,i) => {
 			leaderboard[i] = entry;
-			console.log("Entry ", i, " is ", entry);
 		});
 		render_leaderboard();
 	}
-	leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/global", true);
+	leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/topten", true);
 	leaderboard_req.send();
 }
 
