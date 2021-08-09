@@ -374,7 +374,7 @@ function get_leaderboard_entries() {
 		var listing_req = new XMLHttpRequest();
 		listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
 		listing_req.setRequestHeader("id",local_id);
-		listing_req.setRequestHeader("name",name);
+		listing_req.setRequestHeader("name",local_score.name);
 		listing_req.setRequestHeader("score",score);
 		listing_req.send();
 
