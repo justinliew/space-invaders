@@ -10,6 +10,7 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ### For Release
 
+- [ ] if you kill the UFO you can keep shooting the area and get points.
 - [X] ranks for leaderboard.
 - [X] name the 2 leaderboards.
 - [X] entering high score name.
