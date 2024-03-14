@@ -140,19 +140,6 @@ function get_leaderboard_entries() {
 	}
 	leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/topten", true);
 	leaderboard_req.send();
-
-	var leaderboardaroundme_req = new XMLHttpRequest();
-	leaderboardaroundme_req.onload = function(oEvent) {
-		var entries = JSON.parse(leaderboardaroundme_req.response);
-		leaderboard = [];
-		entries.forEach((entry,i) => {
-			leaderboard[i] = entry;
-		});
-		render_leaderboard(leaderboard_table, leaderboard, true, "Near Me");
-	}
-	leaderboardaroundme_req.open("GET", "https://leaderboard.edgecompute.app/around_me", true);
-	leaderboardaroundme_req.setRequestHeader("score",local_score.score);
-	leaderboardaroundme_req.send();
 }
 
   // Returns an object containing resources that will be used later for drawing
@@ -369,7 +356,6 @@ function get_leaderboard_entries() {
 	function update_local_score(score) {
 		local_score.score = score;
 		render_leaderboard(leaderboardglobal_table,leaderboardglobal, false, "Global");
-		render_leaderboard(leaderboard_table,leaderboard, true, "Near Me");
 
 		var listing_req = new XMLHttpRequest();
 		listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
