@@ -8,6 +8,8 @@ We could also run parts of it on C@E for a potential multiplayer version.
 
 ## TODO
 
+See Github Issues for tracking.
+
 ### For Release
 
 - [ ] if you kill the UFO you can keep shooting the area and get points.
