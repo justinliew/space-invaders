@@ -21,7 +21,6 @@ extern "C" {
     fn draw_hud(_: c_int, _: c_int, _: c_int);
 	fn draw_intro();
 	fn draw_game_over(_: c_int);
-	// fn draw_debug(_: c_double, _: c_double, _: c_double, _: c_double);
 
 	// id, x,y, dim
 	fn draw_shield(_: c_int, _: c_double, _: c_double, _: c_double);
