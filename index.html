@@ -21,6 +21,7 @@
 		}
 
 		#namediv {
+			display: none;
 			position: absolute;
 			top: 50%;
 			left: 50%;
@@ -33,7 +34,7 @@
 			border: 1px solid white;
 		}
 
-		#leaderboardglobal,
+		#leaderboard,
 		tr {
 			background-color: black;
 			color: green;
@@ -46,11 +47,11 @@
 	<div id="gamediv">
 		<canvas id="topbar" style='position:absolute; left:0px; top:0px; width: 100%; height: 10%'></canvas>
 		<canvas id="gamearea" style='position:absolute; left:0px; top:10%; width: 80%; height: 90%'></canvas>
-		<div id="leaderboardglobal" style='position:absolute; left:80%; top:10%; width: 50%; height: 100%'></div>
+		<div id="leaderboard" style='position:absolute; left:80%; top:10%; width: 50%; height: 100%'></div>
 	</div>
 
 	<div id="namediv">
-		Enter Player Name: <input id="player_name" value="" />
+		You got a high score! Enter your name: <input id="player_name" value="" />
 	</div>
 
 	<script>
@@ -60,8 +61,8 @@
 
 		let sprites = [];
 		let module = {};
-		let leaderboardglobal_table = {};
-		let leaderboardglobal = [];
+		let leaderboard_table = {};
+		let leaderboard = [];
 		let local_score = {};
 		let local_id = "";
 		let playername = "";
@@ -148,11 +149,11 @@
 				var leaderboard_req = new XMLHttpRequest();
 				leaderboard_req.onload = function (oEvent) {
 					var entries = JSON.parse(leaderboard_req.response);
-					leaderboardglobal = [];
+					leaderboard = [];
 					entries.forEach((entry, i) => {
-						leaderboardglobal[i] = entry;
+						leaderboard[i] = entry;
 					});
-					if (is_in_top_ten(leaderboardglobal)) {
+					if (is_in_top_ten(leaderboard)) {
 						document.getElementById('namediv').style.display = 'block';
 						document.getElementById("player_name").onchange = function () {
 							var name = document.getElementById("player_name").value;
@@ -183,11 +184,11 @@
 			var leaderboard_req = new XMLHttpRequest();
 			leaderboard_req.onload = function (oEvent) {
 				var entries = JSON.parse(leaderboard_req.response);
-				leaderboardglobal = [];
+				leaderboard = [];
 				entries.forEach((entry, i) => {
-					leaderboardglobal[i] = entry;
+					leaderboard[i] = entry;
 				});
-				render_leaderboard(leaderboardglobal_table, leaderboardglobal, "Global");
+				render_leaderboard(leaderboard_table, leaderboard, "Global");
 			}
 			leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/global", true);
 			leaderboard_req.send();
@@ -246,17 +247,17 @@
 			plCtx.lineTo(0, 0);
 			plCtx.fill();
 
-			leaderboardglobal_table = document.createElement('table');
-			leaderboardglobal_table.style.width = '30%';
+			leaderboard_table = document.createElement('table');
+			leaderboard_table.style.width = '30%';
 			var tbdy = document.createElement('tbody');
-			leaderboardglobal_table.appendChild(tbdy);
+			leaderboard_table.appendChild(tbdy);
 
 			return res;
 		}
 
 		// We create this here because it will be used from within `imports`
 		let gamearea = document.getElementById('gamearea');
-		let leaderboardglobal_elem = document.getElementById('leaderboardglobal');
+		let leaderboardglobal_elem = document.getElementById('leaderboard');
 		let topbar = document.getElementById('topbar');
 
 		// Returns an object containing functions that will be linked to our wasm model
@@ -267,6 +268,7 @@
 			var topbar_ctx = topbar.getContext("2d");
 
 			function new_session() {
+				show_game_end_screen = false;
 				var session_req = new XMLHttpRequest();
 				session_req.onload = function (oEvent) {
 					local_id = session_req.response;
@@ -340,7 +342,7 @@
 				topbar_ctx.fillText("Wave: " + wave, 420, 20);
 
 				// draw leaderboard
-				leaderboardglobal_elem.appendChild(leaderboardglobal_table);
+				leaderboardglobal_elem.appendChild(leaderboard_table);
 			}
 
 
