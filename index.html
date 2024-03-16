@@ -14,15 +14,17 @@
 	  #topbar {
 		  background-color: black;
 	  }
-	  #nameinput {
-		  background-color: black;
-		  font-family: courier;
-		  color: red;
-	  }
-	  #leaderboard, tr {
-		  background-color: black;
-		  color: green;
-		  font-family: courier;
+	  #namediv {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background-color: blue;
+		font-family: courier;
+		width: 400px;
+		height: 100px;
+		padding: 20px;
+		border: 1px solid white;
 	  }
 	  #leaderboardglobal, tr {
 		  background-color: black;
@@ -36,25 +38,21 @@
 	<div id="gamediv">
     <canvas id="topbar" style='position:absolute; left:0px; top:0px; width: 100%; height: 10%'></canvas>
     <canvas id="gamearea" style='position:absolute; left:0px; top:10%; width: 80%; height: 90%'></canvas>
-	<div id="leaderboardglobal" style='position:absolute; left:80%; top:10%; width: 50%; height: 50%'></div>
-	<div id="leaderboard" style='position:absolute; left:80%; top:60%; width: 50%; height: 50%'></div>
+	<div id="leaderboardglobal" style='position:absolute; left:80%; top:10%; width: 50%; height: 100%'></div>
 	</div>
 
-	<div id="introdiv">
-		<div id="nameinput" style='position:absolute; left:0px; top: 0%; width: 100%; height: 10%'>
-		Enter Player Name: <input id="player_name" value="" />
-		</div>
-		<canvas id="introarea" style='position:absolute; left:0px; top:10%; width: 100%; height: 90%'></canvas>
+	<div id="namediv">
+	Enter Player Name: <input id="player_name" value="" />
 	</div>
 
 <script>
+
+let game_over = false;
 
 let sprites = [];
 let module = {};
 let leaderboardglobal_table = {};
 let leaderboardglobal = [];
-let leaderboard_table = {};
-let leaderboard = [];
 let local_score = {};
 let local_id = "";
 let playername = "";
@@ -97,7 +95,9 @@ these get leaderboard entries
 /topten
 */
 
-function render_leaderboard(table, lb, alwayslocal, name) {
+// I think we need to keep local score and name better
+// render_leaderboard isn't working super well when we rename an entry after game is over
+function render_leaderboard(table, lb, name) {
 	table.innerHTML = "";
 	var tbdy = document.createElement('tbody');
 	var rendered_local = false;
@@ -106,26 +106,63 @@ function render_leaderboard(table, lb, alwayslocal, name) {
 	var lastrank = 1;
 
 	lb.forEach(entry => {
-		if (Object.keys(local_score).length != 0) {
-			if (!rendered_local && local_score.score > entry.score) {
-				update_leaderboard_entry(table, i, lastrank, local_score.score, local_score.name, true); // TODO local rank how
-				i += 1;
-				rendered_local = true;
-			}
-		}
-		if (entry.id != local_id) {
-			update_leaderboard_entry(table, i, entry.rank, entry.score, entry.name, false);
-			lastrank = entry.rank;
-			i += 1;
-		}
+		update_leaderboard_entry(table, i, entry.rank, entry.score, entry.name, entry.id == local_id);
+		lastrank = entry.rank;
+		i += 1;
 	});
-	if (Object.keys(local_score).length != 0 && !rendered_local && alwayslocal) {
-		update_leaderboard_entry(table, i, lastrank, local_score.score, local_score.name, true); // TODO local rank how
-	}
+
 	var header = table.createTHead();
 	var row = header.insertRow(0);
 	var cell = row.insertCell(0);
 	cell.innerHTML = "<b>" + name + "</b>";
+}
+
+function is_in_top_ten(lb) {
+	var i = 0;
+	var lastrank = 1;
+
+	var ret = false;
+	lb.forEach(entry => {
+		if (Object.keys(local_score).length != 0) {
+			if (local_score.score > entry.score) {
+				ret = true;
+			}
+		}
+	});
+	return ret;
+}
+
+function check_for_high_score() {
+	var leaderboard_req = new XMLHttpRequest();
+	leaderboard_req.onload = function(oEvent) {
+		var entries = JSON.parse(leaderboard_req.response);
+		leaderboardglobal = [];
+		entries.forEach((entry,i) => {
+			leaderboardglobal[i] = entry;
+		});
+		if (is_in_top_ten(leaderboardglobal)) {
+			document.getElementById('namediv').style.display = 'block';
+			document.getElementById("player_name").onchange = function() {
+				game_over = false;
+				var name = document.getElementById("player_name").value;
+				var listing_req = new XMLHttpRequest();
+				listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
+				listing_req.setRequestHeader("id",local_id);
+				listing_req.setRequestHeader("name",name);
+				listing_req.setRequestHeader("score",local_score.score);
+				listing_req.send();
+				listing_req.onload = function(oEvent) {
+					get_leaderboard_entries();
+				}
+				document.getElementById('namediv').style.display = 'none';
+				module.key_pressed('a', 1);
+			}
+		} else {
+			game_over = false;
+		}
+	}
+	leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/global", true);
+	leaderboard_req.send();
 }
 
 function get_leaderboard_entries() {
@@ -136,9 +173,9 @@ function get_leaderboard_entries() {
 		entries.forEach((entry,i) => {
 			leaderboardglobal[i] = entry;
 		});
-		render_leaderboard(leaderboardglobal_table,leaderboardglobal, false, "Global");
+		render_leaderboard(leaderboardglobal_table,leaderboardglobal, "Global");
 	}
-	leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/topten", true);
+	leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/global", true);
 	leaderboard_req.send();
 }
 
@@ -197,18 +234,12 @@ function get_leaderboard_entries() {
 	var tbdy = document.createElement('tbody');
 	leaderboardglobal_table.appendChild(tbdy);
 
-	leaderboard_table = document.createElement('table');
-	leaderboard_table.style.width = '30%';
-	var tbdy = document.createElement('tbody');
-	leaderboard_table.appendChild(tbdy);
-
     return res;
   }
 
   // We create this here because it will be used from within `imports`
   let gamearea = document.getElementById('gamearea');
   let leaderboardglobal_elem = document.getElementById('leaderboardglobal');
-  let leaderboard_elem = document.getElementById('leaderboard');
   let topbar = document.getElementById('topbar');
 
   // Returns an object containing functions that will be linked to our wasm model
@@ -277,6 +308,12 @@ function get_leaderboard_entries() {
 	}
 
 	function draw_game_over(score) {
+		// this makes sure it's called only once		
+  	  if (!game_over) {
+		// if the score is in the leaderboard, we need to as for a name
+		check_for_high_score();
+	  }
+	  game_over = true;
       ctx.fillStyle = "orange";
       ctx.textBaseline = "top";
       ctx.font = "20px sans-serif";
@@ -294,7 +331,6 @@ function get_leaderboard_entries() {
 
 	// draw leaderboard
 	leaderboardglobal_elem.appendChild(leaderboardglobal_table);
-	leaderboard_elem.appendChild(leaderboard_table);
     }
 
 
@@ -343,32 +379,22 @@ function get_leaderboard_entries() {
 		}
 	}
 
-	function draw_debug(a,b,c,d) {
-	  ctx.fillStyle = "orange";
-      ctx.textBaseline = "top";
-      ctx.font = "20px sans-serif";
-      ctx.fillText('Debug: ' + a, 10, 50)
-      ctx.fillText('Debug: ' + b, 10, 70)
-      ctx.fillText('Debug: ' + c, 10, 90)
-      ctx.fillText('Debug: ' + d, 10, 110)
-	}
-
 	function update_local_score(score) {
 		local_score.score = score;
-		render_leaderboard(leaderboardglobal_table,leaderboardglobal, false, "Global");
 
 		var listing_req = new XMLHttpRequest();
+		listing_req.onload = function(oEvent) {
+			get_leaderboard_entries();
+		}
 		listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
 		listing_req.setRequestHeader("id",local_id);
 		listing_req.setRequestHeader("name",local_score.name);
 		listing_req.setRequestHeader("score",score);
 		listing_req.send();
-
-		get_leaderboard_entries();
 	}
 
     // The real loading and running of our wasm starts here
-    let imports = { clear_screen, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_debug, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
+    let imports = { clear_screen, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
     imports.Math_atan = Math.atan;
     imports.sin = Math.sin;
     imports.cos = Math.cos;
@@ -417,34 +443,20 @@ function copyCStr(module, ptr) {
 
 	module.init();
 
-	playername = get_value_from_cookie('playername');
-	if (playername == "") {
-		document.getElementById('gamediv').style.display = 'none';
-		document.getElementById('introdiv').style.display = 'block';
-		let introarea = document.getElementById('introarea');
-		var introctx = introarea.getContext("2d");
-		var title_img = new Image();
-		title_img.src = 'title.png';
-		title_img.alt = 'Fastronauts Title Screen';
-		introctx.drawImage(title_img, 0, 0, gamearea.width, gamearea.height);
-		document.getElementById("player_name").onchange = function() {
-			local_score.name = document.getElementById("player_name").value;
-			document.cookie = "playername="+local_score.name;
-			document.getElementById('gamediv').style.display = 'block';
-			document.getElementById('introdiv').style.display = 'none';
-		}
-	} else {
-		local_score.name = playername;
-		document.getElementById('gamediv').style.display = 'block';
-		document.getElementById('introdiv').style.display = 'none';
-	}
-
+	local_score.name = "Kiosk Player"; // TODO add unique id to this?
+	document.getElementById('gamediv').style.display = 'block';
+	document.getElementById('namediv').style.display = 'none';
 	local_score.score = 0;
+
 	get_leaderboard_entries();
 	// TODO set timer for get_leaderboard_entries
 
     // Input processing
     function processKey(key, b) {
+		// while in game over, don't do this
+		if (game_over) {
+			return;
+		}
       switch (key) {
         case "ArrowLeft":
           module.toggle_left(b);
@@ -466,114 +478,120 @@ function copyCStr(module, ptr) {
 	So we double the sprites when we init, and then when we render we need to scale by game to screen
 	*/
 	function init_sprites(scale) {
-		let enemy0_0 = [
-			0,0,1,0,0,0,0,0,1,0,0,0,
-			0,0,0,1,0,0,0,1,0,0,0,0,
-			0,0,1,1,1,1,1,1,1,0,0,0,
-			0,1,1,0,1,1,1,0,1,1,0,0,
-			1,1,1,1,1,1,1,1,1,1,1,0,
-			1,0,1,1,1,1,1,1,1,0,1,0,
-			1,0,1,0,0,0,0,0,1,0,1,0,
-			0,0,0,1,1,0,1,1,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0
-		];
+                let enemy0_0 = [
+                        0,0,1,1,1,1,1,1,1,1,0,0,
+                        0,1,0,0,0,0,0,0,0,0,1,0,
+                        0,1,0,1,1,1,1,1,0,0,1,0,
+                        0,1,0,1,1,1,1,1,0,0,1,0,
+                        0,1,0,0,0,0,0,0,0,0,1,0,
+                        1,0,0,0,0,0,0,0,0,0,1,0,
+                        1,0,0,0,0,0,0,0,0,0,0,1,
+                        0,1,0,0,0,0,0,0,0,0,1,0,
+                        0,1,0,0,1,1,0,0,0,1,0,0,
+                        0,0,1,1,0,0,1,1,1,0,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,
+                ];
 
-		let enemy0_1 = [
-			0,0,1,0,0,0,0,0,1,0,0,0,
-			1,0,0,1,0,0,0,1,0,0,1,0,
-			1,0,1,1,1,1,1,1,1,0,1,0,
-			1,1,1,0,1,1,1,0,1,1,1,0,
-			1,1,1,1,1,1,1,1,1,1,1,0,
-			0,0,1,1,1,1,1,1,1,0,0,0,
-			0,0,1,0,0,0,0,0,1,0,0,0,
-			0,1,0,0,0,0,0,0,0,1,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0
-		];
 
-		let enemy1_0 = [
-			0,0,0,0,0,1,1,0,0,0,0,0,
-			0,0,0,0,1,1,1,1,0,0,0,0,
-			0,0,0,1,1,1,1,1,1,0,0,0,
-			0,0,1,1,0,1,1,0,1,1,0,0,
-			0,0,1,1,1,1,1,1,1,1,0,0,
-			0,0,0,1,0,1,1,0,1,0,0,0,
-			0,0,1,0,0,0,0,0,0,1,0,0,
-			0,0,0,1,0,0,0,0,1,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-		];
+                let enemy0_1 = [
+                        0,0,1,1,1,1,1,1,1,1,0,0,
+                        0,1,0,0,0,0,0,0,0,0,1,0,
+                        0,1,0,0,1,1,1,1,1,0,1,0,
+                        0,1,0,0,1,1,1,1,1,0,1,0,
+                        0,1,0,0,0,0,0,0,0,0,1,0,
+                        0,1,0,0,0,0,0,0,0,0,0,1,
+                        1,0,0,0,0,0,0,0,0,0,0,1,
+                        0,1,0,0,0,0,0,0,0,0,1,0,
+                        0,1,0,0,0,0,1,1,0,0,1,0,
+                        0,0,1,1,1,1,0,0,1,1,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,
+                ];
 
-		let enemy1_1 = [
-			0,0,0,0,0,1,1,0,0,0,0,0,
-			0,0,0,0,1,1,1,1,0,0,0,0,
-			0,0,0,1,1,1,1,1,1,0,0,0,
-			0,0,1,1,0,1,1,0,1,1,0,0,
-			0,0,1,1,1,1,1,1,1,1,0,0,
-			0,0,0,0,1,0,0,1,0,0,0,0,
-			0,0,0,1,0,1,1,0,1,0,0,0,
-			0,0,1,0,1,0,0,1,0,1,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-		];
 
-		let enemy2_0 = [
-			0,0,0,0,0,1,1,0,0,0,0,0,
-			0,0,0,1,1,1,1,1,1,0,0,0,
-			0,0,1,1,1,1,1,1,1,1,0,0,
-			0,0,1,1,0,0,1,0,0,1,0,0,
-			0,0,1,1,1,1,1,1,1,1,0,0,
-			0,0,0,1,1,0,0,1,1,0,0,0,
-			0,0,1,1,0,0,0,0,1,1,0,0,
-			0,0,0,1,1,0,0,1,1,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-		];
+                let enemy1_0 = [
+                        0,0,0,0,1,1,1,1,0,0,0,0,
+                        0,0,0,1,0,0,0,0,1,0,0,0,
+                        0,0,0,1,0,1,1,0,1,0,0,0,
+                        0,0,1,1,0,1,0,0,1,1,0,0,
+                        0,1,0,1,0,1,0,0,1,0,1,0,
+                        0,1,0,1,0,1,1,0,1,0,1,0,
+                        0,1,0,1,0,0,0,0,1,0,1,0,
+                        0,1,0,0,1,1,1,1,0,0,1,0,
+                        1,0,0,1,0,0,1,0,0,1,0,0,
+                        0,0,1,0,0,1,0,0,0,0,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,
+                ];
 
-		let enemy2_1 = [
-			0,0,0,0,0,1,1,0,0,0,0,0,
-			0,0,0,1,1,1,1,1,1,0,0,0,
-			0,0,1,1,1,1,1,1,1,1,0,0,
-			0,0,1,1,0,0,1,0,0,1,0,0,
-			0,0,1,1,1,1,1,1,1,1,0,0,
-			0,0,0,1,1,0,0,1,1,0,0,0,
-			0,0,1,1,0,1,1,0,1,1,0,0,
-			0,1,1,0,0,0,0,0,0,1,1,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,
-		];
 
-		let ufo = [
-			0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,
-			0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,
-			0,0,1,1,1,1,1,1,1,1,1,1,1,1,0,0,
-			0,1,1,0,1,1,0,1,1,0,1,1,0,1,1,0,
-			1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-			0,0,1,1,1,0,0,1,1,0,0,1,1,1,0,0,
-			0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-		];
+                let enemy1_1 = [
+                        0,0,0,0,1,1,1,1,0,0,0,0,
+                        0,0,0,1,0,0,0,0,1,0,0,0,
+                        0,0,0,1,0,1,1,0,1,0,0,0,
+                        0,0,1,1,0,0,1,0,1,1,0,0,
+                        0,1,0,1,0,0,1,0,1,0,1,0,
+                        0,1,0,1,0,1,1,0,1,0,1,0,
+                        0,1,0,1,0,0,0,0,1,0,1,0,
+                        0,1,0,0,1,1,1,1,0,0,1,0,
+                        0,0,1,0,0,1,0,0,1,0,0,1,
+                        0,0,0,0,0,0,1,0,0,1,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,
+                ];
+
+
+                let enemy2_0 = [
+                        0,0,0,1,1,1,1,1,0,0,0,0,
+                        0,0,1,0,0,0,0,0,1,0,0,0,
+                        0,1,0,0,0,0,0,0,0,1,0,0,
+                        1,0,0,0,0,0,0,0,0,0,1,0,
+                        1,0,0,1,0,0,1,0,0,0,1,0,
+                        1,0,0,1,0,0,1,0,0,0,1,0,
+                        0,1,0,0,0,0,0,0,0,1,0,0,
+                        0,0,1,0,1,1,1,1,0,1,0,0,
+                        0,0,0,1,0,0,0,0,1,0,0,0,
+                        0,0,0,0,1,0,0,0,0,1,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,
+                ];
+
+
+                let enemy2_1 = [
+                        0,0,0,0,1,1,1,1,1,0,0,0,
+                        0,0,0,1,0,0,0,0,0,1,0,0,
+                        0,0,1,0,0,0,0,0,0,0,1,0,
+                        0,1,0,0,0,0,0,0,0,0,0,1,
+                        0,1,0,0,0,1,0,0,1,0,0,1,
+                        0,1,0,0,0,1,0,0,1,0,0,1,
+                        0,0,1,0,0,0,0,0,0,1,1,0,
+                        0,0,1,0,1,1,1,1,0,1,0,0,
+                        0,0,0,1,0,0,0,0,1,0,0,0,
+                        0,0,1,0,0,0,0,1,0,0,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,
+                ];
+
+
+                let ufo = [
+                        0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,
+                        0,0,0,1,1,1,0,0,0,0,1,1,1,0,0,0,
+                        0,0,1,0,0,0,0,1,1,0,0,0,0,1,0,0,
+                        0,1,0,0,0,0,0,1,1,0,0,0,0,0,1,0,
+                        1,0,0,1,0,1,0,1,1,0,1,0,1,0,0,1,
+                        1,0,0,1,0,1,0,0,0,0,1,0,1,0,0,1,
+                        0,1,0,0,0,0,0,1,1,0,0,0,0,0,1,0,
+                        0,0,1,1,1,1,1,0,0,1,1,1,1,1,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+                ];
 
 		init_sprite_frame(0, 0, enemy0_0, 12, scale*3, 255, 255, 255);
 		init_sprite_frame(0, 1, enemy0_1, 12, scale*3, 255, 255, 255);
@@ -619,8 +637,6 @@ function copyCStr(module, ptr) {
       topbar.height = window.innerHeight * 0.1;
       leaderboardglobal_elem.width = window.innerWidth * 0.2;
       leaderboardglobal_elem.height = window.innerHeight * 0.9;
-      leaderboard_elem.width = window.innerWidth * 0.2;
-      leaderboard_elem.height = window.innerHeight * 0.9;
       let scale = module.resize(gamearea.width, gamearea.height);
 	  init_sprites(scale);
     }
