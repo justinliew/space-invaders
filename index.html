@@ -47,7 +47,8 @@
 
 <script>
 
-let game_over = false;
+let checking_for_high_score = false;
+let show_game_end_screen = false;
 
 let sprites = [];
 let module = {};
@@ -133,36 +134,41 @@ function is_in_top_ten(lb) {
 }
 
 function check_for_high_score() {
-	var leaderboard_req = new XMLHttpRequest();
-	leaderboard_req.onload = function(oEvent) {
-		var entries = JSON.parse(leaderboard_req.response);
-		leaderboardglobal = [];
-		entries.forEach((entry,i) => {
-			leaderboardglobal[i] = entry;
-		});
-		if (is_in_top_ten(leaderboardglobal)) {
-			document.getElementById('namediv').style.display = 'block';
-			document.getElementById("player_name").onchange = function() {
-				game_over = false;
-				var name = document.getElementById("player_name").value;
-				var listing_req = new XMLHttpRequest();
-				listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
-				listing_req.setRequestHeader("id",local_id);
-				listing_req.setRequestHeader("name",name);
-				listing_req.setRequestHeader("score",local_score.score);
-				listing_req.send();
-				listing_req.onload = function(oEvent) {
-					get_leaderboard_entries();
+	if (!checking_for_high_score && !show_game_end_screen) {
+		checking_for_high_score = true;
+		show_game_end_screen = false;
+		var leaderboard_req = new XMLHttpRequest();
+		leaderboard_req.onload = function(oEvent) {
+			var entries = JSON.parse(leaderboard_req.response);
+			leaderboardglobal = [];
+			entries.forEach((entry,i) => {
+				leaderboardglobal[i] = entry;
+			});
+			if (is_in_top_ten(leaderboardglobal)) {
+				document.getElementById('namediv').style.display = 'block';
+				document.getElementById("player_name").onchange = function() {
+					var name = document.getElementById("player_name").value;
+					var listing_req = new XMLHttpRequest();
+					listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
+					listing_req.setRequestHeader("id",local_id);
+					listing_req.setRequestHeader("name",name);
+					listing_req.setRequestHeader("score",local_score.score);
+					listing_req.send();
+					listing_req.onload = function(oEvent) {
+						get_leaderboard_entries();
+					}
+					document.getElementById('namediv').style.display = 'none';
+					checking_for_high_score = false;
+					show_game_end_screen = true;
 				}
-				document.getElementById('namediv').style.display = 'none';
-				module.key_pressed('a', 1);
+			} else {
+				checking_for_high_score = false;
+				show_game_end_screen = true;
 			}
-		} else {
-			game_over = false;
 		}
+		leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/global", true);
+		leaderboard_req.send();
 	}
-	leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/global", true);
-	leaderboard_req.send();
 }
 
 function get_leaderboard_entries() {
@@ -189,11 +195,14 @@ function get_leaderboard_entries() {
 	  shields: {},
 	  shield_hit: gamearea.getContext("2d").createImageData(40,40), // TODO scale shields
 	  title_img: new Image(),
+	  game_over_img: new Image(),
     }
 
 	res.title_img.src = 'title.png';
-	res.title_img.alt = 'Fastronauts Title Screen';
-//	document.body.appendChild(res.title_img);
+	res.title_img.alt = 'Bug Invaders Title Screen';
+
+	res.game_over_img.src = 'game_over_w_score.png';
+	res.game_over_img.alt = 'Bug Invaders Game Over Screen';
 
 	// Particle
     res.particle.width = 20;
@@ -304,20 +313,13 @@ function get_leaderboard_entries() {
 
 	function draw_intro() {
 		ctx.drawImage(res.title_img, 0,0, gamearea.width, gamearea.height);
-
 	}
 
 	function draw_game_over(score) {
-		// this makes sure it's called only once		
-  	  if (!game_over) {
-		// if the score is in the leaderboard, we need to as for a name
 		check_for_high_score();
-	  }
-	  game_over = true;
-      ctx.fillStyle = "orange";
-      ctx.textBaseline = "top";
-      ctx.font = "20px sans-serif";
-      ctx.fillText('Game over! Final score: ' + score, gamearea.width/2, gamearea.height/2)
+		if (show_game_end_screen) {
+			ctx.drawImage(res.game_over_img, 0,0, gamearea.width, gamearea.height);
+		}
 	}
 
     function draw_hud(score,lives, wave) {
@@ -454,7 +456,7 @@ function copyCStr(module, ptr) {
     // Input processing
     function processKey(key, b) {
 		// while in game over, don't do this
-		if (game_over) {
+		if (checking_for_high_score) {
 			return;
 		}
       switch (key) {
