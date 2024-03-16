@@ -1,676 +1,685 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <style>
-      html, body {
-        width: 100%;
-        height: 100%;
-        margin: 0px;
-        border: 0;
-        overflow: hidden; /*  Disable scrollbars */
-        display: block;  /* No floating content on sides */
-      }
-	  #topbar {
-		  background-color: black;
-	  }
-	  #namediv {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		background-color: blue;
-		font-family: courier;
-		width: 400px;
-		height: 100px;
-		padding: 20px;
-		border: 1px solid white;
-	  }
-	  #leaderboardglobal, tr {
-		  background-color: black;
-		  color: green;
-		  font-family: courier;
-	  }
-      </style>
-  </head>
 
-  <body>
+<head>
+	<meta charset="utf-8">
+	<style>
+		html,
+		body {
+			width: 100%;
+			height: 100%;
+			margin: 0px;
+			border: 0;
+			overflow: hidden;
+			/*  Disable scrollbars */
+			display: block;
+			/* No floating content on sides */
+		}
+
+		#topbar {
+			background-color: black;
+		}
+
+		#namediv {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			background-color: blue;
+			font-family: courier;
+			width: 400px;
+			height: 100px;
+			padding: 20px;
+			border: 1px solid white;
+		}
+
+		#leaderboardglobal,
+		tr {
+			background-color: black;
+			color: green;
+			font-family: courier;
+		}
+	</style>
+</head>
+
+<body>
 	<div id="gamediv">
-    <canvas id="topbar" style='position:absolute; left:0px; top:0px; width: 100%; height: 10%'></canvas>
-    <canvas id="gamearea" style='position:absolute; left:0px; top:10%; width: 80%; height: 90%'></canvas>
-	<div id="leaderboardglobal" style='position:absolute; left:80%; top:10%; width: 50%; height: 100%'></div>
+		<canvas id="topbar" style='position:absolute; left:0px; top:0px; width: 100%; height: 10%'></canvas>
+		<canvas id="gamearea" style='position:absolute; left:0px; top:10%; width: 80%; height: 90%'></canvas>
+		<div id="leaderboardglobal" style='position:absolute; left:80%; top:10%; width: 50%; height: 100%'></div>
 	</div>
 
 	<div id="namediv">
-	Enter Player Name: <input id="player_name" value="" />
+		Enter Player Name: <input id="player_name" value="" />
 	</div>
 
-<script>
+	<script>
 
-let checking_for_high_score = false;
-let show_game_end_screen = false;
+		let checking_for_high_score = false;
+		let show_game_end_screen = false;
 
-let sprites = [];
-let module = {};
-let leaderboardglobal_table = {};
-let leaderboardglobal = [];
-let local_score = {};
-let local_id = "";
-let playername = "";
+		let sprites = [];
+		let module = {};
+		let leaderboardglobal_table = {};
+		let leaderboardglobal = [];
+		let local_score = {};
+		let local_id = "";
+		let playername = "";
 
-function get_value_from_cookie(key) {
-	var value;
-	var row = document.cookie
-		.split('; ')
-		.find(row => row.startsWith(key));
-		if (typeof row != "undefined") {
-			value = row.split('=')[1];
-		} else {
-			value = "";
-		}
-	return value;
-}
-
-function updateTable(table, index, fields, local) {
-		let newRow = table.insertRow(index);
-		for (var i=0;i<fields.length;++i) {
-			let newCell = newRow.insertCell(i);
-			if (local)
-				newCell.style.color = "rgb(200, 0, 0)";
-			let newText = document.createTextNode(fields[i]);
-			newCell.appendChild(newText);
-		}
-	}
-
-function update_leaderboard_entry(table, index, rank, score, name, local) {
-	updateTable(table, index, [rank, name, score], local);
-}
-
-/*
-Flow is:
-/new_session to get id
-/update_listing to update score
-
-these get leaderboard entries
-/around_me
-/topten
-*/
-
-// I think we need to keep local score and name better
-// render_leaderboard isn't working super well when we rename an entry after game is over
-function render_leaderboard(table, lb, name) {
-	table.innerHTML = "";
-	var tbdy = document.createElement('tbody');
-	var rendered_local = false;
-	table.appendChild(tbdy);
-	var i = 0;
-	var lastrank = 1;
-
-	lb.forEach(entry => {
-		update_leaderboard_entry(table, i, entry.rank, entry.score, entry.name, entry.id == local_id);
-		lastrank = entry.rank;
-		i += 1;
-	});
-
-	var header = table.createTHead();
-	var row = header.insertRow(0);
-	var cell = row.insertCell(0);
-	cell.innerHTML = "<b>" + name + "</b>";
-}
-
-function is_in_top_ten(lb) {
-	var i = 0;
-	var lastrank = 1;
-
-	var ret = false;
-	lb.forEach(entry => {
-		if (Object.keys(local_score).length != 0) {
-			if (local_score.score > entry.score) {
-				ret = true;
-			}
-		}
-	});
-	return ret;
-}
-
-function check_for_high_score() {
-	if (!checking_for_high_score && !show_game_end_screen) {
-		checking_for_high_score = true;
-		show_game_end_screen = false;
-		var leaderboard_req = new XMLHttpRequest();
-		leaderboard_req.onload = function(oEvent) {
-			var entries = JSON.parse(leaderboard_req.response);
-			leaderboardglobal = [];
-			entries.forEach((entry,i) => {
-				leaderboardglobal[i] = entry;
-			});
-			if (is_in_top_ten(leaderboardglobal)) {
-				document.getElementById('namediv').style.display = 'block';
-				document.getElementById("player_name").onchange = function() {
-					var name = document.getElementById("player_name").value;
-					var listing_req = new XMLHttpRequest();
-					listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
-					listing_req.setRequestHeader("id",local_id);
-					listing_req.setRequestHeader("name",name);
-					listing_req.setRequestHeader("score",local_score.score);
-					listing_req.send();
-					listing_req.onload = function(oEvent) {
-						get_leaderboard_entries();
-					}
-					document.getElementById('namediv').style.display = 'none';
-					checking_for_high_score = false;
-					show_game_end_screen = true;
-				}
+		function get_value_from_cookie(key) {
+			var value;
+			var row = document.cookie
+				.split('; ')
+				.find(row => row.startsWith(key));
+			if (typeof row != "undefined") {
+				value = row.split('=')[1];
 			} else {
-				checking_for_high_score = false;
-				show_game_end_screen = true;
+				value = "";
+			}
+			return value;
+		}
+
+		function updateTable(table, index, fields, local) {
+			let newRow = table.insertRow(index);
+			for (var i = 0; i < fields.length; ++i) {
+				let newCell = newRow.insertCell(i);
+				if (local)
+					newCell.style.color = "rgb(200, 0, 0)";
+				let newText = document.createTextNode(fields[i]);
+				newCell.appendChild(newText);
 			}
 		}
-		leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/global", true);
-		leaderboard_req.send();
-	}
-}
 
-function get_leaderboard_entries() {
-	var leaderboard_req = new XMLHttpRequest();
-	leaderboard_req.onload = function(oEvent) {
-		var entries = JSON.parse(leaderboard_req.response);
-		leaderboardglobal = [];
-		entries.forEach((entry,i) => {
-			leaderboardglobal[i] = entry;
-		});
-		render_leaderboard(leaderboardglobal_table,leaderboardglobal, "Global");
-	}
-	leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/global", true);
-	leaderboard_req.send();
-}
-
-  // Returns an object containing resources that will be used later for drawing
-  function resources() {
-    let res = {
-      player: document.createElement('canvas'),
-      bullet: document.createElement('canvas'),
-      player_bullet: document.createElement('canvas'),
-      particle: document.createElement('canvas'),
-	  shields: {},
-	  shield_hit: gamearea.getContext("2d").createImageData(40,40), // TODO scale shields
-	  title_img: new Image(),
-	  game_over_img: new Image(),
-    }
-
-	res.title_img.src = 'title.png';
-	res.title_img.alt = 'Bug Invaders Title Screen';
-
-	res.game_over_img.src = 'game_over_w_score.png';
-	res.game_over_img.alt = 'Bug Invaders Game Over Screen';
-
-	// Particle
-    res.particle.width = 20;
-    res.particle.height = 20;
-
-    // Bullet
-    res.bullet.width = 6;
-    res.bullet.height = 6;
-    let bCtx = res.bullet.getContext('2d');
-    bCtx.fillStyle = "white";
-    bCtx.beginPath();
-    bCtx.arc(3, 3, 3, 0, 2 * Math.PI);
-    bCtx.fill();
-
-	res.player_bullet.width = 2;
-    res.player_bullet.height = 40;
-    let bpCtx = res.player_bullet.getContext('2d');
-    bpCtx.fillStyle = "red";
-	bpCtx.beginPath();
-    bpCtx.lineTo(2, 40);
-    bpCtx.lineTo(4, 0);
-    bpCtx.lineTo(0, 0);
-    bpCtx.fill();
-
-    // Player
-    res.player.width = 20;
-    res.player.height = 16;
-    let plCtx = res.player.getContext('2d');
-    plCtx.fillStyle = "red";
-    plCtx.beginPath();
-    plCtx.lineTo(20, 8);
-    plCtx.lineTo(0, 16);
-    plCtx.lineTo(0, 0);
-    plCtx.fill();
-
-	leaderboardglobal_table = document.createElement('table');
-	leaderboardglobal_table.style.width = '30%';
-	var tbdy = document.createElement('tbody');
-	leaderboardglobal_table.appendChild(tbdy);
-
-    return res;
-  }
-
-  // We create this here because it will be used from within `imports`
-  let gamearea = document.getElementById('gamearea');
-  let leaderboardglobal_elem = document.getElementById('leaderboardglobal');
-  let topbar = document.getElementById('topbar');
-
-  // Returns an object containing functions that will be linked to our wasm model
-  // This means that they can be called from Rust
-  function imports() {
-    const res = resources();
-    var ctx = gamearea.getContext("2d");
-	var topbar_ctx = topbar.getContext("2d");
-
-	function new_session() {
-		var session_req = new XMLHttpRequest();
-		session_req.onload = function(oEvent) {
-			local_id = session_req.response;
-
+		function update_leaderboard_entry(table, index, rank, score, name, local) {
+			updateTable(table, index, [rank, name, score], local);
 		}
-		session_req.open("GET", "https://leaderboard.edgecompute.app/new_session", true);
-		session_req.send();
-	}
 
-    function clear_screen() {
-      ctx.fillStyle = "black";
-      ctx.fillRect(0, 0, gamearea.width, gamearea.height);
-      topbar_ctx.fillStyle = "black";
-      topbar_ctx.fillRect(0, 0, topbar.width, topbar.height);
-    }
+		/*
+		Flow is:
+		/new_session to get id
+		/update_listing to update score
+		
+		these get leaderboard entries
+		/around_me
+		/topten
+		*/
 
-    function draw_player(x, y, angle) {
-      ctx.translate(x, y);
-      ctx.rotate(angle);
-      ctx.translate(0, -8);
-      ctx.drawImage(res.player, 0, 0);
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.fillStyle = "black";
-    }
+		// I think we need to keep local score and name better
+		// render_leaderboard isn't working super well when we rename an entry after game is over
+		function render_leaderboard(table, lb, name) {
+			table.innerHTML = "";
+			var tbdy = document.createElement('tbody');
+			var rendered_local = false;
+			table.appendChild(tbdy);
+			var i = 0;
+			var lastrank = 1;
 
-	function draw_ufo(x, y) {
-		ctx.putImageData(sprites[99][0].image_data, x, y);
-    }
+			lb.forEach(entry => {
+				update_leaderboard_entry(table, i, entry.rank, entry.score, entry.name, entry.id == local_id);
+				lastrank = entry.rank;
+				i += 1;
+			});
 
-    function draw_bullet(x, y) {
-      ctx.drawImage(res.bullet, x - 3, y - 3);
-    }
-
-	function draw_player_bullet(x, y) {
-      ctx.drawImage(res.player_bullet, x - 3, y - 3);
-    }
-
-    function draw_particle(x, y, radius, color) {
-		let pCtx = res.particle.getContext('2d');
-		if (color == 1) {
-			pCtx.fillStyle = "blue";
-		} else if (color == 2) {
-			pCtx.fillStyle = "red";
-		} else {
-			pCtx.fillStyle = "white";
+			var header = table.createTHead();
+			var row = header.insertRow(0);
+			var cell = row.insertCell(0);
+			cell.innerHTML = "<b>" + name + "</b>";
 		}
-		pCtx.beginPath();
-		pCtx.arc(10, 10, 10, 0, 2 * Math.PI);
-		pCtx.fill();
-		ctx.drawImage(res.particle, x - radius, y - radius, 2 * radius, 2 * radius);
-    }
 
-	function draw_intro() {
-		ctx.drawImage(res.title_img, 0,0, gamearea.width, gamearea.height);
-	}
+		function is_in_top_ten(lb) {
+			var i = 0;
+			var lastrank = 1;
 
-	function draw_game_over(score) {
-		check_for_high_score();
-		if (show_game_end_screen) {
-			ctx.drawImage(res.game_over_img, 0,0, gamearea.width, gamearea.height);
+			var ret = false;
+			lb.forEach(entry => {
+				if (Object.keys(local_score).length != 0) {
+					if (local_score.score > entry.score) {
+						ret = true;
+					}
+				}
+			});
+			return ret;
 		}
-	}
 
-    function draw_hud(score,lives, wave) {
-	  // draw hud
-      topbar_ctx.fillStyle = "red";
-      topbar_ctx.textBaseline = "top";
-      topbar_ctx.font = "20px courier";
-	  topbar_ctx.fillText("Score: " + score, 20, 20);
-	  topbar_ctx.fillText("Lives: " + lives, 220, 20);
-	  topbar_ctx.fillText("Wave: " + wave, 420, 20);
-
-	// draw leaderboard
-	leaderboardglobal_elem.appendChild(leaderboardglobal_table);
-    }
-
-
-	function draw_bounds(x,y,w,h) {
-		ctx.strokeStyle = "orange";
-		ctx.beginPath();
-		ctx.moveTo(x,y);
-		ctx.lineTo(x+w,y);
-		ctx.lineTo(x+w,y+h);
-		ctx.lineTo(x,y+h);
-		ctx.lineTo(x,y);
-		ctx.stroke();
-	}
-
-	function init_shield(id) {
-		res.shields[id] = [];
-	}
-
-	function add_shield_state(id, index, state) {
-		res.shields[id][index] = state;
-	}
-
-	function update_shield(id, index, state) {
-		if (res.shields[id] != "undefined")
-		res.shields[id][index] = state;
-	}
-
-	function draw_shield(id, x, y, dim) {
-		for (var i=0;i<25;++i) {
-			var state = res.shields[id][i];
-			var xoffset = (i % 5) * dim;
-			var yoffset = Math.trunc(i / 5) * dim;
-			if (state == 1) { // BlockState::Hit
-				ctx.fillStyle = "darkred";
-				ctx.fillRect(x + xoffset, y + yoffset, dim, dim);
-			} else if (state == 2) { // BlockState::Full
-				ctx.fillStyle = "red";
-				ctx.fillRect(x + xoffset, y + yoffset, dim, dim);
+		function check_for_high_score() {
+			if (!checking_for_high_score && !show_game_end_screen) {
+				checking_for_high_score = true;
+				show_game_end_screen = false;
+				var leaderboard_req = new XMLHttpRequest();
+				leaderboard_req.onload = function (oEvent) {
+					var entries = JSON.parse(leaderboard_req.response);
+					leaderboardglobal = [];
+					entries.forEach((entry, i) => {
+						leaderboardglobal[i] = entry;
+					});
+					if (is_in_top_ten(leaderboardglobal)) {
+						document.getElementById('namediv').style.display = 'block';
+						document.getElementById("player_name").onchange = function () {
+							var name = document.getElementById("player_name").value;
+							var listing_req = new XMLHttpRequest();
+							listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
+							listing_req.setRequestHeader("id", local_id);
+							listing_req.setRequestHeader("name", name);
+							listing_req.setRequestHeader("score", local_score.score);
+							listing_req.send();
+							listing_req.onload = function (oEvent) {
+								get_leaderboard_entries();
+							}
+							document.getElementById('namediv').style.display = 'none';
+							checking_for_high_score = false;
+							show_game_end_screen = true;
+						}
+					} else {
+						checking_for_high_score = false;
+						show_game_end_screen = true;
+					}
+				}
+				leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/global", true);
+				leaderboard_req.send();
 			}
 		}
-	}
 
-	function draw_sprite(sprite_id, frame_index, x, y) {
-		if (sprites[sprite_id] != "undefined" && sprites[sprite_id][frame_index] != "undefined") {
-			ctx.putImageData(sprites[sprite_id][frame_index].image_data, x, y);
+		function get_leaderboard_entries() {
+			var leaderboard_req = new XMLHttpRequest();
+			leaderboard_req.onload = function (oEvent) {
+				var entries = JSON.parse(leaderboard_req.response);
+				leaderboardglobal = [];
+				entries.forEach((entry, i) => {
+					leaderboardglobal[i] = entry;
+				});
+				render_leaderboard(leaderboardglobal_table, leaderboardglobal, "Global");
+			}
+			leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/global", true);
+			leaderboard_req.send();
 		}
-	}
 
-	function update_local_score(score) {
-		local_score.score = score;
+		// Returns an object containing resources that will be used later for drawing
+		function resources() {
+			let res = {
+				player: document.createElement('canvas'),
+				bullet: document.createElement('canvas'),
+				player_bullet: document.createElement('canvas'),
+				particle: document.createElement('canvas'),
+				shields: {},
+				shield_hit: gamearea.getContext("2d").createImageData(40, 40), // TODO scale shields
+				title_img: new Image(),
+				game_over_img: new Image(),
+			}
 
-		var listing_req = new XMLHttpRequest();
-		listing_req.onload = function(oEvent) {
+			res.title_img.src = 'title.png';
+			res.title_img.alt = 'Bug Invaders Title Screen';
+
+			res.game_over_img.src = 'game_over_w_score.png';
+			res.game_over_img.alt = 'Bug Invaders Game Over Screen';
+
+			// Particle
+			res.particle.width = 20;
+			res.particle.height = 20;
+
+			// Bullet
+			res.bullet.width = 6;
+			res.bullet.height = 6;
+			let bCtx = res.bullet.getContext('2d');
+			bCtx.fillStyle = "white";
+			bCtx.beginPath();
+			bCtx.arc(3, 3, 3, 0, 2 * Math.PI);
+			bCtx.fill();
+
+			res.player_bullet.width = 2;
+			res.player_bullet.height = 40;
+			let bpCtx = res.player_bullet.getContext('2d');
+			bpCtx.fillStyle = "red";
+			bpCtx.beginPath();
+			bpCtx.lineTo(2, 40);
+			bpCtx.lineTo(4, 0);
+			bpCtx.lineTo(0, 0);
+			bpCtx.fill();
+
+			// Player
+			res.player.width = 20;
+			res.player.height = 16;
+			let plCtx = res.player.getContext('2d');
+			plCtx.fillStyle = "red";
+			plCtx.beginPath();
+			plCtx.lineTo(20, 8);
+			plCtx.lineTo(0, 16);
+			plCtx.lineTo(0, 0);
+			plCtx.fill();
+
+			leaderboardglobal_table = document.createElement('table');
+			leaderboardglobal_table.style.width = '30%';
+			var tbdy = document.createElement('tbody');
+			leaderboardglobal_table.appendChild(tbdy);
+
+			return res;
+		}
+
+		// We create this here because it will be used from within `imports`
+		let gamearea = document.getElementById('gamearea');
+		let leaderboardglobal_elem = document.getElementById('leaderboardglobal');
+		let topbar = document.getElementById('topbar');
+
+		// Returns an object containing functions that will be linked to our wasm model
+		// This means that they can be called from Rust
+		function imports() {
+			const res = resources();
+			var ctx = gamearea.getContext("2d");
+			var topbar_ctx = topbar.getContext("2d");
+
+			function new_session() {
+				var session_req = new XMLHttpRequest();
+				session_req.onload = function (oEvent) {
+					local_id = session_req.response;
+
+				}
+				session_req.open("GET", "https://leaderboard.edgecompute.app/new_session", true);
+				session_req.send();
+			}
+
+			function clear_screen() {
+				ctx.fillStyle = "black";
+				ctx.fillRect(0, 0, gamearea.width, gamearea.height);
+				topbar_ctx.fillStyle = "black";
+				topbar_ctx.fillRect(0, 0, topbar.width, topbar.height);
+			}
+
+			function draw_player(x, y, angle) {
+				ctx.translate(x, y);
+				ctx.rotate(angle);
+				ctx.translate(0, -8);
+				ctx.drawImage(res.player, 0, 0);
+				ctx.setTransform(1, 0, 0, 1, 0, 0);
+				ctx.fillStyle = "black";
+			}
+
+			function draw_ufo(x, y) {
+				ctx.putImageData(sprites[99][0].image_data, x, y);
+			}
+
+			function draw_bullet(x, y) {
+				ctx.drawImage(res.bullet, x - 3, y - 3);
+			}
+
+			function draw_player_bullet(x, y) {
+				ctx.drawImage(res.player_bullet, x - 3, y - 3);
+			}
+
+			function draw_particle(x, y, radius, color) {
+				let pCtx = res.particle.getContext('2d');
+				if (color == 1) {
+					pCtx.fillStyle = "blue";
+				} else if (color == 2) {
+					pCtx.fillStyle = "red";
+				} else {
+					pCtx.fillStyle = "white";
+				}
+				pCtx.beginPath();
+				pCtx.arc(10, 10, 10, 0, 2 * Math.PI);
+				pCtx.fill();
+				ctx.drawImage(res.particle, x - radius, y - radius, 2 * radius, 2 * radius);
+			}
+
+			function draw_intro() {
+				ctx.drawImage(res.title_img, 0, 0, gamearea.width, gamearea.height);
+			}
+
+			function draw_game_over(score) {
+				check_for_high_score();
+				if (show_game_end_screen) {
+					ctx.drawImage(res.game_over_img, 0, 0, gamearea.width, gamearea.height);
+				}
+			}
+
+			function draw_hud(score, lives, wave) {
+				// draw hud
+				topbar_ctx.fillStyle = "red";
+				topbar_ctx.textBaseline = "top";
+				topbar_ctx.font = "20px courier";
+				topbar_ctx.fillText("Score: " + score, 20, 20);
+				topbar_ctx.fillText("Lives: " + lives, 220, 20);
+				topbar_ctx.fillText("Wave: " + wave, 420, 20);
+
+				// draw leaderboard
+				leaderboardglobal_elem.appendChild(leaderboardglobal_table);
+			}
+
+
+			function draw_bounds(x, y, w, h) {
+				ctx.strokeStyle = "orange";
+				ctx.beginPath();
+				ctx.moveTo(x, y);
+				ctx.lineTo(x + w, y);
+				ctx.lineTo(x + w, y + h);
+				ctx.lineTo(x, y + h);
+				ctx.lineTo(x, y);
+				ctx.stroke();
+			}
+
+			function init_shield(id) {
+				res.shields[id] = [];
+			}
+
+			function add_shield_state(id, index, state) {
+				res.shields[id][index] = state;
+			}
+
+			function update_shield(id, index, state) {
+				if (res.shields[id] != "undefined")
+					res.shields[id][index] = state;
+			}
+
+			function draw_shield(id, x, y, dim) {
+				for (var i = 0; i < 25; ++i) {
+					var state = res.shields[id][i];
+					var xoffset = (i % 5) * dim;
+					var yoffset = Math.trunc(i / 5) * dim;
+					if (state == 1) { // BlockState::Hit
+						ctx.fillStyle = "darkred";
+						ctx.fillRect(x + xoffset, y + yoffset, dim, dim);
+					} else if (state == 2) { // BlockState::Full
+						ctx.fillStyle = "red";
+						ctx.fillRect(x + xoffset, y + yoffset, dim, dim);
+					}
+				}
+			}
+
+			function draw_sprite(sprite_id, frame_index, x, y) {
+				if (sprites[sprite_id] != "undefined" && sprites[sprite_id][frame_index] != "undefined") {
+					ctx.putImageData(sprites[sprite_id][frame_index].image_data, x, y);
+				}
+			}
+
+			function update_local_score(score) {
+				local_score.score = score;
+
+				var listing_req = new XMLHttpRequest();
+				listing_req.onload = function (oEvent) {
+					get_leaderboard_entries();
+				}
+				listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
+				listing_req.setRequestHeader("id", local_id);
+				listing_req.setRequestHeader("name", local_score.name);
+				listing_req.setRequestHeader("score", score);
+				listing_req.send();
+			}
+
+			// The real loading and running of our wasm starts here
+			let imports = { clear_screen, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
+			imports.Math_atan = Math.atan;
+			imports.sin = Math.sin;
+			imports.cos = Math.cos;
+			return imports;
+		}
+
+		// Copy a nul-terminated string from the buffer pointed to.
+		// Consumes the old data and thus deallocated it.
+		function copyCStr(module, ptr) {
+			let orig_ptr = ptr;
+			const collectCString = function* () {
+				let memory = new Uint8Array(module.memory.buffer);
+				while (memory[ptr] !== 0) {
+					if (memory[ptr] === undefined) { throw new Error("Tried to read undef mem") }
+					yield memory[ptr]
+					ptr += 1
+				}
+			}
+
+			const buffer_as_u8 = new Uint8Array(collectCString())
+			const utf8Decoder = new TextDecoder("UTF-8");
+			const buffer_as_utf8 = utf8Decoder.decode(buffer_as_u8);
+			module.dealloc_str(orig_ptr);
+			return buffer_as_utf8
+		}
+
+		// Fetch and instantiate our wasm module
+		fetch("space_invaders.wasm").then(response =>
+			response.arrayBuffer()
+		).then(bytes =>
+			WebAssembly.instantiate(bytes, { env: imports() })
+		).then(results => {
+			let mod = results.instance;
+			module.update = mod.exports.update;
+			module.key_pressed = mod.exports.key_pressed;
+			module.toggle_fire = mod.exports.toggle_fire;
+			module.toggle_left = mod.exports.toggle_left;
+			module.toggle_right = mod.exports.toggle_right;
+			module.resize = mod.exports.resize;
+			module.draw = mod.exports.draw;
+			module.init = mod.exports.init;
+			module.alloc = mod.exports.alloc;
+			module.dealloc = mod.exports.dealloc;
+			module.dealloc_str = mod.exports.dealloc_str;
+			module.memory = mod.exports.memory;
+
+			module.init();
+
+			local_score.name = "Kiosk Player"; // TODO add unique id to this?
+			document.getElementById('gamediv').style.display = 'block';
+			document.getElementById('namediv').style.display = 'none';
+			local_score.score = 0;
+
 			get_leaderboard_entries();
-		}
-		listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
-		listing_req.setRequestHeader("id",local_id);
-		listing_req.setRequestHeader("name",local_score.name);
-		listing_req.setRequestHeader("score",score);
-		listing_req.send();
-	}
+			// TODO set timer for get_leaderboard_entries
 
-    // The real loading and running of our wasm starts here
-    let imports = { clear_screen, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
-    imports.Math_atan = Math.atan;
-    imports.sin = Math.sin;
-    imports.cos = Math.cos;
-    return imports;
-  }
-
-// Copy a nul-terminated string from the buffer pointed to.
-// Consumes the old data and thus deallocated it.
-function copyCStr(module, ptr) {
-  let orig_ptr = ptr;
-  const collectCString = function* () {
-	let memory = new Uint8Array(module.memory.buffer);
-	while (memory[ptr] !== 0) {
-      if (memory[ptr] === undefined) { throw new Error("Tried to read undef mem") }
-      yield memory[ptr]
-      ptr += 1
-    }
-  }
-
-  const buffer_as_u8 = new Uint8Array(collectCString())
-  const utf8Decoder = new TextDecoder("UTF-8");
-  const buffer_as_utf8 = utf8Decoder.decode(buffer_as_u8);
-  module.dealloc_str(orig_ptr);
-  return buffer_as_utf8
-}
-
-  // Fetch and instantiate our wasm module
-  fetch("space_invaders.wasm").then(response =>
-    response.arrayBuffer()
-  ).then(bytes =>
-    WebAssembly.instantiate(bytes, { env: imports() })
-  ).then(results => {
-    let mod = results.instance;
-    module.update = mod.exports.update;
-	module.key_pressed = mod.exports.key_pressed;
-    module.toggle_fire = mod.exports.toggle_fire;
-    module.toggle_left = mod.exports.toggle_left;
-    module.toggle_right = mod.exports.toggle_right;
-    module.resize = mod.exports.resize;
-    module.draw = mod.exports.draw;
-	module.init = mod.exports.init;
-	module.alloc = mod.exports.alloc;
-	module.dealloc = mod.exports.dealloc;
-	module.dealloc_str = mod.exports.dealloc_str;
-	module.memory = mod.exports.memory;
-
-	module.init();
-
-	local_score.name = "Kiosk Player"; // TODO add unique id to this?
-	document.getElementById('gamediv').style.display = 'block';
-	document.getElementById('namediv').style.display = 'none';
-	local_score.score = 0;
-
-	get_leaderboard_entries();
-	// TODO set timer for get_leaderboard_entries
-
-    // Input processing
-    function processKey(key, b) {
-		// while in game over, don't do this
-		if (checking_for_high_score) {
-			return;
-		}
-      switch (key) {
-        case "ArrowLeft":
-          module.toggle_left(b);
-          break;
-        case "ArrowRight":
-          module.toggle_right(b);
-          break;
-        case " ":
-          module.toggle_fire(b);
-          break;
-      }
-	  module.key_pressed(key, b);
-    }
-    document.addEventListener('keydown', e => processKey(e.key, true));
-    document.addEventListener('keyup', e => processKey(e.key, false));
-
-	/*
-	Sprites are 12x12, and the enemy game radius is 24
-	So we double the sprites when we init, and then when we render we need to scale by game to screen
-	*/
-	function init_sprites(scale) {
-                let enemy0_0 = [
-                        0,0,1,1,1,1,1,1,1,1,0,0,
-                        0,1,0,0,0,0,0,0,0,0,1,0,
-                        0,1,0,1,1,1,1,1,0,0,1,0,
-                        0,1,0,1,1,1,1,1,0,0,1,0,
-                        0,1,0,0,0,0,0,0,0,0,1,0,
-                        1,0,0,0,0,0,0,0,0,0,1,0,
-                        1,0,0,0,0,0,0,0,0,0,0,1,
-                        0,1,0,0,0,0,0,0,0,0,1,0,
-                        0,1,0,0,1,1,0,0,0,1,0,0,
-                        0,0,1,1,0,0,1,1,1,0,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,
-                ];
-
-
-                let enemy0_1 = [
-                        0,0,1,1,1,1,1,1,1,1,0,0,
-                        0,1,0,0,0,0,0,0,0,0,1,0,
-                        0,1,0,0,1,1,1,1,1,0,1,0,
-                        0,1,0,0,1,1,1,1,1,0,1,0,
-                        0,1,0,0,0,0,0,0,0,0,1,0,
-                        0,1,0,0,0,0,0,0,0,0,0,1,
-                        1,0,0,0,0,0,0,0,0,0,0,1,
-                        0,1,0,0,0,0,0,0,0,0,1,0,
-                        0,1,0,0,0,0,1,1,0,0,1,0,
-                        0,0,1,1,1,1,0,0,1,1,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,
-                ];
-
-
-                let enemy1_0 = [
-                        0,0,0,0,1,1,1,1,0,0,0,0,
-                        0,0,0,1,0,0,0,0,1,0,0,0,
-                        0,0,0,1,0,1,1,0,1,0,0,0,
-                        0,0,1,1,0,1,0,0,1,1,0,0,
-                        0,1,0,1,0,1,0,0,1,0,1,0,
-                        0,1,0,1,0,1,1,0,1,0,1,0,
-                        0,1,0,1,0,0,0,0,1,0,1,0,
-                        0,1,0,0,1,1,1,1,0,0,1,0,
-                        1,0,0,1,0,0,1,0,0,1,0,0,
-                        0,0,1,0,0,1,0,0,0,0,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,
-                ];
-
-
-                let enemy1_1 = [
-                        0,0,0,0,1,1,1,1,0,0,0,0,
-                        0,0,0,1,0,0,0,0,1,0,0,0,
-                        0,0,0,1,0,1,1,0,1,0,0,0,
-                        0,0,1,1,0,0,1,0,1,1,0,0,
-                        0,1,0,1,0,0,1,0,1,0,1,0,
-                        0,1,0,1,0,1,1,0,1,0,1,0,
-                        0,1,0,1,0,0,0,0,1,0,1,0,
-                        0,1,0,0,1,1,1,1,0,0,1,0,
-                        0,0,1,0,0,1,0,0,1,0,0,1,
-                        0,0,0,0,0,0,1,0,0,1,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,
-                ];
-
-
-                let enemy2_0 = [
-                        0,0,0,1,1,1,1,1,0,0,0,0,
-                        0,0,1,0,0,0,0,0,1,0,0,0,
-                        0,1,0,0,0,0,0,0,0,1,0,0,
-                        1,0,0,0,0,0,0,0,0,0,1,0,
-                        1,0,0,1,0,0,1,0,0,0,1,0,
-                        1,0,0,1,0,0,1,0,0,0,1,0,
-                        0,1,0,0,0,0,0,0,0,1,0,0,
-                        0,0,1,0,1,1,1,1,0,1,0,0,
-                        0,0,0,1,0,0,0,0,1,0,0,0,
-                        0,0,0,0,1,0,0,0,0,1,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,
-                ];
-
-
-                let enemy2_1 = [
-                        0,0,0,0,1,1,1,1,1,0,0,0,
-                        0,0,0,1,0,0,0,0,0,1,0,0,
-                        0,0,1,0,0,0,0,0,0,0,1,0,
-                        0,1,0,0,0,0,0,0,0,0,0,1,
-                        0,1,0,0,0,1,0,0,1,0,0,1,
-                        0,1,0,0,0,1,0,0,1,0,0,1,
-                        0,0,1,0,0,0,0,0,0,1,1,0,
-                        0,0,1,0,1,1,1,1,0,1,0,0,
-                        0,0,0,1,0,0,0,0,1,0,0,0,
-                        0,0,1,0,0,0,0,1,0,0,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,
-                ];
-
-
-                let ufo = [
-                        0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,
-                        0,0,0,1,1,1,0,0,0,0,1,1,1,0,0,0,
-                        0,0,1,0,0,0,0,1,1,0,0,0,0,1,0,0,
-                        0,1,0,0,0,0,0,1,1,0,0,0,0,0,1,0,
-                        1,0,0,1,0,1,0,1,1,0,1,0,1,0,0,1,
-                        1,0,0,1,0,1,0,0,0,0,1,0,1,0,0,1,
-                        0,1,0,0,0,0,0,1,1,0,0,0,0,0,1,0,
-                        0,0,1,1,1,1,1,0,0,1,1,1,1,1,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                ];
-
-		init_sprite_frame(0, 0, enemy0_0, 12, scale*3, 255, 255, 255);
-		init_sprite_frame(0, 1, enemy0_1, 12, scale*3, 255, 255, 255);
-		init_sprite_frame(1, 0, enemy1_0, 12, scale*3, 255, 255, 255);
-		init_sprite_frame(1, 1, enemy1_1, 12, scale*3, 255, 255, 255);
-		init_sprite_frame(2, 0, enemy2_0, 12, scale*3, 255, 255, 255);
-		init_sprite_frame(2, 1, enemy2_1, 12, scale*3, 255, 255, 255);
-		init_sprite_frame(99,0, ufo, 16, scale*3, 0, 0, 255);
-	}
-
-	function init_sprite_frame(sprite_id, frame_index, data, orig_dim, scale, r, g, b) {
-
-		let final_size = Math.floor(scale * orig_dim);
-
-		if (typeof(sprites[sprite_id]) == "undefined") {
-			sprites[sprite_id] = [];
-		}
-
-		// TODO does this leak if we call this multiple times?
-		sprites[sprite_id][frame_index] = {
-			image_data: gamearea.getContext("2d").createImageData(final_size,final_size),
-			w: final_size,
-			h: final_size
-		}
-		for (var j=0;j<final_size;++j) {
-			for (var i=0;i<final_size;++i) {
-				var dest_index = i + j*final_size;
-				var source_index = Math.floor(i/scale) + Math.floor(j/scale) * orig_dim;
-				sprites[sprite_id][frame_index].image_data.data[4*dest_index] = data[source_index] > 0 ? r : 0;
-				sprites[sprite_id][frame_index].image_data.data[4*dest_index+1] = data[source_index] > 0 ? g : 0;
-				sprites[sprite_id][frame_index].image_data.data[4*dest_index+2] = data[source_index] > 0 ? b : 0;
-				sprites[sprite_id][frame_index].image_data.data[4*dest_index+3] = 255;
+			// Input processing
+			function processKey(key, b) {
+				// while in game over, don't do this
+				if (checking_for_high_score) {
+					return;
+				}
+				switch (key) {
+					case "ArrowLeft":
+						module.toggle_left(b);
+						break;
+					case "ArrowRight":
+						module.toggle_right(b);
+						break;
+					case " ":
+						module.toggle_fire(b);
+						break;
+				}
+				module.key_pressed(key, b);
 			}
-		}
-	}
+			document.addEventListener('keydown', e => processKey(e.key, true));
+			document.addEventListener('keyup', e => processKey(e.key, false));
 
-    // Resizing
-    function resize() {
-      // We make the gamearea somewhat smaller to get some zooming
-      gamearea.width = window.innerWidth * 0.8;
-      gamearea.height = window.innerHeight * 0.9;
-      topbar.width = window.innerWidth;
-      topbar.height = window.innerHeight * 0.1;
-      leaderboardglobal_elem.width = window.innerWidth * 0.2;
-      leaderboardglobal_elem.height = window.innerHeight * 0.9;
-      let scale = module.resize(gamearea.width, gamearea.height);
-	  init_sprites(scale);
-    }
-    window.addEventListener('resize', () => {
-      resize();
-    });
+			/*
+			Sprites are 12x12, and the enemy game radius is 24
+			So we double the sprites when we init, and then when we render we need to scale by game to screen
+			*/
+			function init_sprites(scale) {
+				let enemy0_0 = [
+					0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
+					0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+					0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0,
+					0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0,
+					0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+					1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+					1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+					0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+					0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0,
+					0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				];
 
-    // Game loop
-    let start = null;
-    let prevTimestamp = null;
-    let drawAndUpdate = (timestamp) => {
-      // Initialization
-      if (!prevTimestamp) {
-        start = timestamp;
-        prevTimestamp = timestamp;
-        requestAnimationFrame(drawAndUpdate);
-        return;
-      }
 
-      // Update and draw
-      let progress = (timestamp - prevTimestamp) / 1000;
-      module.update(progress);
-      module.draw(progress);
+				let enemy0_1 = [
+					0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
+					0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+					0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0,
+					0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0,
+					0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+					0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+					1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+					0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+					0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0,
+					0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				];
 
-      // Some bookkeeping
-      prevTimestamp = timestamp;
-      requestAnimationFrame(drawAndUpdate);
-    };
 
-    resize();
-    drawAndUpdate();
-  });
-  </script>
-  </body>
+				let enemy1_0 = [
+					0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0,
+					0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0,
+					0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0,
+					0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0,
+					0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0,
+					0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0,
+					0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0,
+					0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0,
+					1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
+					0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				];
+
+
+				let enemy1_1 = [
+					0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0,
+					0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0,
+					0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0,
+					0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0,
+					0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0,
+					0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0,
+					0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0,
+					0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0,
+					0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+					0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				];
+
+
+				let enemy2_0 = [
+					0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0,
+					0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+					0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+					1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+					1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0,
+					1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0,
+					0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+					0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 0,
+					0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0,
+					0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				];
+
+
+				let enemy2_1 = [
+					0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0,
+					0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0,
+					0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+					0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+					0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+					0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1,
+					0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0,
+					0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 0,
+					0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0,
+					0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				];
+
+
+				let ufo = [
+					0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0,
+					0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0,
+					0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0,
+					1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1,
+					1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1,
+					0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0,
+					0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				];
+
+				init_sprite_frame(0, 0, enemy0_0, 12, scale * 3, 255, 255, 255);
+				init_sprite_frame(0, 1, enemy0_1, 12, scale * 3, 255, 255, 255);
+				init_sprite_frame(1, 0, enemy1_0, 12, scale * 3, 255, 255, 255);
+				init_sprite_frame(1, 1, enemy1_1, 12, scale * 3, 255, 255, 255);
+				init_sprite_frame(2, 0, enemy2_0, 12, scale * 3, 255, 255, 255);
+				init_sprite_frame(2, 1, enemy2_1, 12, scale * 3, 255, 255, 255);
+				init_sprite_frame(99, 0, ufo, 16, scale * 3, 0, 0, 255);
+			}
+
+			function init_sprite_frame(sprite_id, frame_index, data, orig_dim, scale, r, g, b) {
+
+				let final_size = Math.floor(scale * orig_dim);
+
+				if (typeof (sprites[sprite_id]) == "undefined") {
+					sprites[sprite_id] = [];
+				}
+
+				// TODO does this leak if we call this multiple times?
+				sprites[sprite_id][frame_index] = {
+					image_data: gamearea.getContext("2d").createImageData(final_size, final_size),
+					w: final_size,
+					h: final_size
+				}
+				for (var j = 0; j < final_size; ++j) {
+					for (var i = 0; i < final_size; ++i) {
+						var dest_index = i + j * final_size;
+						var source_index = Math.floor(i / scale) + Math.floor(j / scale) * orig_dim;
+						sprites[sprite_id][frame_index].image_data.data[4 * dest_index] = data[source_index] > 0 ? r : 0;
+						sprites[sprite_id][frame_index].image_data.data[4 * dest_index + 1] = data[source_index] > 0 ? g : 0;
+						sprites[sprite_id][frame_index].image_data.data[4 * dest_index + 2] = data[source_index] > 0 ? b : 0;
+						sprites[sprite_id][frame_index].image_data.data[4 * dest_index + 3] = 255;
+					}
+				}
+			}
+
+			// Resizing
+			function resize() {
+				// We make the gamearea somewhat smaller to get some zooming
+				gamearea.width = window.innerWidth * 0.8;
+				gamearea.height = window.innerHeight * 0.9;
+				topbar.width = window.innerWidth;
+				topbar.height = window.innerHeight * 0.1;
+				leaderboardglobal_elem.width = window.innerWidth * 0.2;
+				leaderboardglobal_elem.height = window.innerHeight * 0.9;
+				let scale = module.resize(gamearea.width, gamearea.height);
+				init_sprites(scale);
+			}
+			window.addEventListener('resize', () => {
+				resize();
+			});
+
+			// Game loop
+			let start = null;
+			let prevTimestamp = null;
+			let drawAndUpdate = (timestamp) => {
+				// Initialization
+				if (!prevTimestamp) {
+					start = timestamp;
+					prevTimestamp = timestamp;
+					requestAnimationFrame(drawAndUpdate);
+					return;
+				}
+
+				// Update and draw
+				let progress = (timestamp - prevTimestamp) / 1000;
+				module.update(progress);
+				module.draw(progress);
+
+				// Some bookkeeping
+				prevTimestamp = timestamp;
+				requestAnimationFrame(drawAndUpdate);
+			};
+
+			resize();
+			drawAndUpdate();
+		});
+	</script>
+</body>
+
 </html>
