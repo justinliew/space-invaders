@@ -156,32 +156,34 @@ impl RenderData {
 				draw_intro();
 			},
 			GameState::Playing | GameState::Death(_) | GameState::Win(_) => {
-				for bullet in &world.bullets {
+				for bullet in world.get_bullets() {
 					let bp = self.world_to_screen(&bullet.location.position);
 					draw_bullet(bp.x, bp.y);
 				}
-				if let BulletType::Player(alive) = world.player_bullet.bullet_type {
+				let player_bullet = world.get_player_bullet();
+				if let BulletType::Player(alive) = player_bullet.bullet_type {
 					if alive {
-						let bp = self.world_to_screen(&world.player_bullet.location.position);
+						let bp = self.world_to_screen(&player_bullet.location.position);
 						draw_player_bullet(bp.x, bp.y);
 					}
 				}
 
-				let p = self.world_to_screen(&Point{x: world.player.x(), y: world.player.y()});
+				let player = world.get_player();
+				let p = self.world_to_screen(&Point{x: player.x(), y: player.y()});
 
-				if world.player.alive {
-					draw_player(p.x, p.y, world.player.dir());
+				if player.alive {
+					draw_player(p.x, p.y, player.dir());
 				}
 
-				self.draw_swarm(&world.swarm);
+				self.draw_swarm(&world.get_swarm());
 
-				for (index,shield) in world.shields.iter().enumerate() {
+				for (index,shield) in world.get_active_shields().iter().enumerate() {
 					let screen_pos = self.world_to_screen(&shield.top_left);
 					draw_shield(index as i32, screen_pos.x, screen_pos.y, Shield::BLOCK_DIM * self.game_to_screen);
 				}
 
-				if world.ufo.active {
-					let screen_pos = self.world_to_screen(&world.ufo.position);
+				if world.get_ufo().active {
+					let screen_pos = self.world_to_screen(&world.get_ufo().position);
 					draw_ufo(screen_pos.x, screen_pos.y);
 				}
 			},

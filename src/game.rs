@@ -10,8 +10,6 @@ use crate::point::Point;
 const MOVE_SPEED: f64 = 200.0;
 
 extern "C" {
-	fn init_shield(_: c_int);
-	fn add_shield_state(_: c_int, _: c_int, _: c_int);
 
 	// id, index, state
 	fn update_shield(_: c_int, _: c_int, _: c_int);
@@ -90,15 +88,11 @@ impl Game {
 		}
 
         // Remove all enemies and bullets
-        self.world.bullets.clear();
-		self.world.swarm.reset(reset_type);
-		self.world.player.alive = true;
+		self.world.reset(reset_type);
     }
 
 	pub fn post_death_reset(&mut self) {
-        self.world.bullets.clear();
-		self.world.player.alive = true;
-		self.world.player.reset_location();
+		self.world.reset(ResetType::New);
 	}
 
 	pub fn send_game_event(&mut self, event: GameEvent) {
@@ -112,14 +106,7 @@ impl Game {
 					if *timer >= 0. {
 						*timer -= dt;
 					} else {
-						for (index,shield) in self.world.shields.iter_mut().enumerate() {
-							shield.reset();
-							init_shield(index as i32);
-							for i in 0..25 {
-								let state = &shield.b[i];
-								add_shield_state(index as i32, i as i32, *state as i32);
-							}
-						}
+						self.world.init_shields();
 						if input.any {
 							new_session();
 							self.game_state = GameState::Playing;
@@ -128,37 +115,38 @@ impl Game {
 				}
 			},
 			GameState::Playing => {
-				let radius = self.world.swarm.radius;
+				let radius = self.world.get_swarm().radius;
+				let player_location = self.world.get_player().vector.clone();
 
-				if input.left && self.world.player.x() > radius {
-					*self.world.player.x_mut() -= MOVE_SPEED * dt;
+				if input.left && self.world.get_player().x() > radius {
+					*self.world.get_player_mut().x_mut() -= MOVE_SPEED * dt;
 				}
-				if input.right && self.world.player.x() < (self.world.world_size.width-radius) {
-					*self.world.player.x_mut() += MOVE_SPEED * dt;
+				if input.right && self.world.get_player().x() < (self.world.world_size.width-radius) {
+					*self.world.get_player_mut().x_mut() += MOVE_SPEED * dt;
 				};
 
 				// Add bullets
 				if input.fire {
-					if let BulletType::Player(alive) = self.world.player_bullet.bullet_type {
+					if let BulletType::Player(alive) = self.world.get_player_bullet().bullet_type {
 						if !alive {
-							self.world.player_bullet.inplace_new(self.world.player.vector.clone(), BulletType::Player(true), 600.);
+							self.world.get_player_bullet_mut().inplace_new(player_location, BulletType::Player(true), 600.);
 						}
 					}
 				}
 
 				// update enemies
-				if let Some(bullet) = self.world.swarm.update(dt) {
-					self.world.bullets.push(bullet);
+				if let Some(bullet) = self.world.get_swarm_mut().update(dt) {
+					self.world.get_bullets_mut().push(bullet);
 				}
 
 				// update bullets
-				for bullet in &mut self.world.bullets {
+				for bullet in self.world.get_bullets_mut() {
 					bullet.update(dt);
 				}
 
-				if let BulletType::Player(alive) = self.world.player_bullet.bullet_type {
+				if let BulletType::Player(alive) = self.world.get_player_bullet().bullet_type {
 					if alive {
-						self.world.player_bullet.update(dt);
+						self.world.get_player_bullet_mut().update(dt);
 					}
 				}
 
@@ -166,36 +154,36 @@ impl Game {
 				{
 					let width = self.world.world_size.width;
 					let height = self.world.world_size.height;
-					let bullets = &mut self.world.bullets;
+					let bullets = self.world.get_bullets_mut();
 					bullets.retain(|bullet| {
 						let within = bullet.x() > 0. && bullet.x() < width &&
 								bullet.y() > 0. && bullet.y() < height;
 						within
 					});
 
-					if self.world.player_bullet.x() < 0. || self.world.player_bullet.x() > width ||
-					self.world.player_bullet.y() < 0. || self.world.player_bullet.y() > height {
-						self.world.player_bullet.bullet_type = BulletType::Player(false);
+					let player_bullet = self.world.get_player_bullet_mut();
+					if player_bullet.x() < 0. || player_bullet.x() > width ||
+					player_bullet.y() < 0. || player_bullet.y() > height {
+						player_bullet.bullet_type = BulletType::Player(false);
 					}
 				}
 
 				let deferred_shield_damage = self.handle_collisions();
 				{
-					let mut_shields = &mut self.world.shields;
 					for d in deferred_shield_damage {
-						let bs = mut_shields[d.0].damage(d.1,d.2);
+						let bs = self.world.get_active_shields_mut()[d.0].damage(d.1,d.2);
 						update_shield(d.0 as i32, (d.1 as f64 + d.2 as f64 * 5.) as i32, bs as i32);
 					}
 				}
-				if let Some(lowest) = self.world.swarm.get_lowest_alive() {
-					if lowest >= self.world.player.vector.position.y {
+				if let Some(lowest) = self.world.get_swarm().get_lowest_alive() {
+					if lowest >= self.world.get_player().vector.position.y {
 						self.game_state = GameState::GameOver(2.);
 					}
 				} else {
 					self.game_state = GameState::Win(2.);
 				}
 
-				if !self.world.player.alive {
+				if !self.world.get_player().alive {
 					self.lives -= 1;
 					if self.lives == 0 {
 						self.game_state = GameState::GameOver(2.);
@@ -204,7 +192,7 @@ impl Game {
 					}
 				}
 
-				self.world.ufo.update(dt);
+				self.world.get_ufo_mut().update(dt);
 			},
 			GameState::Death(_) => {
 				if let GameState::Death(ref mut timer) = self.game_state {
