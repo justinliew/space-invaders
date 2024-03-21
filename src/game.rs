@@ -21,6 +21,7 @@ extern "C" {
 pub enum ResetType {
 	New,
 	Next,
+	Respawn,
 }
 
 #[derive(Clone,Copy)]
@@ -95,7 +96,7 @@ impl Game {
     }
 
 	pub fn post_death_reset(&mut self) {
-		self.world.reset(ResetType::New);
+		self.world.reset(ResetType::Respawn);
 	}
 
 	pub fn send_game_event(&mut self, event: GameEvent) {

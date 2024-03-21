@@ -63,6 +63,8 @@ impl Swarm {
 	pub fn reset(&mut self, reset_type: ResetType) {
 		if reset_type == ResetType::Next {
 			self.top_left = START_LOCATION + Point::new(0.,10.);
+		} else if reset_type == ResetType::Respawn {
+			return;			
 		} else {
 			self.top_left = START_LOCATION;
 		}
