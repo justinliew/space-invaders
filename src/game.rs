@@ -58,6 +58,8 @@ pub struct Game {
 	/// state of the game
 	pub game_state: GameState,
 
+	toggle_shield_cooldown: f64,
+
 	/// Events to other parts of the system
 	sender: Sender<GameEvent>,
 }
@@ -71,6 +73,7 @@ impl Game {
 			lives: 3,
 			wave: 1,
 			game_state: GameState::Intro(0.5),
+			toggle_shield_cooldown: 0.,
 			sender: tx,
         }
     }
@@ -132,6 +135,13 @@ impl Game {
 							self.world.get_player_bullet_mut().inplace_new(player_location, BulletType::Player(true), 600.);
 						}
 					}
+				}
+
+				if input.alt && self.toggle_shield_cooldown <= 0. {
+					self.world.toggle_shields();
+					self.toggle_shield_cooldown = 1.;
+				} else if self.toggle_shield_cooldown > 0. {
+					self.toggle_shield_cooldown -= dt;
 				}
 
 				// update enemies

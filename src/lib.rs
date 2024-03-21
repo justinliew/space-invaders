@@ -111,3 +111,9 @@ pub extern "C" fn toggle_fire(b: c_int) {
     let data = &mut GAME.lock().unwrap();
     data.input.fire = int_to_bool(b);
 }
+
+#[no_mangle]
+pub extern "C" fn toggle_alt(b: c_int) {
+    let data = &mut GAME.lock().unwrap();
+    data.input.alt = int_to_bool(b);
+}

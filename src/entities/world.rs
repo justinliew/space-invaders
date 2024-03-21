@@ -20,6 +20,7 @@ pub struct World {
 	swarm: Swarm,
 	player_bullet: Bullet,
 	bullets: Vec<Bullet>,
+	using_fastly_shields: bool,
 	shields: Vec<Shield>,
 	fastly_shields: Vec<Shield>,
 	ufo: Ufo,
@@ -34,6 +35,7 @@ impl World {
 			swarm: Swarm::new(10,5, world_size),
 			player_bullet: Bullet::new(Vector::default(), BulletType::Player(false), 0.),
 			bullets: vec![],
+			using_fastly_shields: false,
 			shields: vec![
 				Shield::new(Point::new(150.,550.,),
 				[BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,BlockState::Full,
@@ -114,12 +116,23 @@ impl World {
 		}
 	}
 
+	pub fn toggle_shields(&mut self) {
+		self.using_fastly_shields = !self.using_fastly_shields;
+		self.init_shields();
+	}
+
 	pub fn get_active_shields(&self) -> &Vec<Shield> {
-		&self.shields
+		match self.using_fastly_shields {
+			true => &self.fastly_shields,
+			false => &self.shields,
+		}
 	}
 
 	pub fn get_active_shields_mut(&mut self) -> &mut Vec<Shield> {
-		&mut self.shields
+		match self.using_fastly_shields {
+			true => &mut self.fastly_shields,
+			false => &mut self.shields,
+		}
 	}
 
 	pub fn get_bullets(&self) -> &Vec<Bullet> {
@@ -163,7 +176,11 @@ impl World {
 	}
 
 	pub fn get_for_collisions(&mut self) -> (&mut Player, &mut Swarm, &mut Bullet, &mut Vec<Bullet>, &mut Vec<Shield>, &mut Ufo) {
-		(&mut self.player, &mut self.swarm, &mut self.player_bullet, &mut self.bullets, &mut self.shields, &mut self.ufo)
+		let shields = match self.using_fastly_shields {
+			true => &mut self.fastly_shields,
+			false => &mut self.shields
+		};
+		(&mut self.player, &mut self.swarm, &mut self.player_bullet, &mut self.bullets, shields, &mut self.ufo)
 	}
 
 

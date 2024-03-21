@@ -445,6 +445,7 @@
 			module.toggle_fire = mod.exports.toggle_fire;
 			module.toggle_left = mod.exports.toggle_left;
 			module.toggle_right = mod.exports.toggle_right;
+			module.toggle_alt = mod.exports.toggle_alt;
 			module.resize = mod.exports.resize;
 			module.draw = mod.exports.draw;
 			module.init = mod.exports.init;
@@ -478,6 +479,9 @@
 						break;
 					case " ":
 						module.toggle_fire(b);
+						break;
+					case "s":
+						module.toggle_alt(b);
 						break;
 				}
 				module.key_pressed(key, b);
