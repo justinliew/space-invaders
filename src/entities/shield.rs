@@ -1,3 +1,5 @@
+use core::num;
+
 use crate::point::Point;
 use crate::bullet::Bullet;
 
@@ -17,20 +19,28 @@ pub struct Shield {
 	pub top_left: Point,
 	pub b: [BlockState; 25],
 	pub def: [BlockState; 25],
+	pub num_full: usize,
 }
 
 impl Shield {
 	pub const BLOCK_DIM : f64 = 20.;
 	pub fn new(top_left: Point, block_state: [BlockState; 25]) -> Self {
+		let num_full = block_state.iter().fold(0, |acc, b| acc + (*b == BlockState::Full) as usize);
 		Shield {
 			top_left: top_left,
 			b: block_state,
 			def: block_state,
+			num_full: num_full,
 		}
 	}
 
 	pub fn reset(&mut self) {
 		self.b = self.def;
+	}
+
+	pub fn get_percentage_full(&self) -> f32 {
+		let cur_full = self.b.iter().fold(0, |acc, b| acc + (*b != BlockState::Empty) as usize);
+		cur_full as f32 / self.num_full as f32
 	}
 
 	fn get_indices(&self, p: &Point) -> Option<(usize,usize)> {

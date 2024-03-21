@@ -1,4 +1,4 @@
-use std::os::raw::{c_double, c_int, c_uint};
+use std::os::raw::{c_double, c_int, c_uchar, c_uint};
 
 use crate::point::Point;
 use crate::size::WorldSize;
@@ -18,7 +18,7 @@ extern "C" {
 	fn draw_player_bullet(_: c_double, _: c_double);
     fn draw_particle(_: c_double, _: c_double, _: c_double, _: c_int);
 	fn draw_ufo(_: c_double, _: c_double);
-    fn draw_hud(_: c_int, _: c_int, _: c_int);
+    fn draw_hud(_: c_int, _: c_int, _: c_int, _: c_uchar);
 	fn draw_intro();
 	fn draw_game_over(_: c_int);
 
@@ -192,7 +192,7 @@ impl RenderData {
 			},
 		}
 
-		draw_hud(game.score, game.lives, game.wave);
+		draw_hud(game.score, game.lives, game.wave, game.conditions);
 	}
 }
 

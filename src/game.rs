@@ -46,6 +46,15 @@ pub enum ColourIndex {
 	RED,
 }
 
+#[derive(Clone,Copy)]
+#[repr(u8)]
+pub enum Condition {
+	None = 0x0,
+	Shields = 0x1,
+	Bomb = 0x2,
+	HeatSeeking = 0x4,
+}
+
 /// The data structure that contains the state of the game
 pub struct Game {
     /// The world contains everything that needs to be drawn
@@ -58,6 +67,9 @@ pub struct Game {
 	pub wave: i32,
 	/// state of the game
 	pub game_state: GameState,
+
+	/// debug state of the game
+	pub conditions: u8,
 
 	toggle_shield_cooldown: f64,
 
@@ -74,10 +86,24 @@ impl Game {
 			lives: 3,
 			wave: 1,
 			game_state: GameState::Intro(0.5),
+			conditions: 0,
 			toggle_shield_cooldown: 0.,
 			sender: tx,
         }
     }
+
+	pub fn update_conditions(&mut self) {
+		self.conditions = 0;
+
+		// check shields
+		let total = self.world.get_active_shields().iter().fold(0., |acc, s| acc + s.get_percentage_full());
+		let avg = total / self.world.get_active_shields().len() as f32;
+		if avg < 0.5 {
+			self.conditions += Condition::Shields as u8;
+		}
+
+		// check number of swarm left
+	}
 
     /// Reset our game-state
     pub fn reset(&mut self, reset_type: ResetType) {
@@ -204,6 +230,8 @@ impl Game {
 				}
 
 				self.world.get_ufo_mut().update(dt);
+
+				self.update_conditions();
 			},
 			GameState::Death(_) => {
 				if let GameState::Death(ref mut timer) = self.game_state {

@@ -332,7 +332,7 @@
 				}
 			}
 
-			function draw_hud(score, lives, wave) {
+			function draw_hud(score, lives, wave, conditions) {
 				// draw hud
 				topbar_ctx.fillStyle = "red";
 				topbar_ctx.textBaseline = "top";
@@ -340,6 +340,7 @@
 				topbar_ctx.fillText("Score: " + score, 20, 20);
 				topbar_ctx.fillText("Lives: " + lives, 220, 20);
 				topbar_ctx.fillText("Wave: " + wave, 420, 20);
+				topbar_ctx.fillText("Conditions: " + conditions, 620, 20);
 
 				// draw leaderboard
 				leaderboardglobal_elem.appendChild(leaderboard_table);

@@ -18,7 +18,7 @@ fn draw_particle(_: f64, _: f64, _: f64, _: i32) {}
 fn draw_ufo(_: f64, _: f64) {}
 
 #[no_mangle]
-fn draw_hud(_: i32, _: i32, _: i32) {}
+fn draw_hud(_: i32, _: i32, _: i32, _: u8) {}
 
 #[no_mangle]
 fn draw_intro() {}
