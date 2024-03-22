@@ -119,8 +119,8 @@ impl World {
 		}
 	}
 
-	pub fn toggle_shields(&mut self) {
-		self.using_fastly_shields = !self.using_fastly_shields;
+	pub fn enable_fastly_shields(&mut self) {
+		self.using_fastly_shields = true;
 		self.init_shields();
 	}
 

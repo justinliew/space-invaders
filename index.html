@@ -332,7 +332,7 @@
 				}
 			}
 
-			function draw_hud(score, lives, wave, conditions) {
+			function draw_hud(score, lives, wave) {
 				// draw hud
 				topbar_ctx.fillStyle = "red";
 				topbar_ctx.textBaseline = "top";
@@ -340,10 +340,23 @@
 				topbar_ctx.fillText("Score: " + score, 20, 20);
 				topbar_ctx.fillText("Lives: " + lives, 220, 20);
 				topbar_ctx.fillText("Wave: " + wave, 420, 20);
-				topbar_ctx.fillText("Conditions: " + conditions, 620, 20);
 
 				// draw leaderboard
 				leaderboardglobal_elem.appendChild(leaderboard_table);
+			}
+
+			function draw_condition_warning(condition,x,y) {
+				ctx.fillStyle = "red";
+				ctx.textBaseline = "top";
+				ctx.font = "20px courier";
+				console.log(condition);
+				if (condition == 1) {
+					ctx.fillText("Shields Low; activating Fastly Shields", x,y);
+				} else if (condition == 2) {
+					ctx.fillText("Bots closing in; activating Bot Bomb", x,y);					
+				} else if (condition == 3) {
+					ctx.fillText("Bots speeding up; activating Bot Seeking", x,y);
+				}
 			}
 
 
@@ -356,6 +369,10 @@
 				ctx.lineTo(x, y + h);
 				ctx.lineTo(x, y);
 				ctx.stroke();
+			}
+
+			function console_log_int(value) {
+				console.log(value);
 			}
 
 			function init_shield(id) {
@@ -407,7 +424,7 @@
 			}
 
 			// The real loading and running of our wasm starts here
-			let imports = { clear_screen, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
+			let imports = { console_log_int, clear_screen, draw_condition_warning, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
 			imports.Math_atan = Math.atan;
 			imports.sin = Math.sin;
 			imports.cos = Math.cos;

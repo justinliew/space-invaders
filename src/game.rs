@@ -1,4 +1,4 @@
-use std::os::raw::{c_int};
+use std::os::raw::c_int;
 use std::sync::mpsc::{Sender};
 
 use crate::size::WorldSize;
@@ -15,9 +15,11 @@ extern "C" {
 	fn update_shield(_: c_int, _: c_int, _: c_int);
 
 	fn new_session();
+
+//	fn console_log_int(_: c_int);
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq,Clone,Copy)]
 pub enum ResetType {
 	New,
 	Next,
@@ -35,7 +37,8 @@ pub enum GameState {
 
 pub enum GameEvent {
 	ScoreChanged(i32),
-	EntityDied(Point, ColourIndex)
+	EntityDied(Point, ColourIndex),
+	Condition(Condition),
 }
 
 // TODO - I don't know if this should live here
@@ -46,13 +49,13 @@ pub enum ColourIndex {
 	RED,
 }
 
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,PartialEq)]
 #[repr(u8)]
 pub enum Condition {
-	None = 0x0,
-	Shields = 0x1,
-	Bomb = 0x2,
-	HeatSeeking = 0x4,
+	None=0,
+	Shields=1,
+	Bomb=2,
+	HeatSeeking=3,
 }
 
 /// The data structure that contains the state of the game
@@ -69,9 +72,8 @@ pub struct Game {
 	pub game_state: GameState,
 
 	/// debug state of the game
-	pub conditions: u8,
-
-	toggle_shield_cooldown: f64,
+	pub current_condition: Condition,
+	pub conditions: Vec<Condition>,
 
 	/// Events to other parts of the system
 	sender: Sender<GameEvent>,
@@ -86,23 +88,39 @@ impl Game {
 			lives: 3,
 			wave: 1,
 			game_state: GameState::Intro(0.5),
-			conditions: 0,
-			toggle_shield_cooldown: 0.,
+			current_condition: Condition::None,
+			conditions: vec![],
 			sender: tx,
         }
     }
 
-	pub fn update_conditions(&mut self) {
-		self.conditions = 0;
+	fn has_had_condition(&self, condition: Condition) -> bool {
+		self.conditions.iter().find(|v| *v == &condition).is_some()
+	}
 
-		// check shields
+	fn activate_condition(&mut self, condition: Condition) {
+		self.current_condition = condition;
+		self.conditions.push(condition);
+		self.send_game_event(GameEvent::Condition(condition));	
+	}
+
+	pub fn update_conditions(&mut self) {
+		// conditions that happen in priority order
 		let total = self.world.get_active_shields().iter().fold(0., |acc, s| acc + s.get_percentage_full());
 		let avg = total / self.world.get_active_shields().len() as f32;
-		if avg < 0.5 {
-			self.conditions += Condition::Shields as u8;
+		if avg < 0.75 && !self.has_had_condition(Condition::Shields) { // tune this; maybe 0.5?
+			self.world.enable_fastly_shields();
+			self.activate_condition(Condition::Shields);
+		} else if let Some(lowest) = self.world.get_swarm().get_lowest_alive() {
+			if lowest >= 350. && !self.has_had_condition(Condition::Bomb) { // tune this; maybe 450?
+				self.activate_condition(Condition::Bomb);
+			}
+		} else if self.world.get_swarm().get_percentage_alive() < 0.6 && !self.has_had_condition(Condition::HeatSeeking) { // tune this; maybe 0.3?
+			self.activate_condition(Condition::HeatSeeking);
+		} else {
+			self.current_condition = Condition::None;
 		}
 
-		// check number of swarm left
 	}
 
     /// Reset our game-state
@@ -164,11 +182,9 @@ impl Game {
 					}
 				}
 
-				if input.alt && self.toggle_shield_cooldown <= 0. {
-					self.world.toggle_shields();
-					self.toggle_shield_cooldown = 1.;
-				} else if self.toggle_shield_cooldown > 0. {
-					self.toggle_shield_cooldown -= dt;
+				if input.alt {
+					// self.condition = Condition::Shields;
+					// self.send_game_event(GameEvent::Condition(Condition::Shields));
 				}
 
 				// update enemies

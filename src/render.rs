@@ -2,7 +2,7 @@ use std::os::raw::{c_double, c_int, c_uchar, c_uint};
 
 use crate::point::Point;
 use crate::size::WorldSize;
-use crate::game::{Game, GameEvent, GameState};
+use crate::game::{Game, GameEvent, GameState, Condition};
 use crate::bullet::BulletType;
 use crate::swarm::Swarm;
 use crate::shield::Shield;
@@ -18,9 +18,10 @@ extern "C" {
 	fn draw_player_bullet(_: c_double, _: c_double);
     fn draw_particle(_: c_double, _: c_double, _: c_double, _: c_int);
 	fn draw_ufo(_: c_double, _: c_double);
-    fn draw_hud(_: c_int, _: c_int, _: c_int, _: c_uchar);
+    fn draw_hud(_: c_int, _: c_int, _: c_int);
 	fn draw_intro();
 	fn draw_game_over(_: c_int);
+	fn draw_condition_warning(_: c_uchar, _: c_int, _: c_int);
 
 	// id, x,y, dim
 	fn draw_shield(_: c_int, _: c_double, _: c_double, _: c_double);
@@ -32,11 +33,40 @@ extern "C" {
 
 }
 
+pub struct ConditionText {
+	pub on: bool,
+	pub blink_countdown: f64,
+	pub countdown: f64,
+}
+
+impl ConditionText {
+	pub fn update(&mut self, dt: f64) {
+		self.countdown -= dt;
+		match self.on {
+			false => {
+				if self.blink_countdown <= 0. {
+					self.blink_countdown = 0.2;
+					self.on = true;
+				}
+				self.blink_countdown -= dt;
+			}
+			true => {
+				if self.blink_countdown <= 0. {
+					self.blink_countdown = 0.2;
+					self.on = false;
+				}
+				self.blink_countdown -= dt;
+			}
+		}
+	}
+}
+
 pub struct RenderData {
 	pub screen_top_left_offset: Point,
 	pub game_to_screen: f64,
 	pub width: usize,
 	pub height: usize,
+	pub condition_text: Option<ConditionText>,
     pub particles: Vec<Particle>,
 	receiver: Receiver<GameEvent>,
 	pub sender: Sender<GameEvent>,
@@ -50,10 +80,19 @@ impl RenderData {
 			game_to_screen: 1.,
 			width: 1024,
 			height: 768,
+			condition_text: None,
             particles: Vec::with_capacity(1000),
 			receiver: rx,
 			sender: tx,
 		}
+	}
+
+	fn enable_condition_text(&mut self) {
+		self.condition_text = Some(ConditionText {on: false, countdown: 5., blink_countdown: 0.});
+	}
+
+	fn disable_condition_text(&mut self) {
+		self.condition_text = None;
 	}
 
 	pub fn world_to_screen(&self, in_point: &Point) -> Point {
@@ -119,12 +158,27 @@ impl RenderData {
 				let particles = &mut self.particles;
 				make_explosion(particles, &p, 6, c);
 			}
+			GameEvent::Condition(_c) => {
+				self.enable_condition_text();
+			}
 		}
 	}
 
 	pub unsafe fn draw(&mut self, game_state: GameState, game: &Game, dt: f64) {
 		let world = &game.world;
 		clear_screen();
+
+		let warning_loc = self.world_to_screen(&Point{x: self.width as f64/2., y: 500.});
+
+		if let Some(ct) = &mut self.condition_text {
+			ct.update(dt);
+			if ct.on {
+				draw_condition_warning(game.current_condition as u8, warning_loc.x as i32, warning_loc.y as i32);
+			}
+			if ct.countdown <= 0. {
+				self.disable_condition_text();
+			}
+		}
 
 		match self.receiver.try_recv() {
 			Ok(event) => {
@@ -192,7 +246,7 @@ impl RenderData {
 			},
 		}
 
-		draw_hud(game.score, game.lives, game.wave, game.conditions);
+		draw_hud(game.score, game.lives, game.wave);
 	}
 }
 
