@@ -2,7 +2,7 @@ use std::os::raw::{c_double, c_int, c_uchar, c_uint};
 
 use crate::point::Point;
 use crate::size::WorldSize;
-use crate::game::{Game, GameEvent, GameState, Condition};
+use crate::game::{Condition, Game, GameEvent, GameState};
 use crate::bullet::BulletType;
 use crate::swarm::Swarm;
 use crate::shield::Shield;
@@ -13,9 +13,9 @@ use std::sync::mpsc::{Receiver,Sender};
 
 extern "C" {
     fn clear_screen();
-    fn draw_player(_: c_double, _: c_double, _: c_double);
+    fn draw_player(_: c_double, _: c_double, _: c_double, _: c_int);
     fn draw_bullet(_: c_double, _: c_double);
-	fn draw_player_bullet(_: c_double, _: c_double);
+	fn draw_player_bullet(_: c_double, _: c_double, _: c_double, _: c_int);
     fn draw_particle(_: c_double, _: c_double, _: c_double, _: c_int);
 	fn draw_ufo(_: c_double, _: c_double);
     fn draw_hud(_: c_int, _: c_int, _: c_int);
@@ -24,7 +24,7 @@ extern "C" {
 	fn draw_condition_warning(_: c_uchar, _: c_int, _: c_int);
 
 	// id, x,y, dim
-	fn draw_shield(_: c_int, _: c_double, _: c_double, _: c_double);
+	fn draw_shield(_: c_int, _: c_double, _: c_double, _: c_double, _: c_int);
 
 	// sprite id, frame index, x, y
 	fn draw_sprite(_: c_uint, _: c_uint, _: c_uint, _: c_uint);
@@ -215,10 +215,11 @@ impl RenderData {
 					draw_bullet(bp.x, bp.y);
 				}
 				let player_bullet = world.get_player_bullet();
-				if let BulletType::Player(alive) = player_bullet.bullet_type {
-					if alive {
+				if let BulletType::Player(active,bomb,heat) = player_bullet.bullet_type {
+					if active {
+						// TODO heat seek should have an angle
 						let bp = self.world_to_screen(&player_bullet.location.position);
-						draw_player_bullet(bp.x, bp.y);
+						draw_player_bullet(bp.x, bp.y, 0.0, bomb as i32);
 					}
 				}
 
@@ -226,14 +227,15 @@ impl RenderData {
 				let p = self.world_to_screen(&Point{x: player.x(), y: player.y()});
 
 				if player.alive {
-					draw_player(p.x, p.y, player.dir());
+					draw_player(p.x, p.y, player.dir(),!game.conditions.is_empty() as i32);
 				}
 
 				self.draw_swarm(&world.get_swarm());
 
 				for (index,shield) in world.get_active_shields().iter().enumerate() {
 					let screen_pos = self.world_to_screen(&shield.top_left);
-					draw_shield(index as i32, screen_pos.x, screen_pos.y, Shield::BLOCK_DIM * self.game_to_screen);
+					let condition = game.conditions.iter().find(|v| *v == &Condition::Shields).is_some();
+					draw_shield(index as i32, screen_pos.x, screen_pos.y, Shield::BLOCK_DIM * self.game_to_screen, condition as i32);
 				}
 
 				if world.get_ufo().active {

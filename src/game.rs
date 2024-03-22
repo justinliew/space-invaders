@@ -114,9 +114,11 @@ impl Game {
 		} else if let Some(lowest) = self.world.get_swarm().get_lowest_alive() {
 			if lowest >= 350. && !self.has_had_condition(Condition::Bomb) { // tune this; maybe 450?
 				self.activate_condition(Condition::Bomb);
+				self.world.get_player_bullet_mut().bullet_type = BulletType::Player(true,true,false);
 			}
 		} else if self.world.get_swarm().get_percentage_alive() < 0.6 && !self.has_had_condition(Condition::HeatSeeking) { // tune this; maybe 0.3?
 			self.activate_condition(Condition::HeatSeeking);
+			self.world.get_player_bullet_mut().bullet_type = BulletType::Player(true,false,true);
 		} else {
 			self.current_condition = Condition::None;
 		}
@@ -175,16 +177,17 @@ impl Game {
 
 				// Add bullets
 				if input.fire {
-					if let BulletType::Player(alive) = self.world.get_player_bullet().bullet_type {
-						if !alive {
-							self.world.get_player_bullet_mut().inplace_new(player_location, BulletType::Player(true), 600.);
+					if let BulletType::Player(active,_,_) = self.world.get_player_bullet().bullet_type {
+						if !active {
+							let bomb = self.conditions.iter().find(|v| *v == &Condition::Bomb).is_some();
+							let heat = self.conditions.iter().find(|v| *v == &Condition::HeatSeeking).is_some();
+							self.world.get_player_bullet_mut().inplace_new(player_location, BulletType::Player(true,bomb,heat), 600.);
 						}
 					}
 				}
 
 				if input.alt {
-					// self.condition = Condition::Shields;
-					// self.send_game_event(GameEvent::Condition(Condition::Shields));
+					self.activate_condition(Condition::Bomb);
 				}
 
 				// update enemies
@@ -197,8 +200,8 @@ impl Game {
 					bullet.update(dt);
 				}
 
-				if let BulletType::Player(alive) = self.world.get_player_bullet().bullet_type {
-					if alive {
+				if let BulletType::Player(active,_,_) = self.world.get_player_bullet().bullet_type {
+					if active {
 						self.world.get_player_bullet_mut().update(dt);
 					}
 				}
@@ -217,7 +220,7 @@ impl Game {
 					let player_bullet = self.world.get_player_bullet_mut();
 					if player_bullet.x() < 0. || player_bullet.x() > width ||
 					player_bullet.y() < 0. || player_bullet.y() > height {
-						player_bullet.bullet_type = BulletType::Player(false);
+						player_bullet.bullet_type = BulletType::Player(false,false,false);
 					}
 				}
 

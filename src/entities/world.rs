@@ -33,7 +33,7 @@ impl World {
 			world_size: world_size,
             player: Player::new(),
 			swarm: Swarm::new(10,5, world_size),
-			player_bullet: Bullet::new(Vector::default(), BulletType::Player(false), 0.),
+			player_bullet: Bullet::new(Vector::default(), BulletType::Player(false,false,false), 0.),
 			bullets: vec![],
 			using_fastly_shields: false,
 			shields: vec![

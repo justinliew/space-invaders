@@ -33,14 +33,14 @@ impl Game {
 			!playerhit
 		});
 
-		if let BulletType::Player(alive) = player_bullet.bullet_type {
-			if alive {
+		if let BulletType::Player(active,bomb,heat) = player_bullet.bullet_type {
+			if active {
 				// shields first
 				for (index,shield) in shields.iter().enumerate() {
 					match shield.check_hit(player_bullet) {
 						Some((i,j)) => {
 							deferred_shield_damage.push((index,i,j));
-							player_bullet.bullet_type = BulletType::Player(false);
+							player_bullet.bullet_type = BulletType::Player(false,bomb,heat);
 							break;
 						},
 						None => {},
@@ -54,7 +54,7 @@ impl Game {
 					queued_events.push(GameEvent::EntityDied(loc, ColourIndex::WHITE));
 					self.score += points as i32;
 					queued_events.push(GameEvent::ScoreChanged(self.score));
-					player_bullet.bullet_type = BulletType::Player(false);
+					player_bullet.bullet_type = BulletType::Player(false,bomb,heat); // TODO does the bomb revert after a hit?
 				}
 
 				let ufohit = ufo.check_hit(player_bullet);
@@ -64,7 +64,7 @@ impl Game {
 					queued_events.push(GameEvent::EntityDied(loc, ColourIndex::BLUE));
 					self.score += points as i32;
 					queued_events.push(GameEvent::ScoreChanged(self.score));
-					player_bullet.bullet_type = BulletType::Player(false);
+					player_bullet.bullet_type = BulletType::Player(false,bomb,heat); // TODO does the bomb revert after a hit?
 				}
 			}
 		}

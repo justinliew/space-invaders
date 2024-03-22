@@ -2,9 +2,13 @@
 
 use crate::vector::Vector;
 
+type IsBomb = bool;
+type IsHeatSeeking = bool;
+type BulletActive = bool;
+
 #[derive(PartialEq)]
 pub enum BulletType {
-	Player(bool),
+	Player(BulletActive, IsBomb, IsHeatSeeking),
 	Swarm,
 }
 
@@ -27,7 +31,7 @@ impl Bullet {
 	pub fn inplace_new(&mut self, spawn_location: Vector, bullet_type: BulletType, speed: f64) {
 		self.location = spawn_location;
 		self.bullet_type = bullet_type;
-		self.speed = speed;
+		self.speed = speed;	
 	}
 
 	pub fn x(&self) -> f64 { self.location.position.x }

@@ -198,8 +198,10 @@
 		function resources() {
 			let res = {
 				player: document.createElement('canvas'),
+				fastly_player: document.createElement('canvas'),
 				bullet: document.createElement('canvas'),
 				player_bullet: document.createElement('canvas'),
+				player_bomb: document.createElement('canvas'),
 				particle: document.createElement('canvas'),
 				shields: {},
 				shield_hit: gamearea.getContext("2d").createImageData(40, 40), // TODO scale shields
@@ -229,23 +231,43 @@
 			res.player_bullet.width = 2;
 			res.player_bullet.height = 40;
 			let bpCtx = res.player_bullet.getContext('2d');
-			bpCtx.fillStyle = "red";
+			bpCtx.fillStyle = "green";
 			bpCtx.beginPath();
 			bpCtx.lineTo(2, 40);
 			bpCtx.lineTo(4, 0);
 			bpCtx.lineTo(0, 0);
 			bpCtx.fill();
 
+			res.player_bomb.width = 10;
+			res.player_bomb.height = 80;
+			let bombCtx = res.player_bomb.getContext('2d');
+			bombCtx.fillStyle = "red";
+			bombCtx.beginPath();
+			bombCtx.lineTo(10, 80);
+			bombCtx.lineTo(4, 0);
+			bombCtx.lineTo(0, 0);
+			bombCtx.fill();
+
 			// Player
-			res.player.width = 20;
-			res.player.height = 16;
+			res.player.width = 40;
+			res.player.height = 32;
 			let plCtx = res.player.getContext('2d');
-			plCtx.fillStyle = "red";
+			plCtx.fillStyle = "green";
 			plCtx.beginPath();
-			plCtx.lineTo(20, 8);
-			plCtx.lineTo(0, 16);
+			plCtx.lineTo(40, 16);
+			plCtx.lineTo(0, 32);
 			plCtx.lineTo(0, 0);
 			plCtx.fill();
+
+			res.fastly_player.width = 40;
+			res.fastly_player.height = 32;
+			let pfCtx = res.fastly_player.getContext('2d');
+			pfCtx.fillStyle = "red";
+			pfCtx.beginPath();
+			pfCtx.lineTo(40, 16);
+			pfCtx.lineTo(0, 32);
+			pfCtx.lineTo(0, 0);
+			pfCtx.fill();
 
 			leaderboard_table = document.createElement('table');
 			leaderboard_table.style.width = '30%';
@@ -285,11 +307,15 @@
 				topbar_ctx.fillRect(0, 0, topbar.width, topbar.height);
 			}
 
-			function draw_player(x, y, angle) {
+			function draw_player(x, y, angle, fastly) {
 				ctx.translate(x, y);
 				ctx.rotate(angle);
-				ctx.translate(0, -8);
-				ctx.drawImage(res.player, 0, 0);
+				ctx.translate(0, -16);
+				if (fastly) {
+					ctx.drawImage(res.fastly_player, 0, 0);
+				} else {
+					ctx.drawImage(res.player, 0, 0);
+				}
 				ctx.setTransform(1, 0, 0, 1, 0, 0);
 				ctx.fillStyle = "black";
 			}
@@ -302,8 +328,16 @@
 				ctx.drawImage(res.bullet, x - 3, y - 3);
 			}
 
-			function draw_player_bullet(x, y) {
-				ctx.drawImage(res.player_bullet, x - 3, y - 3);
+			function draw_player_bullet(x, y, rotate, bomb) {
+				console.log(bomb);
+				if (bomb) {
+					ctx.drawImage(res.player_bomb, x - 3, y - 3);
+				} else {
+					ctx.translate(x-3,y-3);
+					ctx.rotate(0); // TODO we can rotate a heat seeking bullet
+					ctx.drawImage(res.player_bullet, 0, 0);
+				}
+				ctx.setTransform(1, 0, 0, 1, 0, 0);
 			}
 
 			function draw_particle(x, y, radius, color) {
@@ -349,7 +383,6 @@
 				ctx.fillStyle = "red";
 				ctx.textBaseline = "top";
 				ctx.font = "20px courier";
-				console.log(condition);
 				if (condition == 1) {
 					ctx.fillText("Shields Low; activating Fastly Shields", x,y);
 				} else if (condition == 2) {
@@ -388,17 +421,27 @@
 					res.shields[id][index] = state;
 			}
 
-			function draw_shield(id, x, y, dim) {
+			function draw_shield(id, x, y, dim, fastly) {
 				for (var i = 0; i < 25; ++i) {
 					var state = res.shields[id][i];
 					var xoffset = (i % 5) * dim;
 					var yoffset = Math.trunc(i / 5) * dim;
-					if (state == 1) { // BlockState::Hit
-						ctx.fillStyle = "darkred";
-						ctx.fillRect(x + xoffset, y + yoffset, dim, dim);
-					} else if (state == 2) { // BlockState::Full
-						ctx.fillStyle = "red";
-						ctx.fillRect(x + xoffset, y + yoffset, dim, dim);
+					if (fastly) {
+						if (state == 1) { // BlockState::Hit
+							ctx.fillStyle = "darkred";
+							ctx.fillRect(x + xoffset, y + yoffset, dim, dim);
+						} else if (state == 2) { // BlockState::Full
+							ctx.fillStyle = "red";
+							ctx.fillRect(x + xoffset, y + yoffset, dim, dim);
+						}
+					} else {
+						if (state == 1) { // BlockState::Hit
+							ctx.fillStyle = "darkgreen";
+							ctx.fillRect(x + xoffset, y + yoffset, dim, dim);
+						} else if (state == 2) { // BlockState::Full
+							ctx.fillStyle = "green";
+							ctx.fillRect(x + xoffset, y + yoffset, dim, dim);
+						}
 					}
 				}
 			}
@@ -644,7 +687,6 @@
 					sprites[sprite_id] = [];
 				}
 
-				// TODO does this leak if we call this multiple times?
 				sprites[sprite_id][frame_index] = {
 					image_data: gamearea.getContext("2d").createImageData(final_size, final_size),
 					w: final_size,

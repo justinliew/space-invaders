@@ -202,7 +202,11 @@ impl Swarm {
 
 
 	pub fn check_hit(&mut self, bullet: &Bullet) -> Option<(i32,Point)> {
-		if bullet.bullet_type != BulletType::Player(true) {
+		let (active,bomb, heat) = match bullet.bullet_type {
+			BulletType::Player(active,bomb,heat) => (active,bomb,heat),
+			_ => (false,false,false)
+		};
+		if !active {
 			return None;
 		}
 		if bullet.x() < self.top_left.x || bullet.x() > self.get_bottom_right().x {
@@ -212,28 +216,34 @@ impl Swarm {
 			return None;
 		}
 
-		if let Some(hit) = self.is_hit(bullet.x(), bullet.y()) {
-			if self.alive[hit.0 + hit.1 * self.num_x] {
-				self.alive[hit.0 + hit.1 * self.num_x] = false;
-				self.num_alive -= 1;
-				let loc = self.get_enemy_location(hit.0,hit.1) + Point::new(self.radius / 2.,self.radius / 2.);
-				return match hit.1 {
-					0 => {
-						Some((30,loc))
-					}
-					1|2 => {
-						Some((20,loc))
-					},
-					3|4 => {
-						Some((10,loc))
-					},
-					_ => {
-						unreachable!()
+		if bomb {
+			// TODO bomb
+			// I think we want to try to calculate and hit a lot of enemies, ideally
+			None
+		} else {
+			if let Some(hit) = self.is_hit(bullet.x(), bullet.y()) {
+				if self.alive[hit.0 + hit.1 * self.num_x] {
+					self.alive[hit.0 + hit.1 * self.num_x] = false;
+					self.num_alive -= 1;
+					let loc = self.get_enemy_location(hit.0,hit.1) + Point::new(self.radius / 2.,self.radius / 2.);
+					return match hit.1 {
+						0 => {
+							Some((30,loc))
+						}
+						1|2 => {
+							Some((20,loc))
+						},
+						3|4 => {
+							Some((10,loc))
+						},
+						_ => {
+							unreachable!()
+						}
 					}
 				}
 			}
+			None
 		}
-		None
 	}
 
 	pub fn get_lowest_alive(&self) -> Option<f64> {

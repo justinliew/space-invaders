@@ -76,7 +76,11 @@ impl Ufo {
 	}
 
 	pub fn check_hit(&mut self, bullet: &Bullet) -> Option<(i32,Point)> {
-		if bullet.bullet_type != BulletType::Player(true) {
+		let (active,bomb,heat) = match bullet.bullet_type {
+			BulletType::Player(active,bomb,heat) => (active,bomb,heat),
+			_ => (false,false,false)
+		};
+		if !active {
 			return None;
 		}
 
