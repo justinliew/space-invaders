@@ -1,5 +1,3 @@
-use core::num;
-
 use crate::point::Point;
 use crate::bullet::Bullet;
 
