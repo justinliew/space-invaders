@@ -103,6 +103,9 @@ impl World {
 		self.swarm.reset(reset_type);
 		self.player.alive = true;
 		self.player.reset_location();
+		if reset_type == ResetType::New {
+			self.using_fastly_shields = false;
+		}
 	}
 
 	pub fn init_shields(&mut self) {
