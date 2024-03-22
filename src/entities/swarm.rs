@@ -75,6 +75,10 @@ impl Swarm {
 		self.fire_column = 0;
 	}
 
+	pub fn get_percentage_alive(&self) -> f64 {
+		self.num_alive as f64 / (self.num_x * self.num_y) as f64
+	}
+
 	pub fn update(&mut self, dt: f64) -> Option<Bullet> {
 
 
@@ -86,19 +90,19 @@ impl Swarm {
 		let mut lhs = self.top_left.x;
 		let mut rhs = self.top_left.x + self.num_x as f64 * self.spacing_x;
 		for l in 0..self.num_x {
-			if !self.get_lowest_in_column(l).is_none() {
+			if self.get_lowest_in_column(l).is_some() {
 				lhs = self.top_left.x + (l as f64) * (self.radius + self.spacing_x);
 				break;
 			}
 		}
 		for r in (0..self.num_x).rev() {
-			if !self.get_lowest_in_column(r).is_none() {
+			if self.get_lowest_in_column(r).is_some() {
 				rhs = self.top_left.x + (r as f64) * (self.radius + self.spacing_x);
 				break;
 			}
 		}
 
-		self.time_to_move = BASE_MOVE_DELAY * (self.num_alive as f64 / (self.num_x * self.num_y) as f64);
+		self.time_to_move = BASE_MOVE_DELAY * self.get_percentage_alive();
 		match self.movement {
 			Movement::RIGHT => {
 				if self.world_size.width - rhs > 50. {
