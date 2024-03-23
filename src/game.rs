@@ -1,8 +1,8 @@
 use std::os::raw::c_int;
-use std::sync::mpsc::{Sender};
+use std::sync::mpsc::Sender;
 
 use crate::size::WorldSize;
-use crate::bullet::{BulletType};
+use crate::bullet::Ability;
 use crate::input::Input;
 use crate::world::World;
 use crate::point::Point;
@@ -114,11 +114,11 @@ impl Game {
 		} else if let Some(lowest) = self.world.get_swarm().get_lowest_alive() {
 			if lowest >= 350. && !self.has_had_condition(Condition::Bomb) { // tune this; maybe 450?
 				self.activate_condition(Condition::Bomb);
-				self.world.get_player_bullet_mut().bullet_type = BulletType::Player(true,true,false);
+				self.world.get_player_bullet_mut().ability = Ability::Bomb;
 			}
 		} else if self.world.get_swarm().get_percentage_alive() < 0.6 && !self.has_had_condition(Condition::HeatSeeking) { // tune this; maybe 0.3?
 			self.activate_condition(Condition::HeatSeeking);
-			self.world.get_player_bullet_mut().bullet_type = BulletType::Player(true,false,true);
+				self.world.get_player_bullet_mut().ability = Ability::Heat;
 		} else {
 			self.current_condition = Condition::None;
 		}
@@ -177,12 +177,17 @@ impl Game {
 
 				// Add bullets
 				if input.fire {
-					if let BulletType::Player(active,_,_) = self.world.get_player_bullet().bullet_type {
-						if !active {
-							let bomb = self.conditions.iter().find(|v| *v == &Condition::Bomb).is_some();
-							let heat = self.conditions.iter().find(|v| *v == &Condition::HeatSeeking).is_some();
-							self.world.get_player_bullet_mut().inplace_new(player_location, BulletType::Player(true,bomb,heat), 600.);
-						}
+					if !self.world.get_player_bullet().active {
+						let bomb = self.conditions.iter().find(|v| *v == &Condition::Bomb).is_some();
+						let heat = self.conditions.iter().find(|v| *v == &Condition::HeatSeeking).is_some();
+						let (ability,speed) = if heat {
+							(Ability::Heat,1200.)
+						} else if bomb {
+							(Ability::Bomb,400.)
+						} else {
+							(Ability::None,600.)
+						};
+						self.world.get_player_bullet_mut().respawn(player_location, speed, ability);
 					}
 				}
 
@@ -200,10 +205,9 @@ impl Game {
 					bullet.update(dt);
 				}
 
-				if let BulletType::Player(active,_,_) = self.world.get_player_bullet().bullet_type {
-					if active {
-						self.world.get_player_bullet_mut().update(dt);
-					}
+				if self.world.get_player_bullet().active {
+					let (bullet,swarm) = self.world.get_for_player_bullet_abilities();
+					bullet.update(dt, swarm);
 				}
 
 				// Remove bullets outside the viewport
@@ -220,7 +224,7 @@ impl Game {
 					let player_bullet = self.world.get_player_bullet_mut();
 					if player_bullet.x() < 0. || player_bullet.x() > width ||
 					player_bullet.y() < 0. || player_bullet.y() > height {
-						player_bullet.bullet_type = BulletType::Player(false,false,false);
+						player_bullet.despawn();
 					}
 				}
 

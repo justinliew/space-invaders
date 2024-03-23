@@ -1,9 +1,9 @@
 use std::os::raw::{c_double, c_int, c_uchar, c_uint};
 
+use crate::bullet::Ability;
 use crate::point::Point;
 use crate::size::WorldSize;
 use crate::game::{Condition, Game, GameEvent, GameState};
-use crate::bullet::BulletType;
 use crate::swarm::Swarm;
 use crate::shield::Shield;
 use crate::particle::{make_explosion, Particle};
@@ -22,6 +22,9 @@ extern "C" {
 	fn draw_intro();
 	fn draw_game_over(_: c_int);
 	fn draw_condition_warning(_: c_uchar, _: c_int, _: c_int);
+
+
+	fn draw_bounds(_: c_double, _: c_double, _: c_double, _: c_double);
 
 	// id, x,y, dim
 	fn draw_shield(_: c_int, _: c_double, _: c_double, _: c_double, _: c_int);
@@ -129,9 +132,9 @@ impl RenderData {
 
 	unsafe fn draw_swarm(&self, swarm: &Swarm) {
 		// enable to draw bounds
-		// let br = swarm.get_bottom_right();
-		// draw_bounds(data.screen_top_left_offset.x + swarm.top_left.x * data.game_to_screen, data.screen_top_left_offset.y + swarm.top_left.y * data.game_to_screen, 
-		// 			br.x * data.game_to_screen, br.y * data.game_to_screen);
+		let br = swarm.get_bottom_right();
+		draw_bounds(self.screen_top_left_offset.x + swarm.top_left.x * self.game_to_screen, self.screen_top_left_offset.y + swarm.top_left.y * self.game_to_screen, 
+					br.x * self.game_to_screen, br.y * self.game_to_screen);
 
 		// is there a better iterator way to do this?
 		for i in 0..swarm.num_x {
@@ -215,12 +218,11 @@ impl RenderData {
 					draw_bullet(bp.x, bp.y);
 				}
 				let player_bullet = world.get_player_bullet();
-				if let BulletType::Player(active,bomb,heat) = player_bullet.bullet_type {
-					if active {
-						// TODO heat seek should have an angle
-						let bp = self.world_to_screen(&player_bullet.location.position);
-						draw_player_bullet(bp.x, bp.y, 0.0, bomb as i32);
-					}
+				if player_bullet.active {
+					// TODO heat seek should have an angle
+					// TODO break up `draw_player_bullet` into multiple functions?
+					let bp = self.world_to_screen(&player_bullet.location.position);
+					draw_player_bullet(bp.x, bp.y, 0.0, (player_bullet.ability == Ability::Bomb) as i32);
 				}
 
 				let player = world.get_player();

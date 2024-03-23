@@ -1,13 +1,12 @@
 use crate::game::ResetType;
-use crate::player::{Player};
+use crate::player::Player;
 use crate::swarm::Swarm;
 use crate::size::WorldSize;
-use crate::bullet::{Bullet,BulletType};
+use crate::bullet::{Bullet,PlayerBullet};
 use crate::point::Point;
 use crate::shield::{BlockState,Shield};
-use crate::vector::Vector;
 use crate::ufo::Ufo;
-use std::os::raw::{c_int};
+use std::os::raw::c_int;
 
 extern "C" {
 	fn init_shield(_: c_int);
@@ -18,7 +17,7 @@ pub struct World {
 	pub world_size: WorldSize,
     player: Player,
 	swarm: Swarm,
-	player_bullet: Bullet,
+	player_bullet: PlayerBullet,
 	bullets: Vec<Bullet>,
 	using_fastly_shields: bool,
 	shields: Vec<Shield>,
@@ -33,7 +32,7 @@ impl World {
 			world_size: world_size,
             player: Player::new(),
 			swarm: Swarm::new(10,5, world_size),
-			player_bullet: Bullet::new(Vector::default(), BulletType::Player(false,false,false), 0.),
+			player_bullet: PlayerBullet::new(),
 			bullets: vec![],
 			using_fastly_shields: false,
 			shields: vec![
@@ -146,12 +145,16 @@ impl World {
 		&mut self.bullets
 	}
 
-	pub fn get_player_bullet(&self) -> &Bullet {
+	pub fn get_player_bullet(&self) -> &PlayerBullet {
 		&self.player_bullet
 	}
 
-	pub fn get_player_bullet_mut(&mut self) -> &mut Bullet {
+	pub fn get_player_bullet_mut(&mut self) -> &mut PlayerBullet {
 		&mut self.player_bullet
+	}
+
+	pub fn get_for_player_bullet_abilities(&mut self) -> (&mut PlayerBullet, &Swarm) {
+		(&mut self.player_bullet,&self.swarm)
 	}
 
 	pub fn get_player(&self) -> &Player {
@@ -177,8 +180,7 @@ impl World {
 	pub fn get_ufo_mut(&mut self) -> &mut Ufo {
 		&mut self.ufo
 	}
-
-	pub fn get_for_collisions(&mut self) -> (&mut Player, &mut Swarm, &mut Bullet, &mut Vec<Bullet>, &mut Vec<Shield>, &mut Ufo) {
+	pub fn get_for_collisions(&mut self) -> (&mut Player, &mut Swarm, &mut PlayerBullet, &mut Vec<Bullet>, &mut Vec<Shield>, &mut Ufo) {
 		let shields = match self.using_fastly_shields {
 			true => &mut self.fastly_shields,
 			false => &mut self.shields

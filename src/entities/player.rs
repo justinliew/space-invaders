@@ -3,7 +3,7 @@
 use crate::point::Point;
 //use crate::{derive_position_direction, vector::{Vector}};
 use crate::vector::Vector;
-use crate::bullet::{Bullet,BulletType};
+use crate::bullet::Bullet;
 
 //use geometry::{Advance, Collide, Position};
 
@@ -41,13 +41,9 @@ impl Player {
 	pub fn dir(&self) -> f64 { self.vector.direction }
 
 	pub fn check_hit(&mut self, bullet: &Bullet) -> bool {
-		if bullet.bullet_type != BulletType::Swarm {
-			return false;
-		}
-
 		// TODO player radius
-		let hit = bullet.x() > self.x() - 8. && bullet.x() < self.x() + 8. &&
-			bullet.y() > self.y() - 8. && bullet.y() < self.y() + 8.;
+		let hit = bullet.x() > self.x() - 16. && bullet.x() < self.x() + 16. &&
+			bullet.y() > self.y() - 16. && bullet.y() < self.y() + 16.;
 
 		if hit {
 			self.alive = false;

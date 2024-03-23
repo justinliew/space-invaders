@@ -1,5 +1,5 @@
 use crate::point::Point;
-use crate::bullet::{Bullet,BulletType};
+use crate::bullet::PlayerBullet;
 use crate::size::WorldSize;
 
 enum StartLocation {
@@ -75,12 +75,8 @@ impl Ufo {
 		}
 	}
 
-	pub fn check_hit(&mut self, bullet: &Bullet) -> Option<(i32,Point)> {
-		let (active,bomb,heat) = match bullet.bullet_type {
-			BulletType::Player(active,bomb,heat) => (active,bomb,heat),
-			_ => (false,false,false)
-		};
-		if !active {
+	pub fn check_hit(&mut self, bullet: &PlayerBullet) -> Option<(i32,Point)> {
+		if !bullet.active {
 			return None;
 		}
 

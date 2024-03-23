@@ -1,7 +1,7 @@
 
 use crate::point::Point;
 use crate::size::WorldSize;
-use crate::bullet::{Bullet,BulletType};
+use crate::bullet::{Bullet,PlayerBullet, Ability};
 use crate::vector::Vector;
 use crate::game::{ResetType};
 
@@ -139,7 +139,7 @@ impl Swarm {
 		}
 
 		if let Some(loc) = self.get_bullet_spawn_location() {
-			return Some(Bullet::new(Vector::new(loc, std::f64::consts::PI / 2.0), BulletType::Swarm, 200.));
+			return Some(Bullet::new(Vector::new(loc, std::f64::consts::PI / 2.0), 200.));
 		} else {
 			return None;
 		}
@@ -178,6 +178,11 @@ impl Swarm {
 		Some((bucket_x.trunc() as usize, bucket_y.trunc() as usize))
 	}
 
+	pub fn get_closest(&self, x: f64, y: f64) -> Option<(usize,usize)> {
+		let bucket_x = (x - self.top_left.x) / (self.radius + self.spacing_x);
+		let bucket_y = (y - self.top_left.y) / (self.radius + self.spacing_y);
+		Some((bucket_x.trunc() as usize, bucket_y.trunc() as usize))
+	}
 	pub fn get_bottom_right(&self) -> Point {
 		Point{
 			x: self.top_left.x + self.num_x as f64 * self.radius + ((self.num_x-1) as f64) * self.spacing_x,
@@ -201,12 +206,8 @@ impl Swarm {
 	}
 
 
-	pub fn check_hit(&mut self, bullet: &Bullet) -> Option<(i32,Point)> {
-		let (active,bomb, heat) = match bullet.bullet_type {
-			BulletType::Player(active,bomb,heat) => (active,bomb,heat),
-			_ => (false,false,false)
-		};
-		if !active {
+	pub fn check_hit(&mut self, bullet: &PlayerBullet) -> Option<Vec<(i32,Point)>> {
+		if !bullet.active {
 			return None;
 		}
 		if bullet.x() < self.top_left.x || bullet.x() > self.get_bottom_right().x {
@@ -216,9 +217,23 @@ impl Swarm {
 			return None;
 		}
 
-		if bomb {
-			// TODO bomb
-			// I think we want to try to calculate and hit a lot of enemies, ideally
+		if bullet.ability == Ability::Bomb {
+			// I think this should just destroy things in a path as it goes up the screen
+			let hit = self.get_closest(bullet.x(),bullet.y());
+			if let Some(hit) = hit {
+				let x_index = hit.0;
+				if self.alive[x_index + hit.1 * self.num_x] {
+					self.alive[x_index + hit.1 * self.num_x] = false;
+					self.num_alive -= 1;
+					let loc = self.get_enemy_location(x_index,hit.1) + Point::new(self.radius / 2.,self.radius / 2.);
+					return Some(vec![(30,loc)]);
+				}
+				return None;
+			} else {
+				return None;
+			}
+		} else if bullet.ability == Ability::Heat {
+			// TODO
 			None
 		} else {
 			if let Some(hit) = self.is_hit(bullet.x(), bullet.y()) {
@@ -228,13 +243,13 @@ impl Swarm {
 					let loc = self.get_enemy_location(hit.0,hit.1) + Point::new(self.radius / 2.,self.radius / 2.);
 					return match hit.1 {
 						0 => {
-							Some((30,loc))
+							Some(vec![(30,loc)])
 						}
 						1|2 => {
-							Some((20,loc))
+							Some(vec![(20,loc)])
 						},
 						3|4 => {
-							Some((10,loc))
+							Some(vec![(10,loc)])
 						},
 						_ => {
 							unreachable!()

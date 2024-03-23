@@ -1,5 +1,5 @@
 use crate::point::Point;
-use crate::bullet::Bullet;
+use crate::vector::Vector;
 
 #[derive(Copy, Clone, PartialEq)]
 pub enum BlockState {
@@ -52,8 +52,8 @@ impl Shield {
 		 ((p.y - self.top_left.y) / Shield::BLOCK_DIM).trunc() as usize))
 	}
 
-	pub fn check_hit(&self, bullet: &Bullet) -> Option<(usize,usize)> {
-		match self.get_indices(&bullet.location.position) {
+	pub fn check_hit(&self, bullet_location: &Vector) -> Option<(usize,usize)> {
+		match self.get_indices(&bullet_location.position) {
 			Some((i,j)) => {
 				if self.b[i+j*5] != BlockState::Empty {
 					return Some((i,j))

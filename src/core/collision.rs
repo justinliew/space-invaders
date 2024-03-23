@@ -1,5 +1,4 @@
-use crate::bullet::BulletType;
-use crate::game::{Game,GameEvent, ColourIndex};
+use crate::{game::{Game,GameEvent, ColourIndex}, bullet::Ability};
 
 type DeferredShieldDamage = (usize,usize,usize);
 
@@ -17,7 +16,7 @@ impl Game {
 
 			// shields first
 			for (index,shield) in shields.iter().enumerate() {
-				match shield.check_hit(bullet) {
+				match shield.check_hit(&bullet.location) {
 					Some((i,j)) => {
 						deferred_shield_damage.push((index,i,j));
 						return false;
@@ -28,44 +27,47 @@ impl Game {
 
 			let playerhit = player.check_hit(bullet);
 			if playerhit {
+				// TODO this should be green if we have certain conditions
 				queued_events.push(GameEvent::EntityDied(bullet.location.position, ColourIndex::RED));
 			}
 			!playerhit
 		});
 
-		if let BulletType::Player(active,bomb,heat) = player_bullet.bullet_type {
-			if active {
-				// shields first
-				for (index,shield) in shields.iter().enumerate() {
-					match shield.check_hit(player_bullet) {
-						Some((i,j)) => {
-							deferred_shield_damage.push((index,i,j));
-							player_bullet.bullet_type = BulletType::Player(false,bomb,heat);
-							break;
-						},
-						None => {},
-					}
+		if player_bullet.active {
+			// shields first
+			for (index,shield) in shields.iter().enumerate() {
+				match shield.check_hit(&player_bullet.location) {
+					Some((i,j)) => {
+						deferred_shield_damage.push((index,i,j));
+						player_bullet.active = false;
+						break;
+					},
+					None => {},
 				}
+			}
 
-				let swarmhit = swarm.check_hit(player_bullet);
-				if let Some(hit) = swarmhit {
+			let swarmhit = swarm.check_hit(player_bullet);
+			if let Some(hits) = swarmhit {
+				for hit in hits {
 					let points = hit.0;
 					let loc = hit.1;
 					queued_events.push(GameEvent::EntityDied(loc, ColourIndex::WHITE));
 					self.score += points as i32;
 					queued_events.push(GameEvent::ScoreChanged(self.score));
-					player_bullet.bullet_type = BulletType::Player(false,bomb,heat); // TODO does the bomb revert after a hit?
+					if player_bullet.ability != Ability::Bomb {
+						player_bullet.active = false;
+					}
 				}
+			}
 
-				let ufohit = ufo.check_hit(player_bullet);
-				if let Some(hit) = ufohit {
-					let points = hit.0;
-					let loc = hit.1;
-					queued_events.push(GameEvent::EntityDied(loc, ColourIndex::BLUE));
-					self.score += points as i32;
-					queued_events.push(GameEvent::ScoreChanged(self.score));
-					player_bullet.bullet_type = BulletType::Player(false,bomb,heat); // TODO does the bomb revert after a hit?
-				}
+			let ufohit = ufo.check_hit(player_bullet);
+			if let Some(hit) = ufohit {
+				let points = hit.0;
+				let loc = hit.1;
+				queued_events.push(GameEvent::EntityDied(loc, ColourIndex::BLUE));
+				self.score += points as i32;
+				queued_events.push(GameEvent::ScoreChanged(self.score));
+				player_bullet.active = false;
 			}
 		}
 
