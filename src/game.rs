@@ -108,21 +108,22 @@ impl Game {
 		// conditions that happen in priority order
 		let total = self.world.get_active_shields().iter().fold(0., |acc, s| acc + s.get_percentage_full());
 		let avg = total / self.world.get_active_shields().len() as f32;
-		if avg < 0.5 && !self.has_had_condition(Condition::Shields) { // tune this; maybe 0.5?
+		let lowest = self.world.get_swarm().get_lowest_alive();
+		if lowest.is_none() {
+			return;
+		}
+		let lowest = lowest.expect("alive");
+
+		if avg < 0.5 && !self.has_had_condition(Condition::Shields) {
 			self.world.enable_fastly_shields();
 			self.activate_condition(Condition::Shields);
-		} else if let Some(lowest) = self.world.get_swarm().get_lowest_alive() {
-			if lowest.y >= 350. && !self.has_had_condition(Condition::Bomb) { // tune this; maybe 450?
-				self.activate_condition(Condition::Bomb);
-				self.world.get_player_bullet_mut().ability = Ability::Bomb;
-			}
-		} else if self.world.get_swarm().get_percentage_alive() < 0.6 && !self.has_had_condition(Condition::HeatSeeking) { // tune this; maybe 0.3?
+		} else if lowest.y >= 400. && !self.has_had_condition(Condition::Bomb) {
+			self.activate_condition(Condition::Bomb);
+			self.world.get_player_bullet_mut().ability = Ability::Bomb;
+		} else if self.world.get_swarm().get_percentage_alive() < 0.3 && !self.has_had_condition(Condition::HeatSeeking) {
 			self.activate_condition(Condition::HeatSeeking);
-				self.world.get_player_bullet_mut().ability = Ability::Heat;
-		} else {
-			self.current_condition = Condition::None;
+			self.world.get_player_bullet_mut().ability = Ability::Heat;
 		}
-
 	}
 
     /// Reset our game-state
@@ -181,7 +182,7 @@ impl Game {
 						let bomb = self.conditions.iter().find(|v| *v == &Condition::Bomb).is_some();
 						let heat = self.conditions.iter().find(|v| *v == &Condition::HeatSeeking).is_some();
 						let (ability,speed) = if heat {
-							(Ability::Heat,1200.)
+							(Ability::Heat,1000.)
 						} else if bomb {
 							(Ability::Bomb,400.)
 						} else {
@@ -192,7 +193,7 @@ impl Game {
 				}
 
 				if input.alt {
-					self.activate_condition(Condition::Bomb);
+					self.activate_condition(Condition::HeatSeeking);
 				}
 
 				// update enemies

@@ -232,9 +232,6 @@ impl Swarm {
 			} else {
 				return None;
 			}
-		} else if bullet.ability == Ability::Heat {
-			// TODO
-			None
 		} else {
 			if let Some(hit) = self.is_hit(bullet.x(), bullet.y()) {
 				if self.alive[hit.0 + hit.1 * self.num_x] {
