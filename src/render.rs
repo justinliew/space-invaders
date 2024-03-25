@@ -219,10 +219,9 @@ impl RenderData {
 				}
 				let player_bullet = world.get_player_bullet();
 				if player_bullet.active {
-					// TODO heat seek should have an angle
 					// TODO break up `draw_player_bullet` into multiple functions?
 					let bp = self.world_to_screen(&player_bullet.location.position);
-					draw_player_bullet(bp.x, bp.y, 0.0, (player_bullet.ability == Ability::Bomb) as i32);
+					draw_player_bullet(bp.x, bp.y, player_bullet.facing, (player_bullet.ability == Ability::Bomb) as i32);
 				}
 
 				let player = world.get_player();

@@ -35,14 +35,16 @@ impl Game {
 
 		if player_bullet.active {
 			// shields first
-			for (index,shield) in shields.iter().enumerate() {
-				match shield.check_hit(&player_bullet.location) {
-					Some((i,j)) => {
-						deferred_shield_damage.push((index,i,j));
-						player_bullet.active = false;
-						break;
-					},
-					None => {},
+			if player_bullet.ability == Ability::None {
+				for (index,shield) in shields.iter().enumerate() {
+					match shield.check_hit(&player_bullet.location) {
+						Some((i,j)) => {
+							deferred_shield_damage.push((index,i,j));
+							player_bullet.active = false;
+							break;
+						},
+						None => {},
+					}
 				}
 			}
 

@@ -178,7 +178,7 @@ impl Swarm {
 		Some((bucket_x.trunc() as usize, bucket_y.trunc() as usize))
 	}
 
-	pub fn get_closest(&self, x: f64, y: f64) -> Option<(usize,usize)> {
+	fn get_closest(&self, x: f64, y: f64) -> Option<(usize,usize)> {
 		let bucket_x = (x - self.top_left.x) / (self.radius + self.spacing_x);
 		let bucket_y = (y - self.top_left.y) / (self.radius + self.spacing_y);
 		Some((bucket_x.trunc() as usize, bucket_y.trunc() as usize))
@@ -261,12 +261,15 @@ impl Swarm {
 		}
 	}
 
-	pub fn get_lowest_alive(&self) -> Option<f64> {
+	pub fn get_lowest_alive(&self) -> Option<Point> {
 		for (index, alive) in self.alive.iter().enumerate().rev() {
 			if *alive {
+				let col = index % self.num_x;
+				let x = self.top_left.x + (self.radius + self.spacing_x) * ((col+1) as f64) - self.spacing_x - self.radius/2.;
+
 				let row = index / self.num_x;
 				let y = self.top_left.y + self.radius * ((row+1) as f64) + self.spacing_y * (row as f64);
-				return Some(y);
+				return Some(Point::new(x,y));
 			}
 		}
 		None

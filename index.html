@@ -329,12 +329,11 @@
 			}
 
 			function draw_player_bullet(x, y, rotate, bomb) {
-				console.log(bomb);
 				if (bomb) {
 					ctx.drawImage(res.player_bomb, x - 3, y - 3);
 				} else {
 					ctx.translate(x-3,y-3);
-					ctx.rotate(0); // TODO we can rotate a heat seeking bullet
+					ctx.rotate(rotate);
 					ctx.drawImage(res.player_bullet, 0, 0);
 				}
 				ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -408,6 +407,10 @@
 				console.log(value);
 			}
 
+			function console_log_double(value) {
+				console.log(value);
+			}
+
 			function init_shield(id) {
 				res.shields[id] = [];
 			}
@@ -467,7 +470,7 @@
 			}
 
 			// The real loading and running of our wasm starts here
-			let imports = { console_log_int, clear_screen, draw_condition_warning, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
+			let imports = { console_log_int, console_log_double, clear_screen, draw_condition_warning, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
 			imports.Math_atan = Math.atan;
 			imports.sin = Math.sin;
 			imports.cos = Math.cos;
