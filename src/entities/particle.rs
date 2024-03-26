@@ -37,6 +37,7 @@ impl Particle {
 		match self.colour_index {
 			ColourIndex::BLUE => 1,
 			ColourIndex::RED => 2,
+            ColourIndex::GREEN => 3,
 			ColourIndex::WHITE => 0,
 		}
 	}

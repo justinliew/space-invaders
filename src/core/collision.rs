@@ -1,10 +1,10 @@
-use crate::{game::{Game,GameEvent, ColourIndex}, bullet::Ability};
+use crate::{game::{Condition, Game,GameEvent, ColourIndex}, bullet::Ability};
 
 type DeferredShieldDamage = (usize,usize,usize);
 
 impl Game {
 
-	pub unsafe fn handle_collisions(&mut self) -> Vec<DeferredShieldDamage> {
+	pub unsafe fn handle_collisions(&mut self, is_red: bool) -> Vec<DeferredShieldDamage> {
 		let world = &mut self.world;
 		let (player,swarm,player_bullet, bullets,shields,ufo) = world.get_for_collisions();
 
@@ -28,7 +28,11 @@ impl Game {
 			let playerhit = player.check_hit(bullet);
 			if playerhit {
 				// TODO this should be green if we have certain conditions
-				queued_events.push(GameEvent::EntityDied(bullet.location.position, ColourIndex::RED));
+				if is_red {
+					queued_events.push(GameEvent::EntityDied(bullet.location.position, ColourIndex::RED));
+				} else {
+					queued_events.push(GameEvent::EntityDied(bullet.location.position, ColourIndex::GREEN));
+				}
 			}
 			!playerhit
 		});

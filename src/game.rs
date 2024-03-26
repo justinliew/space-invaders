@@ -47,6 +47,7 @@ pub enum ColourIndex {
 	WHITE,
 	BLUE,
 	RED,
+	GREEN,
 }
 
 #[derive(Clone,Copy,PartialEq)]
@@ -94,7 +95,7 @@ impl Game {
         }
     }
 
-	fn has_had_condition(&self, condition: Condition) -> bool {
+	pub fn has_had_condition(&self, condition: Condition) -> bool {
 		self.conditions.iter().find(|v| *v == &condition).is_some()
 	}
 
@@ -229,7 +230,8 @@ impl Game {
 					}
 				}
 
-				let deferred_shield_damage = self.handle_collisions();
+				let is_red = self.has_had_condition(Condition::Bomb) || self.has_had_condition(Condition::HeatSeeking);
+				let deferred_shield_damage = self.handle_collisions(is_red);
 				{
 					for d in deferred_shield_damage {
 						let bs = self.world.get_active_shields_mut()[d.0].damage(d.1,d.2);
