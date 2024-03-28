@@ -86,7 +86,7 @@ impl Game {
         Game {
             world: World::new(world_size),
             score: 0,
-			lives: 3,
+			lives: 1,
 			wave: 1,
 			game_state: GameState::Intro(0.5),
 			current_condition: Condition::None,
@@ -132,7 +132,7 @@ impl Game {
 
 		if reset_type == ResetType::New {
 			self.score = 0;
-			self.lives = 3;
+			self.lives = 1;
 			self.wave = 1;
 		}
 		if reset_type == ResetType::Next {
@@ -193,9 +193,9 @@ impl Game {
 					}
 				}
 
-				if input.alt {
-					self.activate_condition(Condition::HeatSeeking);
-				}
+				// if input.alt {
+				// 	self.activate_condition(Condition::HeatSeeking);
+				// }
 
 				// update enemies
 				if let Some(bullet) = self.world.get_swarm_mut().update(dt) {
@@ -239,7 +239,7 @@ impl Game {
 					}
 				}
 				if let Some(lowest) = self.world.get_swarm().get_lowest_alive() {
-					if lowest.y >= self.world.get_player().vector.position.y {
+					if lowest.y >= self.world.get_active_shields()[0].top_left.y {
 						self.game_state = GameState::GameOver(2.);
 					}
 				} else {
@@ -257,7 +257,7 @@ impl Game {
 
 				self.world.get_ufo_mut().update(dt);
 
-				self.update_conditions();
+//				self.update_conditions();
 			},
 			GameState::Death(_) => {
 				if let GameState::Death(ref mut timer) = self.game_state {

@@ -373,15 +373,13 @@
 				topbar_ctx.textBaseline = "top";
 				topbar_ctx.font = "20px courier";
 				topbar_ctx.fillText("Score: " + score, 20, 20);
-				topbar_ctx.fillText("Lives: " + lives, 220, 20);
-				topbar_ctx.fillText("Wave: " + wave, 420, 20);
+				topbar_ctx.fillText("Wave: " + wave, 200, 20);
 
 				// draw leaderboard
 				leaderboardglobal_elem.appendChild(leaderboard_table);
 			}
 
 			function draw_condition_warning(condition,x,y) {
-				console.log("DRAWING CONDITION", condition);
 				ctx.fillStyle = "red";
 				ctx.textBaseline = "top";
 				ctx.font = "20px courier";
