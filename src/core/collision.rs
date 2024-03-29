@@ -25,16 +25,16 @@ impl Game {
 				}
 			}
 
-			let playerhit = player.check_hit(bullet);
-			if playerhit {
-				// TODO this should be green if we have certain conditions
-				if is_red {
-					queued_events.push(GameEvent::EntityDied(bullet.location.position, ColourIndex::RED));
-				} else {
-					queued_events.push(GameEvent::EntityDied(bullet.location.position, ColourIndex::GREEN));
-				}
-			}
-			!playerhit
+			let _playerhit = player.check_hit(bullet);
+			true
+			// if playerhit {
+			// 	if is_red {
+			// 		queued_events.push(GameEvent::EntityDied(bullet.location.position, ColourIndex::RED));
+			// 	} else {
+			// 		queued_events.push(GameEvent::EntityDied(bullet.location.position, ColourIndex::GREEN));
+			// 	}
+			// }
+			// !playerhit
 		});
 
 		if player_bullet.active {

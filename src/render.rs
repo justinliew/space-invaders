@@ -23,6 +23,9 @@ extern "C" {
 	fn draw_game_over(_: c_int);
 	fn draw_condition_warning(_: c_uchar, _: c_int, _: c_int);
 
+	fn draw_fastly_treatment(_: c_double);
+	fn reset_fastly_treatment();
+
 
 	fn draw_bounds(_: c_double, _: c_double, _: c_double, _: c_double);
 
@@ -212,24 +215,27 @@ impl RenderData {
 			GameState::Intro(_) => {
 				draw_intro();
 			},
-			GameState::Playing | GameState::Death(_) | GameState::Win(_) => {
-				for bullet in world.get_bullets() {
-					let bp = self.world_to_screen(&bullet.location.position);
-					draw_bullet(bp.x, bp.y);
-				}
-				let player_bullet = world.get_player_bullet();
-				if player_bullet.active {
-					// TODO break up `draw_player_bullet` into multiple functions?
-					let bp = self.world_to_screen(&player_bullet.location.position);
-					draw_player_bullet(bp.x, bp.y, player_bullet.facing, (player_bullet.ability == Ability::Bomb) as i32);
+			GameState::Playing | GameState::Death(_) | GameState::Win(_) | GameState::DeathFastlyTreatment(_) | GameState::GameOverFastlyTreatment(_) => {
+
+				if !matches!(game_state, GameState::DeathFastlyTreatment(_)) && !matches!(game_state, GameState::GameOverFastlyTreatment(_)) {
+					for bullet in world.get_bullets() {
+						let bp = self.world_to_screen(&bullet.location.position);
+						draw_bullet(bp.x, bp.y);
+					}
+					let player_bullet = world.get_player_bullet();
+					if player_bullet.active {
+						// TODO break up `draw_player_bullet` into multiple functions?
+						let bp = self.world_to_screen(&player_bullet.location.position);
+						draw_player_bullet(bp.x, bp.y, player_bullet.facing, (player_bullet.ability == Ability::Bomb) as i32);
+					}
 				}
 
 				let player = world.get_player();
 				let p = self.world_to_screen(&Point{x: player.x(), y: player.y()});
 
-				if player.alive {
+//				if player.alive {
 					draw_player(p.x, p.y, player.dir(),!game.conditions.is_empty() as i32);
-				}
+//				}
 
 				self.draw_swarm(&world.get_swarm());
 
@@ -243,8 +249,16 @@ impl RenderData {
 					let screen_pos = self.world_to_screen(&world.get_ufo().position);
 					draw_ufo(screen_pos.x, screen_pos.y);
 				}
+
+				if let GameState::GameOverFastlyTreatment(t) = game_state {
+					draw_fastly_treatment(t);
+				}
+				if let GameState::DeathFastlyTreatment(t) = game_state {
+					draw_fastly_treatment(t);
+				}
 			},
 			GameState::GameOver(_) => {
+				reset_fastly_treatment();
 				draw_game_over(game.score);
 			},
 		}

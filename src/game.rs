@@ -26,12 +26,14 @@ pub enum ResetType {
 	Respawn,
 }
 
-#[derive(Clone,Copy)]
+#[derive(Clone,Copy,PartialEq)]
 pub enum GameState {
 	Intro(f64),
 	Playing,
+	DeathFastlyTreatment(f64),
 	Death(f64),
 	Win(f64),
+	GameOverFastlyTreatment(f64),
 	GameOver(f64),
 }
 
@@ -153,16 +155,14 @@ impl Game {
 
 	pub unsafe fn update(&mut self, input: &Input, dt: f64) {
 		match self.game_state {
-			GameState::Intro(_) => {
-				if let GameState::Intro(ref mut timer) = self.game_state {
-					if *timer >= 0. {
-						*timer -= dt;
-					} else {
-						self.world.init_shields();
-						if input.any {
-							new_session();
-							self.game_state = GameState::Playing;
-						}
+			GameState::Intro(ref mut timer) => {
+				if *timer >= 0. {
+					*timer -= dt;
+				} else {
+					self.world.init_shields();
+					if input.any {
+						new_session();
+						self.game_state = GameState::Playing;
 					}
 				}
 			},
@@ -240,7 +240,7 @@ impl Game {
 				}
 				if let Some(lowest) = self.world.get_swarm().get_lowest_alive() {
 					if lowest.y >= self.world.get_active_shields()[0].top_left.y {
-						self.game_state = GameState::GameOver(2.);
+						self.game_state = GameState::GameOverFastlyTreatment(2.);
 					}
 				} else {
 					self.game_state = GameState::Win(2.);
@@ -249,9 +249,9 @@ impl Game {
 				if !self.world.get_player().alive {
 					self.lives -= 1;
 					if self.lives == 0 {
-						self.game_state = GameState::GameOver(2.);
+						self.game_state = GameState::DeathFastlyTreatment(3.);
 					} else {
-						self.game_state = GameState::Death(1.);
+						self.game_state = GameState::Death(3.);
 					}
 				}
 
@@ -259,35 +259,53 @@ impl Game {
 
 //				self.update_conditions();
 			},
-			GameState::Death(_) => {
-				if let GameState::Death(ref mut timer) = self.game_state {
+			GameState::Death(ref mut timer) => {
+				*timer -= dt;
+				if *timer < 0. {
+					self.post_death_reset();
+					self.game_state = GameState::Playing;
+				}
+			},
+			GameState::Win(ref mut timer) => {
+				if *timer >= 0. {
 					*timer -= dt;
-					if *timer < 0. {
-						self.post_death_reset();
-						self.game_state = GameState::Playing;
+				} else {
+					self.reset(ResetType::Next);
+					self.game_state = GameState::Playing;
+				}
+			},
+			GameState::GameOver(ref mut timer) => {
+				if *timer >= 0. {
+					*timer -= dt;
+				} else {
+					if input.any {
+						self.reset(ResetType::New);
+						self.game_state = GameState::Intro(2.);
 					}
 				}
 			},
-			GameState::Win(_) => {
-				if let GameState::Win(ref mut timer) = self.game_state {
-					if *timer >= 0. {
-						*timer -= dt;
-					} else {
-						self.reset(ResetType::Next);
-						self.game_state = GameState::Playing;
+			// freeze the game, draw a circle around the player and then kill all bots
+			GameState::DeathFastlyTreatment(ref mut timer) => {
+				if *timer >= 0. {
+					*timer -= dt;
+					let queued_events = self.world.get_swarm_mut().force_kill((3.0-*timer) / 3.0);
+					for event in queued_events {
+						self.send_game_event(event);
 					}
+				} else {
+					self.game_state = GameState::GameOver(2.);
 				}
 			},
-			GameState::GameOver(_) => {
-				if let GameState::GameOver(ref mut timer) = self.game_state {
-					if *timer >= 0. {
-						*timer -= dt;
-					} else {
-						if input.any {
-							self.reset(ResetType::New);
-							self.game_state = GameState::Intro(2.);
-						}
+			// freeze the game and kill all bots
+			GameState::GameOverFastlyTreatment(ref mut timer) => {
+				if *timer >= 0. {
+					*timer -= dt;
+					let queued_events = self.world.get_swarm_mut().force_kill((3.0-*timer) / 3.0);
+					for event in queued_events {
+						self.send_game_event(event);
 					}
+				} else {
+					self.game_state = GameState::GameOver(2.);
 				}
 			}
 		}

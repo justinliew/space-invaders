@@ -43,7 +43,7 @@
 	</style>
 </head>
 
-<body>
+<body id="bodyid">
 	<div id="gamediv">
 		<canvas id="topbar" style='position:absolute; left:0px; top:0px; width: 100%; height: 10%'></canvas>
 		<canvas id="gamearea" style='position:absolute; left:0px; top:10%; width: 80%; height: 90%'></canvas>
@@ -392,6 +392,19 @@
 				}
 			}
 
+			// as t nears 0 the screen should get more red
+			function draw_fastly_treatment(t) {
+				let opacity = 0.6*t/3.0 + 0.4;
+				let gamearea = document.getElementById('bodyid');
+				gamearea.style.opacity = opacity;
+				gamearea.style.backgroundColor = "red";
+			}
+
+			function reset_fastly_treatment() {
+				let gamearea = document.getElementById('bodyid');
+				gamearea.style.opacity = 1;
+			}
+
 
 			function draw_bounds(x, y, w, h) {
 				ctx.strokeStyle = "orange";
@@ -471,7 +484,7 @@
 			}
 
 			// The real loading and running of our wasm starts here
-			let imports = { console_log_int, console_log_double, clear_screen, draw_condition_warning, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
+			let imports = { console_log_int, console_log_double, clear_screen, draw_condition_warning, draw_fastly_treatment, reset_fastly_treatment, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
 			imports.Math_atan = Math.atan;
 			imports.sin = Math.sin;
 			imports.cos = Math.cos;

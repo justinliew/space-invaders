@@ -3,7 +3,7 @@ use crate::point::Point;
 use crate::size::WorldSize;
 use crate::bullet::{Bullet,PlayerBullet, Ability};
 use crate::vector::Vector;
-use crate::game::{ResetType};
+use crate::game::{ResetType,GameEvent,ColourIndex};
 
 enum Movement {
 	LEFT,
@@ -33,7 +33,7 @@ moves sideways a total of 10 from L to R
 Speeds up as there are fewer and fewer enemies
  */
 const MOVE_AMT: f64 = 20.0;
-const BASE_MOVE_DELAY: f64 = 0.8;
+const BASE_MOVE_DELAY: f64 = 0.1;
 const START_LOCATION: Point = Point{x: 200.0, y: 60.0};
 // I am having issues with rand packages on the wasm-unknown-unknown target
 // so I am just using a hard coded list of columns that repeats
@@ -143,6 +143,29 @@ impl Swarm {
 		} else {
 			return None;
 		}
+	}
+
+	// percentage will go from 0.0 to ~1.0. We should make sure that many are dead
+	pub fn force_kill(&mut self, percentage: f64) -> Vec<GameEvent> {
+		let mut queued_events = vec![];
+		while self.get_percentage_alive() > 1.0-percentage && self.get_percentage_alive() > 0. {
+			let mut kill_index = None;
+			for (index,alive) in self.alive.iter().enumerate().rev() {
+				if *alive {
+					kill_index = Some(index);
+					break;
+				}
+			}
+			if let Some(index) = kill_index {
+				self.alive[index] = false;
+				self.num_alive -= 1;
+				let x = index % self.num_y;
+				let y = index / self.num_y;
+				let loc = self.get_enemy_location(x,y) + Point::new(self.radius / 2.,self.radius / 2.);
+				queued_events.push(GameEvent::EntityDied(loc, ColourIndex::WHITE));
+			}
+		}
+		queued_events
 	}
 
 	pub fn get_enemy_location(&self, x: usize, y: usize) -> Point {
@@ -271,4 +294,6 @@ impl Swarm {
 		}
 		None
 	}
+
+
 }
