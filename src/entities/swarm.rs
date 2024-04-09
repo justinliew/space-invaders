@@ -159,8 +159,8 @@ impl Swarm {
 			if let Some(index) = kill_index {
 				self.alive[index] = false;
 				self.num_alive -= 1;
-				let x = index % self.num_y;
-				let y = index / self.num_y;
+				let x = index % self.num_x;
+				let y = index / self.num_x;
 				let loc = self.get_enemy_location(x,y) + Point::new(self.radius / 2.,self.radius / 2.);
 				queued_events.push(GameEvent::EntityDied(loc, ColourIndex::WHITE));
 			}
