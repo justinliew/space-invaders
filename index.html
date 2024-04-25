@@ -40,14 +40,24 @@
 			color: green;
 			font-family: courier;
 		}
+
+		#gamearea {
+			z-index: 0;
+		}
+		#animationtest {
+			z-index: 1;
+		}
 	</style>
 </head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js" integrity="sha512-jEnuDt6jfecCjthQAJ+ed0MTVA++5ZKmlUcmDGBv2vUI/REn6FuIdixLNnQT+vKusE2hhTk2is3cFvv5wA+Sgg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <body id="bodyid">
 	<div id="gamediv">
 		<canvas id="topbar" style='position:absolute; left:0px; top:0px; width: 100%; height: 10%'></canvas>
+		<div id="animationtest" style='position:absolute; left:0px; top:10%; width: 80%; height: 90%'></div>
 		<canvas id="gamearea" style='position:absolute; left:0px; top:10%; width: 80%; height: 90%'></canvas>
 		<div id="leaderboard" style='position:absolute; left:80%; top:10%; width: 50%; height: 100%'></div>
+		</div>
 	</div>
 
 	<div id="namediv">
@@ -398,11 +408,21 @@
 				let gamearea = document.getElementById('bodyid');
 				gamearea.style.opacity = opacity;
 				gamearea.style.backgroundColor = "red";
+
+				bodymovin.loadAnimation({
+					container: document.getElementById('animationtest'),
+					path: 'test.json',
+					render: 'canvas',
+					loop: true,
+					autoplay: true,
+					name: 'explosion'
+				});
 			}
 
 			function reset_fastly_treatment() {
 				let gamearea = document.getElementById('bodyid');
 				gamearea.style.opacity = 1;
+				bodymovin.destroy();
 			}
 
 
