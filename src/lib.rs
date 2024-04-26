@@ -40,7 +40,7 @@ mod vector;
 mod size;
 
 use crate::size::WorldSize;
-use crate::game::{GameData};
+use crate::game::GameData;
 use crate::render::RenderData;
 
 #[macro_use]
