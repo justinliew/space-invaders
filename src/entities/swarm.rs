@@ -25,6 +25,8 @@ pub struct Swarm {
 	time_to_move: f64,
 	pub fire_column: usize,
 	pub frame: u32,
+	pub num_drops: usize,
+	pub level: usize,
 }
 
 /*
@@ -33,7 +35,7 @@ moves sideways a total of 10 from L to R
 Speeds up as there are fewer and fewer enemies
  */
 const MOVE_AMT: f64 = 20.0;
-const BASE_MOVE_DELAY: f64 = 0.1;
+const BASE_MOVE_DELAY: f64 = 0.8;
 const START_LOCATION: Point = Point{x: 200.0, y: 60.0};
 // I am having issues with rand packages on the wasm-unknown-unknown target
 // so I am just using a hard coded list of columns that repeats
@@ -56,12 +58,15 @@ impl Swarm {
 			time_to_move: BASE_MOVE_DELAY,
 			fire_column: 0,
 			frame: 0,
+			num_drops: 0,
+			level: 0,
 		};
 		ret
 	}
 
 	pub fn reset(&mut self, reset_type: ResetType) {
 		if reset_type == ResetType::Next {
+			self.level += 1;
 			self.top_left = START_LOCATION + Point::new(0.,10.);
 		} else if reset_type == ResetType::Respawn {
 			return;			
@@ -71,12 +76,21 @@ impl Swarm {
 		self.alive = vec![true;self.num_x*self.num_y];
 		self.num_alive = self.num_x * self.num_y;
 		self.movement = Movement::RIGHT;
-		self.time_to_move = BASE_MOVE_DELAY;
+		self.time_to_move = self.get_level_modifier();
 		self.fire_column = 0;
+		self.num_drops = 0;
 	}
 
 	pub fn get_percentage_alive(&self) -> f64 {
 		self.num_alive as f64 / (self.num_x * self.num_y) as f64
+	}
+
+	pub fn get_num_drops(&self) -> usize {
+		self.num_drops
+	}
+
+	pub fn get_level_modifier(&self) -> f64 {
+		f64::max(BASE_MOVE_DELAY - 0.12 * self.level as f64,0.2)
 	}
 
 	pub fn update(&mut self, dt: f64) -> Option<Bullet> {
@@ -102,7 +116,9 @@ impl Swarm {
 			}
 		}
 
-		self.time_to_move = BASE_MOVE_DELAY * self.get_percentage_alive();
+		let drops = self.get_num_drops();
+		let drop_multiplier = 1.0 - 0.09*drops as f64;
+		self.time_to_move = self.get_level_modifier() * self.get_percentage_alive() * drop_multiplier;
 		match self.movement {
 			Movement::RIGHT => {
 				if self.world_size.width - rhs > 50. {
@@ -113,6 +129,7 @@ impl Swarm {
 			},
 			Movement::DOWN(right) => {
 				self.top_left.y += MOVE_AMT;
+				self.num_drops += 1;
 				if right {
 					self.movement = Movement::LEFT;
 				} else {
@@ -206,6 +223,7 @@ impl Swarm {
 		let bucket_y = (y - self.top_left.y) / (self.radius + self.spacing_y);
 		Some((bucket_x.trunc() as usize, bucket_y.trunc() as usize))
 	}
+
 	pub fn get_bottom_right(&self) -> Point {
 		Point{
 			x: self.top_left.x + self.num_x as f64 * self.radius + ((self.num_x-1) as f64) * self.spacing_x,
