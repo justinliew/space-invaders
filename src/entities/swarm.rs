@@ -137,7 +137,7 @@ impl Swarm {
 				}
 			}
 			Movement::LEFT => {
-				if lhs > 50. {
+				if lhs > 30. {
 					self.top_left.x -= MOVE_AMT;
 				} else {
 					self.movement = Movement::DOWN(false);
@@ -226,8 +226,8 @@ impl Swarm {
 
 	pub fn get_bottom_right(&self) -> Point {
 		Point{
-			x: self.top_left.x + self.num_x as f64 * self.radius + ((self.num_x-1) as f64) * self.spacing_x,
-			y: self.top_left.y + self.num_y as f64 * self.radius + ((self.num_y-1) as f64) * self.spacing_y,
+			x: self.top_left.x + (self.num_x as f64) * self.radius + ((self.num_x-1) as f64) * self.spacing_x,
+			y: self.top_left.y + (self.num_y as f64) * self.radius + ((self.num_y-1) as f64) * self.spacing_y,
 		}
 	}
 

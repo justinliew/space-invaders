@@ -426,14 +426,14 @@
 			}
 
 
-			function draw_bounds(x, y, w, h) {
+			function draw_bounds(x1, y1, x2, y2) {
 				ctx.strokeStyle = "orange";
 				ctx.beginPath();
-				ctx.moveTo(x, y);
-				ctx.lineTo(x + w, y);
-				ctx.lineTo(x + w, y + h);
-				ctx.lineTo(x, y + h);
-				ctx.lineTo(x, y);
+				ctx.moveTo(x1, y1);
+				ctx.lineTo(x2, y1);
+				ctx.lineTo(x2, y2);
+				ctx.lineTo(x1, y2);
+				ctx.lineTo(x1, y1);
 				ctx.stroke();
 			}
 

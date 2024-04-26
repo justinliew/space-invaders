@@ -137,7 +137,7 @@ impl RenderData {
 		// enable to draw bounds
 		// let br = swarm.get_bottom_right();
 		// draw_bounds(self.screen_top_left_offset.x + swarm.top_left.x * self.game_to_screen, self.screen_top_left_offset.y + swarm.top_left.y * self.game_to_screen, 
-		// 			br.x * self.game_to_screen, br.y * self.game_to_screen);
+		// 	self.screen_top_left_offset.x + br.x * self.game_to_screen, self.screen_top_left_offset.y + br.y * self.game_to_screen);
 
 		// is there a better iterator way to do this?
 		for i in 0..swarm.num_x {
