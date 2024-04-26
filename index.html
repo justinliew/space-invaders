@@ -28,7 +28,7 @@
 			transform: translate(-50%, -50%);
 			background-color: blue;
 			font-family: courier;
-			width: 400px;
+			width: 600px;
 			height: 100px;
 			padding: 20px;
 			border: 1px solid white;
@@ -168,6 +168,7 @@
 					});
 					if (is_in_top_ten(leaderboard)) {
 						document.getElementById('namediv').style.display = 'block';
+						document.getElementById("player_name").focus();
 						document.getElementById("player_name").onchange = function () {
 							var name = document.getElementById("player_name").value;
 							var listing_req = new XMLHttpRequest();
