@@ -300,7 +300,7 @@ impl Game {
 			GameState::GameOverFastlyTreatment(ref mut timer) => {
 				if *timer >= 0. {
 					*timer -= dt;
-					self.world.get_swarm_mut().force_kill((3.0-*timer) / 3.0);
+					self.world.get_swarm_mut().force_kill(1.);
 					// for event in queued_events {
 					// 	self.send_game_event(event);
 					// }
