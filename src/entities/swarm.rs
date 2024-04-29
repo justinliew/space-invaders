@@ -93,7 +93,7 @@ impl Swarm {
 		f64::max(BASE_MOVE_DELAY - 0.12 * self.level as f64,0.2)
 	}
 
-	pub fn update(&mut self, dt: f64) -> Option<Bullet> {
+	pub fn update(&mut self, dt: f64) -> Option<Vec<Bullet>> {
 
 
 		self.time_to_move -= dt;
@@ -155,10 +155,17 @@ impl Swarm {
 			_ => {},
 		}
 
-		if let Some(loc) = self.get_bullet_spawn_location() {
-			return Some(Bullet::new(Vector::new(loc, std::f64::consts::PI / 2.0), 200.));
-		} else {
+		let mut ret = vec![];
+
+		for i in 0..2 {
+			if let Some(loc) = self.get_bullet_spawn_location() {
+				ret.push(Bullet::new(Vector::new(loc, std::f64::consts::PI / 2.0), 200.));
+			}
+		}
+		if ret.is_empty() {
 			return None;
+		} else {
+			return Some(ret);
 		}
 	}
 

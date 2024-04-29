@@ -198,8 +198,10 @@ impl Game {
 				// }
 
 				// update enemies
-				if let Some(bullet) = self.world.get_swarm_mut().update(dt) {
-					self.world.get_bullets_mut().push(bullet);
+				if let Some(bullets) = self.world.get_swarm_mut().update(dt) {
+					for bullet in bullets {
+						self.world.get_bullets_mut().push(bullet);
+					}
 				}
 
 				// update bullets
