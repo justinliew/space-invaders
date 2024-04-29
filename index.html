@@ -171,6 +171,7 @@
 						document.getElementById("player_name").focus();
 						document.getElementById("player_name").onchange = function () {
 							var name = document.getElementById("player_name").value;
+							document.getElementById("player_name").value = "";
 							var listing_req = new XMLHttpRequest();
 							listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
 							listing_req.setRequestHeader("id", local_id);
@@ -417,7 +418,7 @@
 					container: document.getElementById('animation'),
 					path: 'data.json',
 					render: 'canvas',
-					loop: true,
+					loop: false,
 					autoplay: true,
 					name: 'explosion'
 				});
