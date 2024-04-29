@@ -187,7 +187,7 @@ impl Game {
 						} else if bomb {
 							(Ability::Bomb,400.)
 						} else {
-							(Ability::None,600.)
+							(Ability::None,800.)
 						};
 						self.world.get_player_bullet_mut().respawn(player_location, speed, ability);
 					}
@@ -240,7 +240,7 @@ impl Game {
 				}
 				if let Some(lowest) = self.world.get_swarm().get_lowest_alive() {
 					if lowest.y >= self.world.get_active_shields()[0].top_left.y {
-						self.game_state = GameState::GameOverFastlyTreatment(2.);
+						self.game_state = GameState::GameOverFastlyTreatment(1.);
 					}
 				} else {
 					self.game_state = GameState::Win(2.);
@@ -249,7 +249,7 @@ impl Game {
 				if !self.world.get_player().alive {
 					self.lives -= 1;
 					if self.lives == 0 {
-						self.game_state = GameState::DeathFastlyTreatment(3.);
+						self.game_state = GameState::DeathFastlyTreatment(1.);
 					} else {
 						self.game_state = GameState::Death(3.);
 					}
@@ -288,10 +288,10 @@ impl Game {
 			GameState::DeathFastlyTreatment(ref mut timer) => {
 				if *timer >= 0. {
 					*timer -= dt;
-					let queued_events = self.world.get_swarm_mut().force_kill((3.0-*timer) / 3.0);
-					for event in queued_events {
-						self.send_game_event(event);
-					}
+					self.world.get_swarm_mut().force_kill((3.0-*timer) / 3.0);
+					// for event in queued_events {
+					// 	self.send_game_event(event);
+					// }
 				} else {
 					self.game_state = GameState::GameOver(2.);
 				}
@@ -300,10 +300,10 @@ impl Game {
 			GameState::GameOverFastlyTreatment(ref mut timer) => {
 				if *timer >= 0. {
 					*timer -= dt;
-					let queued_events = self.world.get_swarm_mut().force_kill((3.0-*timer) / 3.0);
-					for event in queued_events {
-						self.send_game_event(event);
-					}
+					self.world.get_swarm_mut().force_kill((3.0-*timer) / 3.0);
+					// for event in queued_events {
+					// 	self.send_game_event(event);
+					// }
 				} else {
 					self.game_state = GameState::GameOver(2.);
 				}
