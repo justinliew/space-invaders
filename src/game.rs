@@ -30,7 +30,6 @@ pub enum ResetType {
 pub enum GameState {
 	Intro(f64),
 	Playing,
-	DeathFastlyTreatment(f64),
 	Death(f64),
 	Win(f64),
 	GameOverFastlyTreatment(f64),
@@ -251,7 +250,7 @@ impl Game {
 				if !self.world.get_player().alive {
 					self.lives -= 1;
 					if self.lives == 0 {
-						self.game_state = GameState::DeathFastlyTreatment(1.);
+						self.game_state = GameState::GameOverFastlyTreatment(1.);
 					} else {
 						self.game_state = GameState::Death(3.);
 					}
@@ -285,18 +284,6 @@ impl Game {
 						self.reset(ResetType::New);
 						self.game_state = GameState::Intro(2.);
 					}
-				}
-			},
-			// freeze the game, draw a circle around the player and then kill all bots
-			GameState::DeathFastlyTreatment(ref mut timer) => {
-				if *timer >= 0. {
-					*timer -= dt;
-					self.world.get_swarm_mut().force_kill((3.0-*timer) / 3.0);
-					// for event in queued_events {
-					// 	self.send_game_event(event);
-					// }
-				} else {
-					self.game_state = GameState::GameOver(2.);
 				}
 			},
 			// freeze the game and kill all bots

@@ -220,9 +220,9 @@ impl RenderData {
 			GameState::Intro(_) => {
 				draw_intro();
 			},
-			GameState::Playing | GameState::Death(_) | GameState::Win(_) | GameState::DeathFastlyTreatment(_) | GameState::GameOverFastlyTreatment(_) => {
+			GameState::Playing | GameState::Death(_) | GameState::Win(_) | GameState::GameOverFastlyTreatment(_) => {
 
-				if !matches!(game_state, GameState::DeathFastlyTreatment(_)) && !matches!(game_state, GameState::GameOverFastlyTreatment(_)) {
+				if !matches!(game_state, GameState::GameOverFastlyTreatment(_)) {
 					for bullet in world.get_bullets() {
 						let bp = self.world_to_screen(&bullet.location.position);
 						draw_bullet(bp.x, bp.y);
@@ -256,9 +256,6 @@ impl RenderData {
 				}
 
 				if let GameState::GameOverFastlyTreatment(t) = game_state {
-					draw_fastly_treatment(t);
-				}
-				if let GameState::DeathFastlyTreatment(t) = game_state {
 					draw_fastly_treatment(t);
 				}
 			},
