@@ -269,7 +269,7 @@ const buttonTemplate = `
 			var lastrank = 1;
 
 			lb.forEach(entry => {
-				update_leaderboard_entry(table, i, entry.rank, entry.score, entry.name, entry.id == local_id);
+				update_leaderboard_entry(table, i, i+1, entry.score, entry.name, entry.id == local_id);
 				lastrank = entry.rank;
 				i += 1;
 			});
@@ -340,8 +340,15 @@ const buttonTemplate = `
 			leaderboard_req.onload = function (oEvent) {
 				var entries = JSON.parse(leaderboard_req.response);
 				leaderboard = [];
+				let eindex = 0;
 				entries.forEach((entry, i) => {
-					leaderboard[i] = entry;
+					if (entry.id == local_id) {
+						leaderboard[i] = entry;
+					}
+					if (entry.name != "Kiosk Player" && eindex < 10) {
+						leaderboard[i] = entry;
+						eindex++;
+					}
 				});
 				render_leaderboard(leaderboard_table, leaderboard, "Global");
 			}
