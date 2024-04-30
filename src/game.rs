@@ -273,6 +273,7 @@ impl Game {
 					*timer -= dt;
 				} else {
 					self.reset(ResetType::Next);
+					self.world.init_shields();
 					self.game_state = GameState::Playing;
 				}
 			},
