@@ -117,7 +117,7 @@ impl Swarm {
 		}
 
 		let drops = self.get_num_drops();
-		let drop_multiplier = 1.0 - 0.09*drops as f64;
+		let drop_multiplier = 1.0 - 0.05*drops as f64;
 		self.time_to_move = self.get_level_modifier() * self.get_percentage_alive();
 		match self.movement {
 			Movement::RIGHT => {
@@ -157,7 +157,7 @@ impl Swarm {
 
 		let mut ret = vec![];
 
-		for i in 0..2 {
+		for i in 0..4 {
 			if let Some(loc) = self.get_bullet_spawn_location() {
 				ret.push(Bullet::new(Vector::new(loc, std::f64::consts::PI / 2.0), 200.));
 			}
