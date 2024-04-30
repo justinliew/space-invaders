@@ -582,6 +582,24 @@ const buttonTemplate = `
 				ctx.stroke();
 			}
 
+			function draw_line(x1, y1, x2, y2, color) {
+				if (color == 1) {
+					ctx.strokeStyle = "blue";
+				} else if (color == 2) {
+					pCtx.strokeStyle = "red";
+				} else if (color == 3) {
+					pCtx.strokeStyle = "green";
+				} else {
+					pCtx.strokeSTyle = "white";
+				}
+
+				ctx.strokeStyle = "orange";
+				ctx.beginPath();
+				ctx.moveTo(x1, y1);
+				ctx.lineTo(x2, y2);
+				ctx.stroke();
+			}
+
 			function console_log_int(value) {
 				console.log(value);
 			}
@@ -649,7 +667,7 @@ const buttonTemplate = `
 			}
 
 			// The real loading and running of our wasm starts here
-			let imports = { console_log_int, console_log_double, clear_screen, draw_condition_warning, draw_fastly_treatment, reset_fastly_treatment, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
+			let imports = { console_log_int, console_log_double, clear_screen, draw_condition_warning, draw_fastly_treatment, reset_fastly_treatment, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_line, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
 			imports.Math_atan = Math.atan;
 			imports.sin = Math.sin;
 			imports.cos = Math.cos;

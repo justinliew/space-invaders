@@ -29,6 +29,8 @@ extern "C" {
 
 	fn draw_bounds(_: c_double, _: c_double, _: c_double, _: c_double);
 
+	fn draw_line(_: c_double, _: c_double, _: c_double, _: c_double, _: c_int);
+
 	// id, x,y, dim
 	fn draw_shield(_: c_int, _: c_double, _: c_double, _: c_double, _: c_int);
 
@@ -138,6 +140,9 @@ impl RenderData {
 		// let br = swarm.get_bottom_right();
 		// draw_bounds(self.screen_top_left_offset.x + swarm.top_left.x * self.game_to_screen, self.screen_top_left_offset.y + swarm.top_left.y * self.game_to_screen, 
 		// 	self.screen_top_left_offset.x + br.x * self.game_to_screen, self.screen_top_left_offset.y + br.y * self.game_to_screen);
+
+		// draw_line(self.screen_top_left_offset.x + swarm.lhs*self.game_to_screen,self.screen_top_left_offset.y,self.screen_top_left_offset.x + swarm.lhs*self.game_to_screen, 500., 1);
+		// draw_line(self.screen_top_left_offset.x + swarm.rhs*self.game_to_screen,self.screen_top_left_offset.y,self.screen_top_left_offset.x + swarm.rhs*self.game_to_screen, 500., 1);
 
 		// is there a better iterator way to do this?
 		for i in 0..swarm.num_x {
