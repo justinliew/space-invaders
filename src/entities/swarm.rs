@@ -27,6 +27,8 @@ pub struct Swarm {
 	pub frame: u32,
 	pub num_drops: usize,
 	pub level: usize,
+	pub lhs: f64,
+	pub rhs: f64,
 }
 
 /*
@@ -60,6 +62,8 @@ impl Swarm {
 			frame: 0,
 			num_drops: 0,
 			level: 0,
+			lhs: 0.,
+			rhs: 0.,
 		};
 		ret
 	}
@@ -95,33 +99,33 @@ impl Swarm {
 
 	pub fn update(&mut self, dt: f64) -> Option<Vec<Bullet>> {
 
-
-		self.time_to_move -= dt;
-		if self.time_to_move > 0.0 {
-			return None;
-		}
-
 		let mut lhs = self.top_left.x;
-		let mut rhs = self.top_left.x + self.num_x as f64 * self.spacing_x;
 		for l in 0..self.num_x {
 			if self.get_lowest_in_column(l).is_some() {
 				lhs = self.top_left.x + (l as f64) * (self.radius + self.spacing_x);
 				break;
 			}
 		}
+		let mut rhs = self.top_left.x + self.num_x as f64 * (self.radius + self.spacing_x) + self.radius;
 		for r in (0..self.num_x).rev() {
 			if self.get_lowest_in_column(r).is_some() {
-				rhs = self.top_left.x + (r as f64) * (self.radius + self.spacing_x);
+				rhs = self.top_left.x + (r as f64) * (self.radius + self.spacing_x) + self.radius;
 				break;
 			}
 		}
 
-		let drops = self.get_num_drops();
-		let drop_multiplier = 1.0 - 0.05*drops as f64;
+		self.lhs = lhs;
+		self.rhs = rhs;
+
+		self.time_to_move -= dt;
+		if self.time_to_move > 0.0 {
+			return None;
+		}
+
 		self.time_to_move = self.get_level_modifier() * self.get_percentage_alive();
 		match self.movement {
 			Movement::RIGHT => {
-				if self.world_size.width - rhs > 50. {
+				if self.world_size.width - rhs > 75. {
 					self.top_left.x += MOVE_AMT;
 				} else {
 					self.movement = Movement::DOWN(true);
@@ -201,11 +205,11 @@ impl Swarm {
 
 	pub fn get_lowest_in_column(&self, col: usize) -> Option<usize> {
 		// find an alive enemy
-		let mut row = self.num_y - 1;
+		let mut row = self.num_y;
 
 		while row > 0 {
-			if self.alive[row * self.num_x + col] {
-				return Some(row);
+			if self.alive[(row-1) * self.num_x + col] {
+				return Some(row-1);
 			}
 			row -= 1;
 		}
