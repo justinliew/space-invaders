@@ -241,7 +241,7 @@ impl Game {
 				}
 				if let Some(lowest) = self.world.get_swarm().get_lowest_alive() {
 					if lowest.y >= self.world.get_active_shields()[0].top_left.y {
-						self.game_state = GameState::GameOverFastlyTreatment(1.);
+						self.game_state = GameState::GameOverFastlyTreatment(3.);
 					}
 				} else {
 					self.game_state = GameState::Win(2.);
@@ -250,7 +250,7 @@ impl Game {
 				if !self.world.get_player().alive {
 					self.lives -= 1;
 					if self.lives == 0 {
-						self.game_state = GameState::GameOverFastlyTreatment(1.);
+						self.game_state = GameState::GameOverFastlyTreatment(3.);
 					} else {
 						self.game_state = GameState::Death(3.);
 					}

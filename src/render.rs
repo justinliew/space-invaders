@@ -233,6 +233,17 @@ impl RenderData {
 						let bp = self.world_to_screen(&player_bullet.location.position);
 						draw_player_bullet(bp.x, bp.y, player_bullet.facing, (player_bullet.ability == Ability::Bomb) as i32);
 					}
+
+					if world.get_ufo().active {
+						let screen_pos = self.world_to_screen(&world.get_ufo().position);
+						draw_ufo(screen_pos.x, screen_pos.y);
+					}
+	
+					for (index,shield) in world.get_active_shields().iter().enumerate() {
+						let screen_pos = self.world_to_screen(&shield.top_left);
+						let condition = game.conditions.iter().find(|v| *v == &Condition::Shields).is_some();
+						draw_shield(index as i32, screen_pos.x, screen_pos.y, Shield::BLOCK_DIM * self.game_to_screen, condition as i32);
+					}	
 				}
 
 				let player = world.get_player();
@@ -244,16 +255,6 @@ impl RenderData {
 
 				self.draw_swarm(&world.get_swarm());
 
-				for (index,shield) in world.get_active_shields().iter().enumerate() {
-					let screen_pos = self.world_to_screen(&shield.top_left);
-					let condition = game.conditions.iter().find(|v| *v == &Condition::Shields).is_some();
-					draw_shield(index as i32, screen_pos.x, screen_pos.y, Shield::BLOCK_DIM * self.game_to_screen, condition as i32);
-				}
-
-				if world.get_ufo().active {
-					let screen_pos = self.world_to_screen(&world.get_ufo().position);
-					draw_ufo(screen_pos.x, screen_pos.y);
-				}
 
 				if let GameState::GameOverFastlyTreatment(t) = game_state {
 					draw_fastly_treatment(t);

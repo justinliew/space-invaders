@@ -561,13 +561,17 @@ const buttonTemplate = `
 				// gamearea.style.opacity = opacity;
 				// gamearea.style.backgroundColor = "red";
 
-				bodymovin.loadAnimation({
+				document.getElementById('animation').style.display = 'block';
+				let anim = bodymovin.loadAnimation({
 					container: document.getElementById('animation'),
 					path: 'data.json',
 					render: 'canvas',
 					loop: false,
 					autoplay: true,
 					name: 'explosion'
+				});
+				anim.addEventListener('complete', e => {
+					document.getElementById('animation').style.display = 'none'
 				});
 			}
 
