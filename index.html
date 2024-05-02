@@ -83,34 +83,6 @@
 		let local_id = "";
 		let playername = "";
 		const gamepadsByIndex = {};
-		const controllerTemplate = `
-<div>
-  <div class="head"><div class="index"></div><div class="id"></div></div>
-  <div class="info"><div class="label">connected:</div><span class="connected"></span></div>
-  <div class="info"><div class="label">mapping:</div><span class="mapping"></span></div>
-  <div class="inputs">
-    <div class="axes"></div>
-    <div class="buttons"></div>
-  </div>
-</div>
-`;
-const axisTemplate = `
-<svg viewBox="-2.2 -2.2 4.4 4.4" width="128" height="128">
-    <circle cx="0" cy="0" r="2" fill="none" stroke="#888" stroke-width="0.04" />
-    <path d="M0,-2L0,2M-2,0L2,0" stroke="#888" stroke-width="0.04" />
-    <circle cx="0" cy="0" r="0.22" fill="red" class="axis" />
-    <text text-anchor="middle" fill="#CCC" x="0" y="2">0</text>
-</svg>
-`
-
-const buttonTemplate = `
-<svg viewBox="-2.2 -2.2 4.4 4.4" width="64" height="64">
-  <circle cx="0" cy="0" r="2" fill="none" stroke="#888" stroke-width="0.1" />
-  <circle cx="0" cy="0" r="0" fill="none" fill="red" class="button" />
-  <text class="value" dominant-baseline="middle" text-anchor="middle" fill="#CCC" x="0" y="0">0.00</text>
-  <text class="index" alignment-baseline="hanging" dominant-baseline="hanging" text-anchor="start" fill="#CCC" x="-2" y="-2">0</text>
-</svg>
-`;
 
 	const buttonids = {
 		FACE_1: 0, // Face (main) buttons
@@ -140,46 +112,7 @@ const buttonTemplate = `
 		return percentage * (number > 0 ? 1 : -1);
 		}
 		function addGamepad(gamepad) {
-			console.log('add:', gamepad.index);
-			const elem = document.createElement('div');
-			elem.innerHTML = controllerTemplate;
-
-			const axesElem = elem.querySelector('.axes');
-			const buttonsElem = elem.querySelector('.buttons');
-			
-			const axes = [];
-			for (let ndx = 0; ndx < gamepad.axes.length; ndx += 2) {
-				const div = document.createElement('div');
-				div.innerHTML = axisTemplate;
-				axesElem.appendChild(div);
-				axes.push({
-				axis: div.querySelector('.axis'),
-				value: div.querySelector('text'),
-				});
-			}
-
-			const buttons = [];
-			for (let ndx = 0; ndx < gamepad.buttons.length; ++ndx) {
-				const div = document.createElement('div');
-				div.innerHTML = buttonTemplate;
-				buttonsElem.appendChild(div);
-				div.querySelector('.index').textContent = ndx;
-				buttons.push({
-				circle: div.querySelector('.button'),
-				value: div.querySelector('.value'),
-				});
-			}
-
-			gamepadsByIndex[gamepad.index] = {
-				gamepad,
-				elem,
-				axes,
-				buttons,
-				index: elem.querySelector('.index'),
-				id: elem.querySelector('.id'),
-				mapping: elem.querySelector('.mapping'),
-				connected: elem.querySelector('.connected'),
-			};
+			gamepadsByIndex[gamepad.index] = {gamepad};
 			}
 
 			function removeGamepad(gamepad) {
