@@ -252,7 +252,7 @@ impl RenderData {
 				let p = self.world_to_screen(&Point{x: player.x(), y: player.y()});
 
 //				if player.alive {
-					draw_player(p.x, p.y, player.dir(),!game.conditions.is_empty() as i32);
+					draw_player(p.x, p.y, player.dir(),0);
 //				}
 
 				self.draw_swarm(&world.get_swarm());
