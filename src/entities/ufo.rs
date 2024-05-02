@@ -63,12 +63,12 @@ impl Ufo {
 					StartLocation::LEFT => {
 						self.start = StartLocation::RIGHT;
 						self.position.x = self.world_size.width;
-						self.position.y = 10.;
+						self.position.y = 20.;
 					},
 					StartLocation::RIGHT => {
 						self.start = StartLocation::LEFT;
 						self.position.x = 0.;
-						self.position.y = 10.;
+						self.position.y = 20.;
 					}
 				}
 			}
@@ -80,8 +80,8 @@ impl Ufo {
 			return None;
 		}
 
-		let hit = bullet.x() > self.x() - Ufo::UFO_WIDTH/2. && bullet.x() < self.x() + Ufo::UFO_WIDTH/2. &&
-			bullet.y() > self.y() - Ufo::UFO_HEIGHT/2. && bullet.y() < self.y() + Ufo::UFO_HEIGHT/2.;
+		let hit = bullet.x() > self.x() && bullet.x() < self.x() + Ufo::UFO_WIDTH*1.5 &&
+			bullet.y() < self.y() + Ufo::UFO_HEIGHT;
 		if hit {
 			self.reset();
 			Some((300, bullet.location.position))
