@@ -69,8 +69,11 @@
 
 	<script>
 
-		let checking_for_high_score = false;
-		let show_game_end_screen = false;
+		let high_score_checked = false;
+		let has_high_score = false;
+		let high_score_index = 0;
+		let cur_high_score_letter = 0;
+		let high_score_name_letters = [];
 
 		let sprites = [];
 		let module = {};
@@ -296,43 +299,46 @@ const buttonTemplate = `
 		}
 
 		function check_for_high_score() {
-			if (!checking_for_high_score && !show_game_end_screen) {
-				checking_for_high_score = true;
-				show_game_end_screen = false;
-				var leaderboard_req = new XMLHttpRequest();
-				leaderboard_req.onload = function (oEvent) {
-					var entries = JSON.parse(leaderboard_req.response);
-					leaderboard = [];
-					entries.forEach((entry, i) => {
-						leaderboard[i] = entry;
-					});
-					if (is_in_top_ten(leaderboard)) {
-						document.getElementById('namediv').style.display = 'block';
-						document.getElementById("player_name").focus();
-						document.getElementById("player_name").onchange = function () {
-							var name = document.getElementById("player_name").value;
-							document.getElementById("player_name").value = "";
-							var listing_req = new XMLHttpRequest();
-							listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
-							listing_req.setRequestHeader("id", local_id);
-							listing_req.setRequestHeader("name", name);
-							listing_req.setRequestHeader("score", local_score.score);
-							listing_req.send();
-							listing_req.onload = function (oEvent) {
-								get_leaderboard_entries();
-							}
-							document.getElementById('namediv').style.display = 'none';
-							checking_for_high_score = false;
-							show_game_end_screen = true;
-						}
-					} else {
-						checking_for_high_score = false;
-						show_game_end_screen = true;
-					}
+			high_score_checked = false;
+			has_high_score = false;
+
+			high_score_index = 0;
+			cur_high_score_letter = 0;
+			high_score_name_letters = [];
+			var leaderboard_req = new XMLHttpRequest();
+			leaderboard_req.onload = function (oEvent) {
+				var entries = JSON.parse(leaderboard_req.response);
+				leaderboard = [];
+				entries.forEach((entry, i) => {
+					leaderboard[i] = entry;
+				});
+//					if (is_in_top_ten(leaderboard)) {
+				if (true) {
+					has_high_score = true;
+					// document.getElementById('namediv').style.display = 'block';
+					// document.getElementById("player_name").focus();
+					// document.getElementById("player_name").onchange = function () {
+					// 	var name = document.getElementById("player_name").value;
+					// 	document.getElementById("player_name").value = "";
+					// 	var listing_req = new XMLHttpRequest();
+					// 	listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
+					// 	listing_req.setRequestHeader("id", local_id);
+					// 	listing_req.setRequestHeader("name", name);
+					// 	listing_req.setRequestHeader("score", local_score.score);
+					// 	listing_req.send();
+					// 	listing_req.onload = function (oEvent) {
+					// 		get_leaderboard_entries();
+					// 	}
+					// 	document.getElementById('namediv').style.display = 'none';
+					// 	show_game_end_screen = true;
+					// }
+				} else {
+					has_high_score = false;
 				}
-				leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/global", true);
-				leaderboard_req.send();
+				high_score_checked = true;
 			}
+			leaderboard_req.open("GET", "https://leaderboard.edgecompute.app/global", true);
+			leaderboard_req.send();
 		}
 
 		function get_leaderboard_entries() {
@@ -522,11 +528,36 @@ const buttonTemplate = `
 				ctx.drawImage(res.title_img, 0, 0, gamearea.width, gamearea.height);
 			}
 
-			function draw_game_over(score) {
+			function check_high_score(score) {
 				check_for_high_score();
-				if (show_game_end_screen) {
-					ctx.drawImage(res.game_over_img, 0, 0, gamearea.width, gamearea.height);
+			}
+
+			function wait_high_score() {
+				if (high_score_checked) {
+					if (has_high_score) {
+						return 2;
+					} else {
+						return 1;
+					}
 				}
+				return 0;
+			}
+
+			function draw_game_over(score) {
+				let name = "";
+				for (i=0;i<high_score_name_letters.length;++i) {
+					name = name.concat(String.fromCharCode(65 + high_score_name_letters[i]));
+				}
+				var listing_req = new XMLHttpRequest();
+				listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
+				listing_req.setRequestHeader("id", local_id);
+				listing_req.setRequestHeader("name", name);
+				listing_req.setRequestHeader("score", local_score.score);
+				listing_req.send();
+				listing_req.onload = function (oEvent) {
+					get_leaderboard_entries();
+				}
+				ctx.drawImage(res.game_over_img, 0, 0, gamearea.width, gamearea.height);
 			}
 
 			function draw_hud(score, lives, wave) {
@@ -539,6 +570,38 @@ const buttonTemplate = `
 
 				// draw leaderboard
 				leaderboardglobal_elem.appendChild(leaderboard_table);
+			}
+
+			function draw_name_picker(letter_index, cur_letter) {
+				if (letter_index != high_score_index) {
+					high_score_name_letters[high_score_index] = cur_high_score_letter;
+				}
+				high_score_index = letter_index;
+				cur_high_score_letter = cur_letter;
+				
+				ctx.fillStyle = "red";
+				ctx.font = "20px courier";
+				ctx.fillText("You got a high score! Enter your initials", 300,300);
+				ctx.font = "30px courier";
+				for (li = 0; li < letter_index+1; ++li) {
+					let letter_offset = li * 110;
+					ctx.strokeStyle = "red";
+					ctx.beginPath();
+					ctx.moveTo(letter_offset + 500, 500);
+					ctx.lineTo(letter_offset + 550, 500);
+					ctx.lineTo(letter_offset + 550, 550);
+					ctx.lineTo(letter_offset + 500, 550);
+					ctx.lineTo(letter_offset + 500, 500);
+					ctx.stroke();
+					if (li == letter_index) {
+						high_score_name_letters[high_score_index] = cur_high_score_letter;
+						let letter = String.fromCharCode(65 + cur_high_score_letter);
+						ctx.fillText(letter, letter_offset + 515,525);
+					} else {
+						let letter = String.fromCharCode(65 + high_score_name_letters[li]);
+						ctx.fillText(letter, letter_offset + 515, 525);
+					}
+				}
 			}
 
 			function draw_condition_warning(condition,x,y) {
@@ -678,7 +741,7 @@ const buttonTemplate = `
 			}
 
 			// The real loading and running of our wasm starts here
-			let imports = { console_log_int, console_log_double, clear_screen, draw_condition_warning, draw_fastly_treatment, reset_fastly_treatment, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_line, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
+			let imports = { console_log_int, console_log_double, clear_screen, draw_condition_warning, draw_fastly_treatment, reset_fastly_treatment, draw_name_picker, check_high_score, wait_high_score, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_line, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
 			imports.Math_atan = Math.atan;
 			imports.sin = Math.sin;
 			imports.cos = Math.cos;
@@ -794,10 +857,6 @@ const buttonTemplate = `
 			}
 
 			function processKey(key, b) {
-				// while in game over, don't do this
-				if (checking_for_high_score) {
-					return;
-				}
 				switch (key) {
 					case "ArrowLeft":
 						module.toggle_left(b);

@@ -14,6 +14,10 @@ extern "C" {
 	// id, index, state
 	fn update_shield(_: c_int, _: c_int, _: c_int);
 
+	fn check_high_score(_: c_int);
+
+	fn wait_high_score() -> c_int;
+
 	fn new_session();
 
 //	fn console_log_int(_: c_int);
@@ -33,6 +37,9 @@ pub enum GameState {
 	Death(f64),
 	Win(f64),
 	GameOverFastlyTreatment(f64),
+	CheckHighScore,
+	WaitHighScore,
+	ShowHighScore(bool,bool,bool),
 	GameOver(f64),
 }
 
@@ -77,6 +84,10 @@ pub struct Game {
 	pub current_condition: Condition,
 	pub conditions: Vec<Condition>,
 
+	/// name picker
+	pub letter_index: i32,
+	pub cur_letter: i32,
+
 	/// Events to other parts of the system
 	sender: Sender<GameEvent>,
 }
@@ -92,6 +103,8 @@ impl Game {
 			game_state: GameState::Intro(0.5),
 			current_condition: Condition::None,
 			conditions: vec![],
+			letter_index: 0,
+			cur_letter: 0,
 			sender: tx,
         }
     }
@@ -276,16 +289,6 @@ impl Game {
 					self.game_state = GameState::Playing;
 				}
 			},
-			GameState::GameOver(ref mut timer) => {
-				if *timer >= 0. {
-					*timer -= dt;
-				} else {
-					if input.any {
-						self.reset(ResetType::New);
-						self.game_state = GameState::Intro(2.);
-					}
-				}
-			},
 			// freeze the game and kill all bots
 			GameState::GameOverFastlyTreatment(ref mut timer) => {
 				if *timer >= 0. {
@@ -295,9 +298,60 @@ impl Game {
 					// 	self.send_game_event(event);
 					// }
 				} else {
-					self.game_state = GameState::GameOver(2.);
+					self.game_state = GameState::CheckHighScore;
 				}
-			}
+			},
+			GameState::CheckHighScore => {
+				check_high_score(self.score);
+				self.game_state = GameState::WaitHighScore;
+			},
+			GameState::WaitHighScore => {
+				let ret = wait_high_score();
+				match ret {
+					1 => self.game_state = GameState::GameOver(1.),
+					2 => self.game_state = GameState::ShowHighScore(false,false,false),
+					_ => {},
+				}
+			},
+			GameState::ShowHighScore(ref mut fire,ref mut left,ref mut right) => {
+				let mut advance = false;
+				if !input.fire && *fire {
+					if self.letter_index == 2 {
+						advance = true;
+					} else {
+						self.letter_index += 1;
+						self.cur_letter = 0;
+					}
+				}
+				if !input.left && *left {
+					self.cur_letter -= 1;
+					if (self.cur_letter < 0) {
+						self.cur_letter = 25;
+					}
+				}
+				if !input.right && *right {
+					self.cur_letter += 1;
+					if (self.cur_letter > 25) {
+						self.cur_letter = 0;
+					}
+				}
+				*fire = input.fire;
+				*left = input.left;
+				*right = input.right;
+				if advance {
+					self.game_state = GameState::GameOver(1.);
+				}
+			},
+			GameState::GameOver(ref mut timer) => {
+				if *timer >= 0. {
+					*timer -= dt;
+				} else {
+					if input.any {
+						self.reset(ResetType::New);
+						self.game_state = GameState::Intro(2.);
+					}
+				}
+			},			
 		}
 	}
 }
