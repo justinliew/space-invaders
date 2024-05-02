@@ -97,7 +97,7 @@ impl RenderData {
 	}
 
 	fn enable_condition_text(&mut self) {
-		self.condition_text = Some(ConditionText {on: false, countdown: 5., blink_countdown: 0.});
+		self.condition_text = Some(ConditionText {on: false, countdown: 3., blink_countdown: 0.});
 	}
 
 	fn disable_condition_text(&mut self) {
@@ -180,12 +180,13 @@ impl RenderData {
 		let world = &game.world;
 		clear_screen();
 
-		let warning_loc = self.world_to_screen(&Point{x: self.width as f64/2., y: 500.});
+		let warning_loc = self.world_to_screen(&Point{x: self.width as f64/4., y: 400.});
 
 		if let Some(ct) = &mut self.condition_text {
 			ct.update(dt);
 			if ct.on {
-				draw_condition_warning(game.current_condition as u8, warning_loc.x as i32, warning_loc.y as i32);
+				// TODO reusing condition as wave
+				draw_condition_warning(game.wave as u8, warning_loc.x as i32, warning_loc.y as i32);
 			}
 			if ct.countdown <= 0. {
 				self.disable_condition_text();

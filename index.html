@@ -541,13 +541,15 @@
 				ctx.fillStyle = "red";
 				ctx.textBaseline = "top";
 				ctx.font = "20px courier";
-				if (condition == 1) {
-					ctx.fillText("Shields Low; activating Fastly Shields", x,y);
-				} else if (condition == 2) {
-					ctx.fillText("Bots closing in; activating Bot Bomb", x,y);					
-				} else if (condition == 3) {
-					ctx.fillText("Bots speeding up; activating Bot Seeking", x,y);
-				}
+				// if (condition == 1) {
+				// 	ctx.fillText("Shields Low; activating Fastly Shields", x,y);
+				// } else if (condition == 2) {
+				// 	ctx.fillText("Bots closing in; activating Bot Bomb", x,y);					
+				// } else if (condition == 3) {
+				// 	ctx.fillText("Bots speeding up; activating Bot Seeking", x,y);
+				// }
+				let text = "Starting Wave " + condition;
+				ctx.fillText(text, x, y);
 			}
 
 			// as t nears 0 the screen should get more red

@@ -65,6 +65,7 @@ pub enum Condition {
 	Shields=1,
 	Bomb=2,
 	HeatSeeking=3,
+	Wave=4,
 }
 
 /// The data structure that contains the state of the game
@@ -287,6 +288,7 @@ impl Game {
 					self.reset(ResetType::Next);
 					self.world.init_shields();
 					self.game_state = GameState::Playing;
+					self.activate_condition(Condition::Wave);
 				}
 			},
 			// freeze the game and kill all bots
