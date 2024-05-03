@@ -75,6 +75,7 @@
 		let cur_high_score_letter = 0;
 		let high_score_name_letters = [];
 		let submit_high_score = false;
+		let start_anim = true;
 
 		let sprites = [];
 		let module = {};
@@ -446,6 +447,7 @@ const buttonTemplate = `
 
 			function new_session() {
 				show_game_end_screen = false;
+				start_anim = true;
 				var session_req = new XMLHttpRequest();
 				session_req.onload = function (oEvent) {
 					local_id = session_req.response;
@@ -628,21 +630,24 @@ const buttonTemplate = `
 				// gamearea.style.opacity = opacity;
 				// gamearea.style.backgroundColor = "red";
 
-				document.getElementById('animation').style.display = 'block';
-				let anim = bodymovin.loadAnimation({
-					container: document.getElementById('animation'),
-					path: 'data.json',
-					render: 'canvas',
-					loop: false,
-					autoplay: true,
-					name: 'explosion'
-				});
-				setTimeout(() => {
-					anim.stop();
-				}, 500);
-				anim.addEventListener('complete', e => {
-					document.getElementById('animation').style.display = 'none'
-				});
+				if (start_anim) {
+					document.getElementById('animation').style.display = 'block';
+					let anim = bodymovin.loadAnimation({
+						container: document.getElementById('animation'),
+						path: 'data.json',
+						render: 'canvas',
+						loop: false,
+						autoplay: true,
+						name: 'explosion'
+					});
+					setTimeout(() => {
+						anim.stop();
+					},500);
+					anim.addEventListener('complete', e => {
+						document.getElementById('animation').style.display = 'none'
+					});
+					start_anim = false;
+				}
 			}
 
 			function reset_fastly_treatment() {
