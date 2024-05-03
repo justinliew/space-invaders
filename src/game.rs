@@ -189,7 +189,7 @@ impl Game {
 				if input.left && self.world.get_player().x() > radius {
 					*self.world.get_player_mut().x_mut() -= MOVE_SPEED * dt;
 				}
-				if input.right && self.world.get_player().x() < (self.world.world_size.width-radius) {
+				if input.right && self.world.get_player().x() < (self.world.world_size.width-radius-75.) {
 					*self.world.get_player_mut().x_mut() += MOVE_SPEED * dt;
 				};
 
