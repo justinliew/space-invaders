@@ -74,6 +74,7 @@
 		let high_score_index = 0;
 		let cur_high_score_letter = 0;
 		let high_score_name_letters = [];
+		let submit_high_score = false;
 
 		let sprites = [];
 		let module = {};
@@ -217,16 +218,21 @@
 		}
 
 		function is_in_top_ten(lb) {
-			var i = 0;
-			var lastrank = 1;
-
-			var ret = false;
-			lb.forEach(entry => {
-				if (Object.keys(local_score).length != 0) {
+			var ret = true;
+			var count = 1;
+			lb.every(entry => {
+				if (count > 10) {
+					ret = false;
+					return false;
+				}
+				if (entry.name != "Kiosk Player") {
+					count++;
 					if (local_score.score > entry.score) {
 						ret = true;
+						return false;
 					}
 				}
+				return true;
 			});
 			return ret;
 		}
@@ -245,26 +251,8 @@
 				entries.forEach((entry, i) => {
 					leaderboard[i] = entry;
 				});
-//					if (is_in_top_ten(leaderboard)) {
-				if (true) {
+				if (is_in_top_ten(leaderboard)) {
 					has_high_score = true;
-					// document.getElementById('namediv').style.display = 'block';
-					// document.getElementById("player_name").focus();
-					// document.getElementById("player_name").onchange = function () {
-					// 	var name = document.getElementById("player_name").value;
-					// 	document.getElementById("player_name").value = "";
-					// 	var listing_req = new XMLHttpRequest();
-					// 	listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
-					// 	listing_req.setRequestHeader("id", local_id);
-					// 	listing_req.setRequestHeader("name", name);
-					// 	listing_req.setRequestHeader("score", local_score.score);
-					// 	listing_req.send();
-					// 	listing_req.onload = function (oEvent) {
-					// 		get_leaderboard_entries();
-					// 	}
-					// 	document.getElementById('namediv').style.display = 'none';
-					// 	show_game_end_screen = true;
-					// }
 				} else {
 					has_high_score = false;
 				}
@@ -461,7 +449,7 @@
 				ctx.drawImage(res.title_img, 0, 0, gamearea.width, gamearea.height);
 			}
 
-			function check_high_score(score) {
+			function check_high_score() {
 				check_for_high_score();
 			}
 
@@ -477,18 +465,21 @@
 			}
 
 			function draw_game_over(score) {
-				let name = "";
-				for (i=0;i<high_score_name_letters.length;++i) {
-					name = name.concat(String.fromCharCode(65 + high_score_name_letters[i]));
-				}
-				var listing_req = new XMLHttpRequest();
-				listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
-				listing_req.setRequestHeader("id", local_id);
-				listing_req.setRequestHeader("name", name);
-				listing_req.setRequestHeader("score", local_score.score);
-				listing_req.send();
-				listing_req.onload = function (oEvent) {
-					get_leaderboard_entries();
+				if (submit_high_score) {
+					let name = "";
+					for (i=0;i<high_score_name_letters.length;++i) {
+						name = name.concat(String.fromCharCode(65 + high_score_name_letters[i]));
+					}
+					var listing_req = new XMLHttpRequest();
+					listing_req.open("POST", "https://leaderboard.edgecompute.app/update_listing", true);
+					listing_req.setRequestHeader("id", local_id);
+					listing_req.setRequestHeader("name", name);
+					listing_req.setRequestHeader("score", local_score.score);
+					listing_req.send();
+					listing_req.onload = function (oEvent) {
+						get_leaderboard_entries();
+					}
+					submit_high_score = false;
 				}
 				ctx.drawImage(res.game_over_img, 0, 0, gamearea.width, gamearea.height);
 			}
@@ -520,21 +511,22 @@
 					let letter_offset = li * 110;
 					ctx.strokeStyle = "red";
 					ctx.beginPath();
-					ctx.moveTo(letter_offset + 500, 500);
-					ctx.lineTo(letter_offset + 550, 500);
-					ctx.lineTo(letter_offset + 550, 550);
-					ctx.lineTo(letter_offset + 500, 550);
-					ctx.lineTo(letter_offset + 500, 500);
+					ctx.moveTo(letter_offset + 450, 400);
+					ctx.lineTo(letter_offset + 500, 400);
+					ctx.lineTo(letter_offset + 500, 450);
+					ctx.lineTo(letter_offset + 450, 450);
+					ctx.lineTo(letter_offset + 450, 400);
 					ctx.stroke();
 					if (li == letter_index) {
 						high_score_name_letters[high_score_index] = cur_high_score_letter;
 						let letter = String.fromCharCode(65 + cur_high_score_letter);
-						ctx.fillText(letter, letter_offset + 515,525);
+						ctx.fillText(letter, letter_offset + 465,425);
 					} else {
 						let letter = String.fromCharCode(65 + high_score_name_letters[li]);
-						ctx.fillText(letter, letter_offset + 515, 525);
+						ctx.fillText(letter, letter_offset + 465, 425);
 					}
 				}
+				submit_high_score = true;
 			}
 
 			function draw_condition_warning(condition,x,y) {
