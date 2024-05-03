@@ -516,6 +516,17 @@
 					ctx.lineTo(letter_offset + 450, 450);
 					ctx.lineTo(letter_offset + 450, 400);
 					ctx.stroke();
+					ctx.beginPath();
+					ctx.moveTo(letter_offset + 440, 410);
+					ctx.lineTo(letter_offset + 430, 420);
+					ctx.lineTo(letter_offset + 440, 430);
+					ctx.stroke();
+					ctx.beginPath();
+					ctx.moveTo(letter_offset + 510, 410);
+					ctx.lineTo(letter_offset + 520, 420);
+					ctx.lineTo(letter_offset + 510, 430);
+					ctx.stroke();
+
 					if (li == letter_index) {
 						high_score_name_letters[high_score_index] = cur_high_score_letter;
 						let letter = String.fromCharCode(65 + cur_high_score_letter);
