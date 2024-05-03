@@ -196,7 +196,6 @@
 		*/
 
 		// I think we need to keep local score and name better
-		// render_leaderboard isn't working super well when we rename an entry after game is over
 		function render_leaderboard(table, lb, name) {
 			table.innerHTML = "";
 			var tbdy = document.createElement('tbody');
@@ -383,7 +382,7 @@
 				var session_req = new XMLHttpRequest();
 				session_req.onload = function (oEvent) {
 					local_id = session_req.response;
-
+					get_leaderboard_entries();
 				}
 				session_req.open("GET", "https://leaderboard.edgecompute.app/new_session", true);
 				session_req.send();
