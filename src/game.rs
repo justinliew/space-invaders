@@ -14,7 +14,7 @@ extern "C" {
 	// id, index, state
 	fn update_shield(_: c_int, _: c_int, _: c_int);
 
-	fn check_high_score(_: c_int);
+	fn check_high_score();
 
 	fn wait_high_score() -> c_int;
 
@@ -153,6 +153,9 @@ impl Game {
 		if reset_type == ResetType::Next {
 			self.wave += 1;
 		}
+
+		self.letter_index = 0;
+		self.cur_letter = 0;
 
         // Remove all enemies and bullets
 		self.world.reset(reset_type);
@@ -304,7 +307,7 @@ impl Game {
 				}
 			},
 			GameState::CheckHighScore => {
-				check_high_score(self.score);
+				check_high_score();
 				self.game_state = GameState::WaitHighScore;
 			},
 			GameState::WaitHighScore => {
@@ -350,7 +353,7 @@ impl Game {
 				} else {
 					if input.any {
 						self.reset(ResetType::New);
-						self.game_state = GameState::Intro(2.);
+						self.game_state = GameState::Intro(0.5);
 					}
 				}
 			},			
