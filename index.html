@@ -80,6 +80,7 @@
 		let intro_anim = {};
 		let start_outro_anim = true;
 		let outro_anim = {};
+		let outro_complete = 0;
 
 		let sprites = [];
 		let module = {};
@@ -454,6 +455,7 @@ const buttonTemplate = `
 				start_explosion_anim = true;
 				start_intro_anim = true;
 				start_outro_anim = true;
+				outro_complete = 0;
 				intro_anim.stop();
 				intro_anim.destroy();
 				document.getElementById('animation').style.display = 'none';
@@ -648,6 +650,10 @@ const buttonTemplate = `
 				ctx.fillText(text, x, y);
 			}
 
+			function wait_outro_complete() {
+				return outro_complete;
+			}
+
 			// as t nears 0 the screen should get more red
 			function draw_fastly_treatment(t) {
 				// let opacity = 0.6*t + 0.4;
@@ -680,6 +686,10 @@ const buttonTemplate = `
 						loop: false,
 						autoplay: true,
 						name: 'explosion'
+					});
+
+					outro_anim.addEventListener('complete', () => {
+						outro_complete = 1;
 					});
 					start_outro_anim = false;
 				}
@@ -788,7 +798,7 @@ const buttonTemplate = `
 			}
 
 			// The real loading and running of our wasm starts here
-			let imports = { console_log_int, console_log_double, clear_screen, draw_condition_warning, draw_fastly_treatment, reset_fastly_treatment, draw_name_picker, check_high_score, wait_high_score, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_line, draw_bounds, draw_intro, handle_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
+			let imports = { console_log_int, console_log_double, clear_screen, draw_condition_warning, draw_fastly_treatment, reset_fastly_treatment, draw_name_picker, check_high_score, wait_outro_complete, wait_high_score, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_line, draw_bounds, draw_intro, handle_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
 			imports.Math_atan = Math.atan;
 			imports.sin = Math.sin;
 			imports.cos = Math.cos;

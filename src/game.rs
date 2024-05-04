@@ -18,6 +18,8 @@ extern "C" {
 
 	fn wait_high_score() -> c_int;
 
+	fn wait_outro_complete() -> c_int;
+
 	fn new_session();
 
 	fn handle_game_over();
@@ -358,7 +360,8 @@ impl Game {
 				if *timer >= 0. {
 					*timer -= dt;
 				} else {
-					if input.any {
+					let ret = wait_outro_complete();
+					if ret == 1 {
 						self.game_state = GameState::CheckHighScore;
 					}
 				}
