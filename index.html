@@ -75,7 +75,9 @@
 		let cur_high_score_letter = 0;
 		let high_score_name_letters = [];
 		let submit_high_score = false;
-		let start_anim = true;
+		let start_explosion_anim = true;
+		let start_intro_anim = true;
+		let intro_anim = {};
 
 		let sprites = [];
 		let module = {};
@@ -447,7 +449,11 @@ const buttonTemplate = `
 
 			function new_session() {
 				show_game_end_screen = false;
-				start_anim = true;
+				start_explosion_anim = true;
+				start_intro_anim = true;
+				intro_anim.stop();
+				intro_anim.destroy();
+				document.getElementById('animation').style.display = 'none';
 				var session_req = new XMLHttpRequest();
 				session_req.onload = function (oEvent) {
 					local_id = session_req.response;
@@ -514,7 +520,21 @@ const buttonTemplate = `
 			}
 
 			function draw_intro() {
-				ctx.drawImage(res.title_img, 0, 0, gamearea.width, gamearea.height);
+				if (start_intro_anim) {
+					intro_anim = bodymovin.loadAnimation({
+						container: document.getElementById('animation'),
+						path: 'intro.json',
+						render: 'canvas',
+						loop: true,
+						autoplay: true,
+						name: 'intro_anim'
+					});
+					// setTimeout(() => {
+					// 	anim.stop();
+					// },500);
+
+					start_intro_anim = false;
+				}
 			}
 
 			function check_high_score() {
@@ -630,7 +650,7 @@ const buttonTemplate = `
 				// gamearea.style.opacity = opacity;
 				// gamearea.style.backgroundColor = "red";
 
-				if (start_anim) {
+				if (start_explosion_anim) {
 					document.getElementById('animation').style.display = 'block';
 					let anim = bodymovin.loadAnimation({
 						container: document.getElementById('animation'),
@@ -646,7 +666,7 @@ const buttonTemplate = `
 					anim.addEventListener('complete', e => {
 						document.getElementById('animation').style.display = 'none'
 					});
-					start_anim = false;
+					start_explosion_anim = false;
 				}
 			}
 
