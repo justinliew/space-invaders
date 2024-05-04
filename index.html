@@ -558,7 +558,7 @@ const buttonTemplate = `
 				return 0;
 			}
 
-			function draw_game_over(score) {
+			function handle_game_over(score) {
 				if (submit_high_score) {
 					let name = "";
 					for (i=0;i<high_score_name_letters.length;++i) {
@@ -788,7 +788,7 @@ const buttonTemplate = `
 			}
 
 			// The real loading and running of our wasm starts here
-			let imports = { console_log_int, console_log_double, clear_screen, draw_condition_warning, draw_fastly_treatment, reset_fastly_treatment, draw_name_picker, check_high_score, wait_high_score, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_line, draw_bounds, draw_intro, draw_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
+			let imports = { console_log_int, console_log_double, clear_screen, draw_condition_warning, draw_fastly_treatment, reset_fastly_treatment, draw_name_picker, check_high_score, wait_high_score, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_line, draw_bounds, draw_intro, handle_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
 			imports.Math_atan = Math.atan;
 			imports.sin = Math.sin;
 			imports.cos = Math.cos;

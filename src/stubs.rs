@@ -24,9 +24,6 @@ fn draw_hud(_: i32, _: i32, _: i32, _: u8) {}
 fn draw_intro() {}
 
 #[no_mangle]
-fn draw_game_over(_: i32) {}
-
-#[no_mangle]
 fn draw_shield(_: i32, _: f64, _: f64, _: f64) {}
 
 #[no_mangle]

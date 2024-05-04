@@ -20,6 +20,8 @@ extern "C" {
 
 	fn new_session();
 
+	fn handle_game_over();
+
 //	fn console_log_int(_: c_int);
 }
 
@@ -347,6 +349,7 @@ impl Game {
 				*left = input.left;
 				*right = input.right;
 				if advance {
+					handle_game_over();
 					self.reset(ResetType::New);
 					self.game_state = GameState::Intro(0.5);
 			}

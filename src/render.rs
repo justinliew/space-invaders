@@ -20,7 +20,6 @@ extern "C" {
 	fn draw_ufo(_: c_double, _: c_double);
     fn draw_hud(_: c_int, _: c_int, _: c_int);
 	fn draw_intro();
-	fn draw_game_over();
 	fn draw_condition_warning(_: c_uchar, _: c_int, _: c_int);
 	fn draw_name_picker(_: c_int, _: c_int);
 
@@ -271,7 +270,6 @@ impl RenderData {
 				draw_name_picker(game.letter_index, game.cur_letter);
 			},
 			GameState::GameOver(_) => {
-				draw_game_over();
 			},
 		}
 
