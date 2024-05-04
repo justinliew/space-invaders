@@ -42,8 +42,8 @@ impl Player {
 
 	pub fn check_hit(&mut self, bullet: &Bullet) -> bool {
 		// TODO player radius
-		let hit = bullet.x() > self.x() - 16. && bullet.x() < self.x() + 16. &&
-			bullet.y() > self.y() - 16. && bullet.y() < self.y() + 16.;
+		let hit = bullet.x() > self.x() - 20. && bullet.x() < self.x() + 20. &&
+			bullet.y() > self.y();
 
 		if hit {
 			self.alive = false;

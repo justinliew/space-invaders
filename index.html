@@ -476,16 +476,7 @@ const buttonTemplate = `
 			}
 
 			function draw_player(x, y, angle, fastly) {
-				ctx.translate(x, y);
-				ctx.rotate(angle);
-				ctx.translate(0, -16);
-				if (fastly) {
-					ctx.drawImage(res.fastly_player, 0, 0);
-				} else {
-					ctx.drawImage(res.player, 0, 0);
-				}
-				ctx.setTransform(1, 0, 0, 1, 0, 0);
-				ctx.fillStyle = "black";
+				draw_sprite(98, 0, x-20, y);
 			}
 
 			function draw_ufo(x, y) {
@@ -1055,6 +1046,20 @@ const buttonTemplate = `
 					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				];
 
+				let player = [
+					0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,				
+					0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,				
+					0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0,				
+					0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0,				
+					0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0,				
+					0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0,				
+					0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0,				
+					0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0,				
+					0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0,				
+					1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1,
+					1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+				];
+
 				init_sprite_frame(0, 0, enemy0_0, 12, scale * 3, 255, 255, 255);
 				init_sprite_frame(0, 1, enemy0_1, 12, scale * 3, 255, 255, 255);
 				init_sprite_frame(1, 0, enemy1_0, 12, scale * 3, 255, 255, 255);
@@ -1062,6 +1067,7 @@ const buttonTemplate = `
 				init_sprite_frame(2, 0, enemy2_0, 12, scale * 3, 255, 255, 255);
 				init_sprite_frame(2, 1, enemy2_1, 12, scale * 3, 255, 255, 255);
 				init_sprite_frame(99, 0, ufo, 16, scale * 3, 0, 0, 255);
+				init_sprite_frame(98, 0, player, 11, scale * 3, 255, 255, 255);
 			}
 
 			function init_sprite_frame(sprite_id, frame_index, data, orig_dim, scale, r, g, b) {
