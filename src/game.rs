@@ -303,7 +303,7 @@ impl Game {
 					// 	self.send_game_event(event);
 					// }
 				} else {
-					self.game_state = GameState::CheckHighScore;
+					self.game_state = GameState::GameOver(1.);
 				}
 			},
 			GameState::CheckHighScore => {
@@ -313,7 +313,10 @@ impl Game {
 			GameState::WaitHighScore => {
 				let ret = wait_high_score();
 				match ret {
-					1 => self.game_state = GameState::GameOver(1.),
+					1 => {
+						self.reset(ResetType::New);
+						self.game_state = GameState::Intro(0.5);
+					},
 					2 => self.game_state = GameState::ShowHighScore(false,false,false),
 					_ => {},
 				}
@@ -344,16 +347,16 @@ impl Game {
 				*left = input.left;
 				*right = input.right;
 				if advance {
-					self.game_state = GameState::GameOver(1.);
-				}
+					self.reset(ResetType::New);
+					self.game_state = GameState::Intro(0.5);
+			}
 			},
 			GameState::GameOver(ref mut timer) => {
 				if *timer >= 0. {
 					*timer -= dt;
 				} else {
 					if input.any {
-						self.reset(ResetType::New);
-						self.game_state = GameState::Intro(0.5);
+						self.game_state = GameState::CheckHighScore;
 					}
 				}
 			},			
