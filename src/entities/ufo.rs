@@ -80,6 +80,10 @@ impl Ufo {
 			return None;
 		}
 
+		if !self.active {
+			return None;
+		}
+
 		let hit = bullet.x() > self.x() && bullet.x() < self.x() + Ufo::UFO_WIDTH*1.5 &&
 			bullet.y() < self.y() + Ufo::UFO_HEIGHT;
 		if hit {
