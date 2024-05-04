@@ -78,6 +78,8 @@
 		let start_explosion_anim = true;
 		let start_intro_anim = true;
 		let intro_anim = {};
+		let start_outro_anim = true;
+		let outro_anim = {};
 
 		let sprites = [];
 		let module = {};
@@ -451,6 +453,7 @@ const buttonTemplate = `
 				show_game_end_screen = false;
 				start_explosion_anim = true;
 				start_intro_anim = true;
+				start_outro_anim = true;
 				intro_anim.stop();
 				intro_anim.destroy();
 				document.getElementById('animation').style.display = 'none';
@@ -521,6 +524,7 @@ const buttonTemplate = `
 
 			function draw_intro() {
 				if (start_intro_anim) {
+					document.getElementById('animation').style.display = 'block';
 					intro_anim = bodymovin.loadAnimation({
 						container: document.getElementById('animation'),
 						path: 'intro.json',
@@ -538,6 +542,8 @@ const buttonTemplate = `
 			}
 
 			function check_high_score() {
+				outro_anim.stop();
+				outro_anim.destroy();
 				check_for_high_score();
 			}
 
@@ -569,7 +575,6 @@ const buttonTemplate = `
 					}
 					submit_high_score = false;
 				}
-				ctx.drawImage(res.game_over_img, 0, 0, gamearea.width, gamearea.height);
 			}
 
 			function draw_hud(score, lives, wave) {
@@ -662,11 +667,21 @@ const buttonTemplate = `
 					});
 					setTimeout(() => {
 						anim.stop();
+						anim.destroy();
+						start_outro_anim = true;
 					},500);
-					anim.addEventListener('complete', e => {
-						document.getElementById('animation').style.display = 'none'
-					});
 					start_explosion_anim = false;
+				}
+				if (start_outro_anim) {
+					outro_anim = bodymovin.loadAnimation({
+						container: document.getElementById('animation'),
+						path: 'outro.json',
+						render: 'canvas',
+						loop: false,
+						autoplay: true,
+						name: 'explosion'
+					});
+					start_outro_anim = false;
 				}
 			}
 
