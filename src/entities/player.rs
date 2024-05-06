@@ -7,9 +7,9 @@ use crate::bullet::Bullet;
 
 //use geometry::{Advance, Collide, Position};
 
-#[derive(Default)]
 pub struct Player {
     pub vector: Vector,
+	pub collision: [i32; 121],
 	pub alive: bool,
 }
 
@@ -20,12 +20,12 @@ lazy_static! {
 	);
 }
 
-
 impl Player {
 
-	pub fn new() -> Player {
+	pub fn new(collision: [i32; 121]) -> Player {
 		Player {
 			vector: START_LOCATION.clone(),
+			collision: collision,
 			alive: true,
 		}
 	}
@@ -41,9 +41,18 @@ impl Player {
 	pub fn dir(&self) -> f64 { self.vector.direction }
 
 	pub fn check_hit(&mut self, bullet: &Bullet) -> bool {
-		// TODO player radius
-		let hit = bullet.x() > self.x() - 20. && bullet.x() < self.x() + 20. &&
-			bullet.y() > self.y() && bullet.y() < self.y() + 40.;
+		let within = bullet.x() > self.x() - 16. && bullet.x() < self.x() + 17. &&
+			bullet.y() > self.y() && bullet.y() < self.y() + 33.;
+		
+		if !within {
+			return false;
+		}
+
+		// truncate, since the collision map scale is /3
+		let offsetx = ((bullet.x()- self.x() + 16.) / 3.) as usize;
+		let offsety = ((bullet.y() - self.y()) / 3.) as usize;
+
+		let hit = self.collision[offsetx + 11 * offsety] != 0;
 
 		if hit {
 			self.alive = false;

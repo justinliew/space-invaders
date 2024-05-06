@@ -475,8 +475,9 @@ const buttonTemplate = `
 				topbar_ctx.fillRect(0, 0, topbar.width, topbar.height);
 			}
 
+			// player is 33x33
 			function draw_player(x, y, angle, fastly) {
-				draw_sprite(98, 0, x-20, y);
+				draw_sprite(98, 0, x-16, y);
 			}
 
 			function draw_ufo(x, y) {
@@ -1046,6 +1047,7 @@ const buttonTemplate = `
 					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				];
 
+				// this data is duplicated in the player gameplay code
 				let player = [
 					0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,				
 					0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,				
