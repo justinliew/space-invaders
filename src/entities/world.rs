@@ -100,6 +100,7 @@ impl World {
 	pub fn reset(&mut self, reset_type: ResetType) {
         self.bullets.clear();
 		self.swarm.reset(reset_type);
+		self.ufo.reset(reset_type);
 		self.player.alive = true;
 		self.player.reset_location();
 		if reset_type == ResetType::New {

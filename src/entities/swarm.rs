@@ -290,15 +290,16 @@ impl Swarm {
 					self.alive[hit.0 + hit.1 * self.num_x] = false;
 					self.num_alive -= 1;
 					let loc = self.get_enemy_location(hit.0,hit.1) + Point::new(self.radius / 2.,self.radius / 2.);
+					let multiplier = f32::max(1., 1.5 * self.level as f32);
 					return match hit.1 {
 						0 => {
-							Some(vec![(30,loc)])
+							Some(vec![((30.*multiplier) as i32,loc)])
 						}
 						1|2 => {
-							Some(vec![(20,loc)])
+							Some(vec![((20.*multiplier) as i32,loc)])
 						},
 						3|4 => {
-							Some(vec![(10,loc)])
+							Some(vec![((10.*multiplier) as i32,loc)])
 						},
 						_ => {
 							unreachable!()

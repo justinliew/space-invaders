@@ -1,6 +1,7 @@
 use crate::point::Point;
 use crate::bullet::PlayerBullet;
 use crate::size::WorldSize;
+use crate::game::ResetType;
 
 enum StartLocation {
 	LEFT,
@@ -13,6 +14,7 @@ pub struct Ufo {
 	pub active: bool,
 	start: StartLocation,
 	world_size: WorldSize,
+	level: i32,
 }
 
 impl Ufo {
@@ -28,13 +30,17 @@ impl Ufo {
 			active: false,
 			start: StartLocation::LEFT,
 			world_size: world_size,
+			level: 0,
 		}
 	}
 
 	pub fn x(&self) -> f64 { self.position.x }
 	pub fn y(&self) -> f64 { self.position.y }
 
-	fn reset(&mut self) {
+	pub fn reset(&mut self, reset_type: ResetType) {
+		if reset_type == ResetType::Next {
+			self.level += 1;
+		}
 		self.active = false;
 		self.spawn_cooldown = Ufo::SPAWN_COOLDOWN;
 	}
@@ -45,13 +51,13 @@ impl Ufo {
 				StartLocation::LEFT => {
 					self.position.x += Ufo::UFO_SPEED;
 					if self.position.x > self.world_size.width {
-						self.reset();
+						self.reset(ResetType::Respawn);
 					}
 				},
 				StartLocation::RIGHT => {
 					self.position.x -= Ufo::UFO_SPEED;
 					if self.position.x < 0. {
-						self.reset();
+						self.reset(ResetType::Respawn);
 					}
 				}
 			}
@@ -87,8 +93,9 @@ impl Ufo {
 		let hit = bullet.x() > self.x() && bullet.x() < self.x() + Ufo::UFO_WIDTH*1.5 &&
 			bullet.y() < self.y() + Ufo::UFO_HEIGHT;
 		if hit {
-			self.reset();
-			Some((300, bullet.location.position))
+			self.reset(ResetType::Respawn);
+			let multiplier = f32::max(1., 1.5 * self.level as f32);
+			Some(((300.*multiplier) as i32, bullet.location.position))
 		} else {
 			None
 		}
