@@ -156,6 +156,7 @@ impl Game {
 		}
 		if reset_type == ResetType::Next {
 			self.wave += 1;
+			self.score += 700;
 		}
 
 		self.letter_index = 0;
