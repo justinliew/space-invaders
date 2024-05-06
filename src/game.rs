@@ -24,6 +24,8 @@ extern "C" {
 
 	fn handle_game_over();
 
+	fn update_local_score(_: c_int);
+
 //	fn console_log_int(_: c_int);
 }
 
@@ -157,6 +159,7 @@ impl Game {
 		if reset_type == ResetType::Next {
 			self.wave += 1;
 			self.score += 700;
+			unsafe {update_local_score(self.score)};
 		}
 
 		self.letter_index = 0;
