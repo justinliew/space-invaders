@@ -18,6 +18,6 @@ impl WorldSize {
 /// A `Size` represents a region in screenspace
 #[derive(Clone, Copy, Default)]
 pub struct ScreenSize {
-    pub width: usize,
-    pub height: usize
+    pub _width: usize,
+    pub _height: usize
 }

@@ -359,13 +359,9 @@ const buttonTemplate = `
 		function resources() {
 			let res = {
 				player: document.createElement('canvas'),
-				fastly_player: document.createElement('canvas'),
 				bullet: document.createElement('canvas'),
 				player_bullet: document.createElement('canvas'),
-				player_bomb: document.createElement('canvas'),
 				particle: document.createElement('canvas'),
-				shields: {},
-				shield_hit: gamearea.getContext("2d").createImageData(40, 40), // TODO scale shields
 				title_img: new Image(),
 				game_over_img: new Image(),
 			}
@@ -399,16 +395,6 @@ const buttonTemplate = `
 			bpCtx.lineTo(0, 0);
 			bpCtx.fill();
 
-			res.player_bomb.width = 20;
-			res.player_bomb.height = 80;
-			let bombCtx = res.player_bomb.getContext('2d');
-			bombCtx.fillStyle = "red";
-			bombCtx.beginPath();
-			bombCtx.lineTo(10, 80);
-			bombCtx.lineTo(20, 0);
-			bombCtx.lineTo(0, 0);
-			bombCtx.fill();
-
 			// Player
 			res.player.width = 40;
 			res.player.height = 32;
@@ -419,16 +405,6 @@ const buttonTemplate = `
 			plCtx.lineTo(0, 32);
 			plCtx.lineTo(0, 0);
 			plCtx.fill();
-
-			res.fastly_player.width = 40;
-			res.fastly_player.height = 32;
-			let pfCtx = res.fastly_player.getContext('2d');
-			pfCtx.fillStyle = "red";
-			pfCtx.beginPath();
-			pfCtx.lineTo(40, 16);
-			pfCtx.lineTo(0, 32);
-			pfCtx.lineTo(0, 0);
-			pfCtx.fill();
 
 			leaderboard_table = document.createElement('table');
 			leaderboard_table.style.width = '30%';
@@ -480,22 +456,14 @@ const buttonTemplate = `
 				draw_sprite(98, 0, x-16, y);
 			}
 
-			function draw_ufo(x, y) {
-				ctx.putImageData(sprites[99][0].image_data, x, y);
-			}
-
 			function draw_bullet(x, y) {
 				ctx.drawImage(res.bullet, x - 3, y - 3);
 			}
 
-			function draw_player_bullet(x, y, rotate, bomb) {
-				if (bomb) {
-					ctx.drawImage(res.player_bomb, x - 3, y - 3);
-				} else {
-					ctx.translate(x-3,y-3);
-					ctx.rotate(rotate);
-					ctx.drawImage(res.player_bullet, 0, 0);
-				}
+			function draw_player_bullet(x, y, rotate) {
+				ctx.translate(x-3,y-3);
+				ctx.rotate(rotate);
+				ctx.drawImage(res.player_bullet, 0, 0);
 				ctx.setTransform(1, 0, 0, 1, 0, 0);
 			}
 
@@ -627,21 +595,6 @@ const buttonTemplate = `
 				submit_high_score = true;
 			}
 
-			function draw_condition_warning(condition,x,y) {
-				ctx.fillStyle = "red";
-				ctx.textBaseline = "top";
-				ctx.font = "20px courier";
-				// if (condition == 1) {
-				// 	ctx.fillText("Shields Low; activating Fastly Shields", x,y);
-				// } else if (condition == 2) {
-				// 	ctx.fillText("Bots closing in; activating Bot Bomb", x,y);					
-				// } else if (condition == 3) {
-				// 	ctx.fillText("Bots speeding up; activating Bot Seeking", x,y);
-				// }
-				let text = "Starting Wave " + condition;
-				ctx.fillText(text, x, y);
-			}
-
 			function wait_outro_complete() {
 				return outro_complete;
 			}
@@ -737,44 +690,6 @@ const buttonTemplate = `
 				console.log(value);
 			}
 
-			function init_shield(id) {
-				res.shields[id] = [];
-			}
-
-			function add_shield_state(id, index, state) {
-				res.shields[id][index] = state;
-			}
-
-			function update_shield(id, index, state) {
-				if (res.shields[id] != "undefined")
-					res.shields[id][index] = state;
-			}
-
-			function draw_shield(id, x, y, dim, fastly) {
-				for (var i = 0; i < 25; ++i) {
-					var state = res.shields[id][i];
-					var xoffset = (i % 5) * dim;
-					var yoffset = Math.trunc(i / 5) * dim;
-					if (fastly) {
-						if (state == 1) { // BlockState::Hit
-							ctx.fillStyle = "darkred";
-							ctx.fillRect(x + xoffset, y + yoffset, dim, dim);
-						} else if (state == 2) { // BlockState::Full
-							ctx.fillStyle = "red";
-							ctx.fillRect(x + xoffset, y + yoffset, dim, dim);
-						}
-					} else {
-						if (state == 1) { // BlockState::Hit
-							ctx.fillStyle = "darkgreen";
-							ctx.fillRect(x + xoffset, y + yoffset, dim, dim);
-						} else if (state == 2) { // BlockState::Full
-							ctx.fillStyle = "green";
-							ctx.fillRect(x + xoffset, y + yoffset, dim, dim);
-						}
-					}
-				}
-			}
-
 			function draw_sprite(sprite_id, frame_index, x, y) {
 				if (sprites[sprite_id] != "undefined" && sprites[sprite_id][frame_index] != "undefined") {
 					ctx.putImageData(sprites[sprite_id][frame_index].image_data, x, y);
@@ -796,7 +711,7 @@ const buttonTemplate = `
 			}
 
 			// The real loading and running of our wasm starts here
-			let imports = { console_log, console_log_int, console_log_double, clear_screen, draw_condition_warning, draw_fastly_treatment, reset_fastly_treatment, draw_name_picker, check_high_score, wait_outro_complete, wait_high_score, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_line, draw_bounds, draw_intro, handle_game_over, draw_sprite, init_shield, add_shield_state, update_shield, draw_shield, draw_ufo, update_local_score, new_session };
+			let imports = { console_log, console_log_int, console_log_double, clear_screen, draw_fastly_treatment, reset_fastly_treatment, draw_name_picker, check_high_score, wait_outro_complete, wait_high_score, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_line, draw_bounds, draw_intro, handle_game_over, draw_sprite, update_local_score, new_session };
 			imports.Math_atan = Math.atan;
 			imports.sin = Math.sin;
 			imports.cos = Math.cos;
@@ -1034,26 +949,6 @@ const buttonTemplate = `
 					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				];
 
-
-				let ufo = [
-					0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0,
-					0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0,
-					0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0,
-					0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0,
-					1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1,
-					1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1,
-					0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0,
-					0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0,
-					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-				];
-
 				// this data is duplicated in the player gameplay code
 				let player = [
 					0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,				
@@ -1075,7 +970,6 @@ const buttonTemplate = `
 				init_sprite_frame(1, 1, enemy1_1, 12, scale * 3, 255, 255, 255);
 				init_sprite_frame(2, 0, enemy2_0, 12, scale * 3, 255, 255, 255);
 				init_sprite_frame(2, 1, enemy2_1, 12, scale * 3, 255, 255, 255);
-				init_sprite_frame(99, 0, ufo, 16, scale * 3, 0, 0, 255);
 				init_sprite_frame(98, 0, player, 11, scale * 3, 255, 255, 255);
 			}
 

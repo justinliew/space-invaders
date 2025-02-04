@@ -2,7 +2,6 @@ use std::os::raw::c_int;
 use std::sync::mpsc::Sender;
 
 use crate::size::WorldSize;
-use crate::bullet::Ability;
 use crate::input::Input;
 use crate::world::World;
 use crate::point::Point;
@@ -10,9 +9,6 @@ use crate::point::Point;
 const MOVE_SPEED: f64 = 200.0;
 
 extern "C" {
-
-	// id, index, state
-	fn update_shield(_: c_int, _: c_int, _: c_int);
 
 	fn check_high_score();
 
@@ -41,7 +37,7 @@ pub enum GameState {
 	Intro(f64),
 	Playing,
 	Death(f64),
-	Win(f64),
+	_Win(f64),
 	GameOverFastlyTreatment(f64),
 	CheckHighScore,
 	WaitHighScore,
@@ -52,7 +48,6 @@ pub enum GameState {
 pub enum GameEvent {
 	ScoreChanged(i32),
 	EntityDied(Point, ColourIndex),
-	Condition(Condition),
 }
 
 // TODO - I don't know if this should live here
@@ -60,18 +55,6 @@ pub enum GameEvent {
 pub enum ColourIndex {
 	WHITE,
 	BLUE,
-	RED,
-	GREEN,
-}
-
-#[derive(Clone,Copy,PartialEq)]
-#[repr(u8)]
-pub enum Condition {
-	None=0,
-	Shields=1,
-	Bomb=2,
-	HeatSeeking=3,
-	Wave=4,
 }
 
 /// The data structure that contains the state of the game
@@ -86,10 +69,6 @@ pub struct Game {
 	pub wave: i32,
 	/// state of the game
 	pub game_state: GameState,
-
-	/// debug state of the game
-	pub current_condition: Condition,
-	pub conditions: Vec<Condition>,
 
 	/// name picker
 	pub letter_index: i32,
@@ -108,45 +87,11 @@ impl Game {
 			lives: 1,
 			wave: 1,
 			game_state: GameState::Intro(0.5),
-			current_condition: Condition::None,
-			conditions: vec![],
 			letter_index: 0,
 			cur_letter: 0,
 			sender: tx,
         }
     }
-
-	pub fn has_had_condition(&self, condition: Condition) -> bool {
-		self.conditions.iter().find(|v| *v == &condition).is_some()
-	}
-
-	fn activate_condition(&mut self, condition: Condition) {
-		self.current_condition = condition;
-		self.conditions.push(condition);
-		self.send_game_event(GameEvent::Condition(condition));	
-	}
-
-	pub fn update_conditions(&mut self) {
-		// conditions that happen in priority order
-		let total = self.world.get_active_shields().iter().fold(0., |acc, s| acc + s.get_percentage_full());
-		let avg = total / self.world.get_active_shields().len() as f32;
-		let lowest = self.world.get_swarm().get_lowest_alive();
-		if lowest.is_none() {
-			return;
-		}
-		let lowest = lowest.expect("alive");
-
-		if avg < 0.5 && !self.has_had_condition(Condition::Shields) {
-			self.world.enable_fastly_shields();
-			self.activate_condition(Condition::Shields);
-		} else if lowest.y >= 400. && !self.has_had_condition(Condition::Bomb) {
-			self.activate_condition(Condition::Bomb);
-			self.world.get_player_bullet_mut().ability = Ability::Bomb;
-		} else if self.world.get_swarm().get_percentage_alive() < 0.3 && !self.has_had_condition(Condition::HeatSeeking) {
-			self.activate_condition(Condition::HeatSeeking);
-			self.world.get_player_bullet_mut().ability = Ability::Heat;
-		}
-	}
 
     /// Reset our game-state
     pub fn reset(&mut self, reset_type: ResetType) {
@@ -183,7 +128,6 @@ impl Game {
 				if *timer >= 0. {
 					*timer -= dt;
 				} else {
-					self.world.init_shields();
 					if input.any {
 						new_session();
 						self.game_state = GameState::Playing;
@@ -204,16 +148,7 @@ impl Game {
 				// Add bullets
 				if input.fire {
 					if !self.world.get_player_bullet().active {
-						let bomb = self.conditions.iter().find(|v| *v == &Condition::Bomb).is_some();
-						let heat = self.conditions.iter().find(|v| *v == &Condition::HeatSeeking).is_some();
-						let (ability,speed) = if heat {
-							(Ability::Heat,1000.)
-						} else if bomb {
-							(Ability::Bomb,400.)
-						} else {
-							(Ability::None,800.)
-						};
-						self.world.get_player_bullet_mut().respawn(player_location, speed, ability);
+						self.world.get_player_bullet_mut().respawn(player_location, 800.);
 					}
 				}
 
@@ -234,8 +169,8 @@ impl Game {
 				}
 
 				if self.world.get_player_bullet().active {
-					let (bullet,swarm) = self.world.get_for_player_bullet_abilities();
-					bullet.update(dt, swarm);
+					let bullet = self.world.get_for_player_bullet_abilities();
+					bullet.update(dt);
 				}
 
 				// Remove bullets outside the viewport
@@ -256,21 +191,8 @@ impl Game {
 					}
 				}
 
-				let is_red = self.has_had_condition(Condition::Bomb) || self.has_had_condition(Condition::HeatSeeking);
-				let deferred_shield_damage = self.handle_collisions(is_red);
-				{
-					for d in deferred_shield_damage {
-						let bs = self.world.get_active_shields_mut()[d.0].damage(d.1,d.2);
-						update_shield(d.0 as i32, (d.1 as f64 + d.2 as f64 * 5.) as i32, bs as i32);
-					}
-				}
-				if let Some(lowest) = self.world.get_swarm().get_lowest_alive() {
-					if lowest.y >= self.world.get_active_shields()[0].top_left.y {
-						self.game_state = GameState::GameOverFastlyTreatment(3.);
-					}
-				} else {
-					self.game_state = GameState::Win(2.);
-				}
+				self.handle_collisions();
+				// TODO Winning game state
 
 				if !self.world.get_player().alive {
 					self.lives -= 1;
@@ -280,10 +202,6 @@ impl Game {
 						self.game_state = GameState::Death(3.);
 					}
 				}
-
-				self.world.get_ufo_mut().update(dt);
-
-//				self.update_conditions();
 			},
 			GameState::Death(ref mut timer) => {
 				*timer -= dt;
@@ -292,14 +210,12 @@ impl Game {
 					self.game_state = GameState::Playing;
 				}
 			},
-			GameState::Win(ref mut timer) => {
+			GameState::_Win(ref mut timer) => {
 				if *timer >= 0. {
 					*timer -= dt;
 				} else {
 					self.reset(ResetType::Next);
-					self.world.init_shields();
 					self.game_state = GameState::Playing;
-					self.activate_condition(Condition::Wave);
 				}
 			},
 			// freeze the game and kill all bots
@@ -341,13 +257,13 @@ impl Game {
 				}
 				if !input.left && *left {
 					self.cur_letter -= 1;
-					if (self.cur_letter < 0) {
+					if self.cur_letter < 0 {
 						self.cur_letter = 25;
 					}
 				}
 				if !input.right && *right {
 					self.cur_letter += 1;
-					if (self.cur_letter > 25) {
+					if self.cur_letter > 25 {
 						self.cur_letter = 0;
 					}
 				}

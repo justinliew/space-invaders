@@ -1,11 +1,9 @@
-use std::os::raw::{c_double, c_int, c_uchar, c_uint};
+use std::os::raw::{c_double, c_int, c_uint};
 
-use crate::bullet::Ability;
 use crate::point::Point;
 use crate::size::WorldSize;
-use crate::game::{Condition, Game, GameEvent, GameState};
+use crate::game::{Game, GameEvent, GameState};
 use crate::swarm::Swarm;
-use crate::shield::Shield;
 use crate::particle::{make_explosion, Particle};
 
 use std::sync::mpsc;
@@ -15,24 +13,14 @@ extern "C" {
     fn clear_screen();
     fn draw_player(_: c_double, _: c_double, _: c_double, _: c_int);
     fn draw_bullet(_: c_double, _: c_double);
-	fn draw_player_bullet(_: c_double, _: c_double, _: c_double, _: c_int);
+	fn draw_player_bullet(_: c_double, _: c_double, _: c_double);
     fn draw_particle(_: c_double, _: c_double, _: c_double, _: c_int);
-	fn draw_ufo(_: c_double, _: c_double);
     fn draw_hud(_: c_int, _: c_int, _: c_int);
 	fn draw_intro();
-	fn draw_condition_warning(_: c_uchar, _: c_int, _: c_int);
 	fn draw_name_picker(_: c_int, _: c_int);
 
 	fn draw_fastly_treatment(_: c_double);
 	fn reset_fastly_treatment();
-
-
-	fn draw_bounds(_: c_double, _: c_double, _: c_double, _: c_double);
-
-	fn draw_line(_: c_double, _: c_double, _: c_double, _: c_double, _: c_int);
-
-	// id, x,y, dim
-	fn draw_shield(_: c_int, _: c_double, _: c_double, _: c_double, _: c_int);
 
 	// sprite id, frame index, x, y
 	fn draw_sprite(_: c_uint, _: c_uint, _: c_uint, _: c_uint);
@@ -41,40 +29,11 @@ extern "C" {
 
 }
 
-pub struct ConditionText {
-	pub on: bool,
-	pub blink_countdown: f64,
-	pub countdown: f64,
-}
-
-impl ConditionText {
-	pub fn update(&mut self, dt: f64) {
-		self.countdown -= dt;
-		match self.on {
-			false => {
-				if self.blink_countdown <= 0. {
-					self.blink_countdown = 0.2;
-					self.on = true;
-				}
-				self.blink_countdown -= dt;
-			}
-			true => {
-				if self.blink_countdown <= 0. {
-					self.blink_countdown = 0.2;
-					self.on = false;
-				}
-				self.blink_countdown -= dt;
-			}
-		}
-	}
-}
-
 pub struct RenderData {
 	pub screen_top_left_offset: Point,
 	pub game_to_screen: f64,
 	pub width: usize,
 	pub height: usize,
-	pub condition_text: Option<ConditionText>,
     pub particles: Vec<Particle>,
 	receiver: Receiver<GameEvent>,
 	pub sender: Sender<GameEvent>,
@@ -88,19 +47,10 @@ impl RenderData {
 			game_to_screen: 1.,
 			width: 1024,
 			height: 768,
-			condition_text: None,
             particles: Vec::with_capacity(1000),
 			receiver: rx,
 			sender: tx,
 		}
-	}
-
-	fn enable_condition_text(&mut self) {
-		self.condition_text = Some(ConditionText {on: false, countdown: 3., blink_countdown: 0.});
-	}
-
-	fn disable_condition_text(&mut self) {
-		self.condition_text = None;
 	}
 
 	pub fn world_to_screen(&self, in_point: &Point) -> Point {
@@ -169,28 +119,12 @@ impl RenderData {
 				let particles = &mut self.particles;
 				make_explosion(particles, &p, 6, c);
 			}
-			GameEvent::Condition(_c) => {
-				self.enable_condition_text();
-			}
 		}
 	}
 
 	pub unsafe fn draw(&mut self, game_state: GameState, game: &Game, dt: f64) {
 		let world = &game.world;
 		clear_screen();
-
-		let warning_loc = self.world_to_screen(&Point{x: self.width as f64/4., y: 400.});
-
-		if let Some(ct) = &mut self.condition_text {
-			ct.update(dt);
-			if ct.on {
-				// TODO reusing condition as wave
-				draw_condition_warning(game.wave as u8, warning_loc.x as i32, warning_loc.y as i32);
-			}
-			if ct.countdown <= 0. {
-				self.disable_condition_text();
-			}
-		}
 
 		match self.receiver.try_recv() {
 			Ok(event) => {
@@ -221,7 +155,7 @@ impl RenderData {
 			GameState::Intro(_) => {
 				draw_intro();
 			},
-			GameState::Playing | GameState::Death(_) | GameState::Win(_) | GameState::GameOverFastlyTreatment(_) => {
+			GameState::Playing | GameState::Death(_) | GameState::_Win(_) | GameState::GameOverFastlyTreatment(_) => {
 
 				if !matches!(game_state, GameState::GameOverFastlyTreatment(_)) {
 					for bullet in world.get_bullets() {
@@ -230,21 +164,9 @@ impl RenderData {
 					}
 					let player_bullet = world.get_player_bullet();
 					if player_bullet.active {
-						// TODO break up `draw_player_bullet` into multiple functions?
 						let bp = self.world_to_screen(&player_bullet.location.position);
-						draw_player_bullet(bp.x, bp.y, player_bullet.facing, (player_bullet.ability == Ability::Bomb) as i32);
+						draw_player_bullet(bp.x, bp.y, player_bullet.facing);
 					}
-
-					if world.get_ufo().active {
-						let screen_pos = self.world_to_screen(&world.get_ufo().position);
-						draw_ufo(screen_pos.x, screen_pos.y);
-					}
-	
-					for (index,shield) in world.get_active_shields().iter().enumerate() {
-						let screen_pos = self.world_to_screen(&shield.top_left);
-						let condition = game.conditions.iter().find(|v| *v == &Condition::Shields).is_some();
-						draw_shield(index as i32, screen_pos.x, screen_pos.y, Shield::BLOCK_DIM * self.game_to_screen, condition as i32);
-					}	
 				}
 
 				let player = world.get_player();

@@ -1,10 +1,6 @@
-# Space Invaders @ Edge
+# Deception
 
-This is an implementation of Space Invaders, running as a WASM app in browser.
-
-The idea is that we can also run parts of the WASM app on Compute@Edge to do verification for high scores.
-
-We could also run parts of it on C@E for a potential multiplayer version.
+This is an implementation of 1942, running as a WASM app in browser.
 
 ## TODO
 

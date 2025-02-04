@@ -22,12 +22,6 @@ mod swarm;
 #[path = "./entities/world.rs"]
 mod world;
 
-#[path = "./entities/ufo.rs"]
-mod ufo;
-
-#[path = "./entities/shield.rs"]
-mod shield;
-
 #[path = "./core/collision.rs"]
 mod collision;
 

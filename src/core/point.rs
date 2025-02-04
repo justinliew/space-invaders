@@ -16,10 +16,6 @@ impl Point {
     pub fn new(x: f64, y: f64) -> Point {
         Point { x: x, y: y }
     }
-
-    pub fn mag(&self) -> f64 {
-        (self.x * self.x + self.y * self.y).sqrt()
-    }
 }
 
 /// Implements '==' for Point, as well as its inverse '!='

@@ -36,8 +36,6 @@ impl Particle {
 	pub fn get_colour_index(&self) -> i32 {
 		match self.colour_index {
 			ColourIndex::BLUE => 1,
-			ColourIndex::RED => 2,
-            ColourIndex::GREEN => 3,
 			ColourIndex::WHITE => 0,
 		}
 	}

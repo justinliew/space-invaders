@@ -1,7 +1,7 @@
 
 use crate::point::Point;
 use crate::size::WorldSize;
-use crate::bullet::{Bullet,PlayerBullet, Ability};
+use crate::bullet::{Bullet,PlayerBullet};
 use crate::vector::Vector;
 use crate::game::{ResetType,GameEvent,ColourIndex};
 
@@ -89,10 +89,6 @@ impl Swarm {
 		self.num_alive as f64 / (self.num_x * self.num_y) as f64
 	}
 
-	pub fn get_num_drops(&self) -> usize {
-		self.num_drops
-	}
-
 	pub fn get_level_modifier(&self) -> f64 {
 		f64::max(BASE_MOVE_DELAY - 0.12 * self.level as f64,0.2)
 	}
@@ -161,7 +157,7 @@ impl Swarm {
 
 		let mut ret = vec![];
 
-		for i in 0..4 {
+		for _i in 0..4 {
 			if let Some(loc) = self.get_bullet_spawn_location() {
 				ret.push(Bullet::new(Vector::new(loc, std::f64::consts::PI / 2.0), 200.));
 			}
@@ -229,12 +225,6 @@ impl Swarm {
 		Some((bucket_x.trunc() as usize, bucket_y.trunc() as usize))
 	}
 
-	fn get_closest(&self, x: f64, y: f64) -> Option<(usize,usize)> {
-		let bucket_x = (x - self.top_left.x) / (self.radius + self.spacing_x);
-		let bucket_y = (y - self.top_left.y) / (self.radius + self.spacing_y);
-		Some((bucket_x.trunc() as usize, bucket_y.trunc() as usize))
-	}
-
 	pub fn get_bottom_right(&self) -> Point {
 		Point{
 			x: self.top_left.x + (self.num_x as f64) * self.radius + ((self.num_x-1) as f64) * self.spacing_x,
@@ -269,61 +259,29 @@ impl Swarm {
 			return None;
 		}
 
-		if bullet.ability == Ability::Bomb {
-			// I think this should just destroy things in a path as it goes up the screen
-			let hit = self.get_closest(bullet.x(),bullet.y());
-			if let Some(hit) = hit {
-				let x_index = hit.0;
-				if self.alive[x_index + hit.1 * self.num_x] {
-					self.alive[x_index + hit.1 * self.num_x] = false;
-					self.num_alive -= 1;
-					let loc = self.get_enemy_location(x_index,hit.1) + Point::new(self.radius / 2.,self.radius / 2.);
-					return Some(vec![(30,loc)]);
-				}
-				return None;
-			} else {
-				return None;
-			}
-		} else {
-			if let Some(hit) = self.is_hit(bullet.x(), bullet.y()) {
-				if self.alive[hit.0 + hit.1 * self.num_x] {
-					self.alive[hit.0 + hit.1 * self.num_x] = false;
-					self.num_alive -= 1;
-					let loc = self.get_enemy_location(hit.0,hit.1) + Point::new(self.radius / 2.,self.radius / 2.);
-					let multiplier = f32::max(1., 1.5 * self.level as f32);
-					return match hit.1 {
-						0 => {
-							Some(vec![((30.*multiplier) as i32,loc)])
-						}
-						1|2 => {
-							Some(vec![((20.*multiplier) as i32,loc)])
-						},
-						3|4 => {
-							Some(vec![((10.*multiplier) as i32,loc)])
-						},
-						_ => {
-							unreachable!()
-						}
+
+		if let Some(hit) = self.is_hit(bullet.x(), bullet.y()) {
+			if self.alive[hit.0 + hit.1 * self.num_x] {
+				self.alive[hit.0 + hit.1 * self.num_x] = false;
+				self.num_alive -= 1;
+				let loc = self.get_enemy_location(hit.0,hit.1) + Point::new(self.radius / 2.,self.radius / 2.);
+				let multiplier = f32::max(1., 1.5 * self.level as f32);
+				return match hit.1 {
+					0 => {
+						Some(vec![((30.*multiplier) as i32,loc)])
+					}
+					1|2 => {
+						Some(vec![((20.*multiplier) as i32,loc)])
+					},
+					3|4 => {
+						Some(vec![((10.*multiplier) as i32,loc)])
+					},
+					_ => {
+						unreachable!()
 					}
 				}
-			}
-			None
-		}
-	}
-
-	pub fn get_lowest_alive(&self) -> Option<Point> {
-		for (index, alive) in self.alive.iter().enumerate().rev() {
-			if *alive {
-				let col = index % self.num_x;
-				let x = self.top_left.x + (self.radius + self.spacing_x) * ((col+1) as f64) - self.spacing_x - self.radius/2.;
-
-				let row = index / self.num_x;
-				let y = self.top_left.y + self.radius * ((row+1) as f64) + self.spacing_y * (row as f64);
-				return Some(Point::new(x,y));
 			}
 		}
 		None
 	}
-
-
 }
