@@ -145,6 +145,13 @@ impl Game {
 					*self.world.get_player_mut().x_mut() += MOVE_SPEED * dt;
 				};
 
+				if input.up && self.world.get_player().y() > 0. {
+					*self.world.get_player_mut().y_mut() -= MOVE_SPEED * dt;
+				}
+				if input.down && self.world.get_player().y() < (self.world.world_size.height-radius-75.) {
+					*self.world.get_player_mut().y_mut() += MOVE_SPEED * dt;
+				};
+
 				// Add bullets
 				if input.fire {
 					if !self.world.get_player_bullet().active {

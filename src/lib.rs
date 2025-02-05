@@ -105,6 +105,18 @@ pub extern "C" fn toggle_right(b: c_int) {
 }
 
 #[no_mangle]
+pub extern "C" fn toggle_up(b: c_int) {
+    let data = &mut GAME.lock().unwrap();
+    data.input.up = int_to_bool(b);
+}
+
+#[no_mangle]
+pub extern "C" fn toggle_down(b: c_int) {
+    let data = &mut GAME.lock().unwrap();
+    data.input.down = int_to_bool(b);
+}
+
+#[no_mangle]
 pub extern "C" fn toggle_fire(b: c_int) {
     let data = &mut GAME.lock().unwrap();
     data.input.fire = int_to_bool(b);

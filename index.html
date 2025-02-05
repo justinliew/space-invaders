@@ -750,6 +750,8 @@ const buttonTemplate = `
 			module.toggle_fire = mod.exports.toggle_fire;
 			module.toggle_left = mod.exports.toggle_left;
 			module.toggle_right = mod.exports.toggle_right;
+			module.toggle_up = mod.exports.toggle_up;
+			module.toggle_down = mod.exports.toggle_down;
 			module.toggle_alt = mod.exports.toggle_alt;
 			module.resize = mod.exports.resize;
 			module.draw = mod.exports.draw;
@@ -779,15 +781,25 @@ const buttonTemplate = `
 					info[key].textContent = gamepad[key];
 				}
 
-				let v = applyDeadZone(gamepad.axes[0], 0.1);
+				let lr = applyDeadZone(gamepad.axes[0], 0.1);
+				let ud = applyDeadZone(gamepad.axes[1], 0.1);
 				let direction = false;
-				if (v < 0.0) {
+				if (lr < 0.0) {
 					module.toggle_left(true);
 					module.toggle_right(false);
 					direction = true;
-				} else if (v > 0.0) {
+				} else if (lr > 0.0) {
 					module.toggle_left(false);
 					module.toggle_right(true);
+					direction = true;
+				}
+				if (ud < 0.0) {
+					module.toggle_up(true);
+					module.toggle_down(false);
+					direction = true;
+				} else if (ud > 0.0) {
+					module.toggle_up(false);
+					module.toggle_down(true);
 					direction = true;
 				}
 				let all_released = true;
@@ -804,6 +816,18 @@ const buttonTemplate = `
 						if (button.pressed) {
 							module.toggle_left(false);
 							module.toggle_right(true);
+							direction = true;
+						}
+					} else if (ndx == buttonids.PAD_TOP) {
+						if (button.pressed) {
+							module.toggle_up(true);
+							module.toggle_down(false);
+							direction = true;
+						}
+					} else if (ndx == buttonids.PAD_BOTTOM) {
+						if (button.pressed) {
+							module.toggle_up(false);
+							module.toggle_down(true);
 							direction = true;
 						}
 					} else if (ndx != buttonids.PAD_TOP && ndx != buttonids.PAD_BOTTOM ) {
@@ -824,6 +848,8 @@ const buttonTemplate = `
 				if (!direction) {
 					module.toggle_left(false);
 					module.toggle_right(false);
+					module.toggle_up(false);
+					module.toggle_down(false);
 				}
 			}
 
@@ -834,6 +860,12 @@ const buttonTemplate = `
 						break;
 					case "ArrowRight":
 						module.toggle_right(b);
+						break;
+					case "ArrowUp":
+						module.toggle_up(b);
+						break;
+					case "ArrowDown":
+						module.toggle_down(b);
 						break;
 					case " ":
 						module.toggle_fire(b);

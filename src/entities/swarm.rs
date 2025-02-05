@@ -158,8 +158,8 @@ impl Swarm {
 		let mut ret = vec![];
 
 		for _i in 0..4 {
-			if let Some(loc) = self.get_bullet_spawn_location() {
-				ret.push(Bullet::new(Vector::new(loc, std::f64::consts::PI / 2.0), 200.));
+			if let Some(_loc) = self.get_bullet_spawn_location() {
+//				ret.push(Bullet::new(Vector::new(loc, std::f64::consts::PI / 2.0), 200.));
 			}
 		}
 		if ret.is_empty() {

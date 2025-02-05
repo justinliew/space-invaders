@@ -37,6 +37,7 @@ impl Player {
 	pub fn x(&self) -> f64 { self.vector.position.x }
 	pub fn x_mut(&mut self) -> &mut f64 { &mut self.vector.position.x }
 	pub fn y(&self) -> f64 { self.vector.position.y }
+	pub fn y_mut(&mut self) -> &mut f64 { &mut self.vector.position.y }
 
 	pub fn dir(&self) -> f64 { self.vector.direction }
 
