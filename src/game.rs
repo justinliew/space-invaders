@@ -6,7 +6,7 @@ use crate::input::Input;
 use crate::world::World;
 use crate::point::Point;
 
-const MOVE_SPEED: f64 = 200.0;
+const MOVE_SPEED: f64 = 400.0;
 
 extern "C" {
 
@@ -135,20 +135,19 @@ impl Game {
 				}
 			},
 			GameState::Playing => {
-				let radius = self.world.get_swarm().radius;
 				let player_location = self.world.get_player().vector.clone();
 
-				if input.left && self.world.get_player().x() > radius {
+				if input.left && self.world.get_player().x() > 0. {
 					*self.world.get_player_mut().x_mut() -= MOVE_SPEED * dt;
 				}
-				if input.right && self.world.get_player().x() < (self.world.world_size.width-radius-75.) {
+				if input.right && self.world.get_player().x() < (self.world.world_size.width) {
 					*self.world.get_player_mut().x_mut() += MOVE_SPEED * dt;
 				};
 
 				if input.up && self.world.get_player().y() > 0. {
 					*self.world.get_player_mut().y_mut() -= MOVE_SPEED * dt;
 				}
-				if input.down && self.world.get_player().y() < (self.world.world_size.height-radius-75.) {
+				if input.down && self.world.get_player().y() < (self.world.world_size.height) {
 					*self.world.get_player_mut().y_mut() += MOVE_SPEED * dt;
 				};
 
@@ -164,11 +163,6 @@ impl Game {
 				// }
 
 				// update enemies
-				if let Some(bullets) = self.world.get_swarm_mut().update(dt) {
-					for bullet in bullets {
-						self.world.get_bullets_mut().push(bullet);
-					}
-				}
 
 				// update bullets
 				for bullet in self.world.get_bullets_mut() {
@@ -209,6 +203,11 @@ impl Game {
 						self.game_state = GameState::Death(3.);
 					}
 				}
+
+				self.world.scrolly -= 5;
+				if self.world.scrolly == 0 {
+					self.world.scrolly = 4000;
+				} 
 			},
 			GameState::Death(ref mut timer) => {
 				*timer -= dt;
@@ -229,10 +228,6 @@ impl Game {
 			GameState::GameOverFastlyTreatment(ref mut timer) => {
 				if *timer >= 0. {
 					*timer -= dt;
-					self.world.get_swarm_mut().force_kill(1.);
-					// for event in queued_events {
-					// 	self.send_game_event(event);
-					// }
 				} else {
 					self.game_state = GameState::GameOver(1.);
 				}

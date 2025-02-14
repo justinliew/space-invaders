@@ -362,15 +362,11 @@ const buttonTemplate = `
 				bullet: document.createElement('canvas'),
 				player_bullet: document.createElement('canvas'),
 				particle: document.createElement('canvas'),
-				title_img: new Image(),
-				game_over_img: new Image(),
+				bg: new Image(),
 			}
 
-			res.title_img.src = 'title.png';
-			res.title_img.alt = 'Bug Invaders Title Screen';
+			res.bg.src = 'bg.png';
 
-			res.game_over_img.src = 'game_over_w_score.png';
-			res.game_over_img.alt = 'Bug Invaders Game Over Screen';
 
 			// Particle
 			res.particle.width = 20;
@@ -449,6 +445,13 @@ const buttonTemplate = `
 				ctx.fillRect(0, 0, gamearea.width, gamearea.height);
 				topbar_ctx.fillStyle = "black";
 				topbar_ctx.fillRect(0, 0, topbar.width, topbar.height);
+			}
+
+			function draw_bg(yoffset, x,y,width,height) {
+				// drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
+				// top left of subrect, bounds of subrect, top left of canvas, bounds of canvas 
+				ctx.drawImage(res.bg, 0, yoffset, width, height, x, y, width, height);
+//				ctx.drawImage(res.bg, 0, yoffset, 1000, 1000, 0, 0, 1000, 1000);
 			}
 
 			// player is 33x33
@@ -711,7 +714,7 @@ const buttonTemplate = `
 			}
 
 			// The real loading and running of our wasm starts here
-			let imports = { console_log, console_log_int, console_log_double, clear_screen, draw_fastly_treatment, reset_fastly_treatment, draw_name_picker, check_high_score, wait_outro_complete, wait_high_score, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_hud, draw_line, draw_bounds, draw_intro, handle_game_over, draw_sprite, update_local_score, new_session };
+			let imports = { console_log, console_log_int, console_log_double, clear_screen, draw_fastly_treatment, reset_fastly_treatment, draw_name_picker, check_high_score, wait_outro_complete, wait_high_score, draw_player, draw_bullet, draw_player_bullet, draw_particle, draw_bg, draw_hud, draw_line, draw_bounds, draw_intro, handle_game_over, draw_sprite, update_local_score, new_session };
 			imports.Math_atan = Math.atan;
 			imports.sin = Math.sin;
 			imports.cos = Math.cos;
@@ -1040,6 +1043,7 @@ const buttonTemplate = `
 				leaderboardglobal_elem.width = window.innerWidth * 0.2;
 				leaderboardglobal_elem.height = window.innerHeight * 0.9;
 				let scale = module.resize(gamearea.width, gamearea.height);
+				console.log("resize: ", gamearea.width, gamearea.height, window.innerWidth, window.innerHeight, scale);
 				init_sprites(scale);
 			}
 			window.addEventListener('resize', () => {

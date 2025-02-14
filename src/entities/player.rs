@@ -15,7 +15,7 @@ pub struct Player {
 
 lazy_static! {
 	static ref START_LOCATION: Vector = Vector::new(
-		Point::new(500.0,750.0),
+		Point::new(500.0,500.0),
 		-std::f64::consts::PI / 2.0,
 	);
 }

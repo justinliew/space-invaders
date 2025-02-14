@@ -3,13 +3,15 @@ use crate::player::Player;
 use crate::swarm::Swarm;
 use crate::size::WorldSize;
 use crate::bullet::{Bullet,PlayerBullet};
+use crate::enemy::Enemy;
 
 pub struct World {
 	pub world_size: WorldSize,
     player: Player,
-	swarm: Swarm,
+	enemies: Vec<Enemy>,
 	player_bullet: PlayerBullet,
 	bullets: Vec<Bullet>,
+	pub scrolly: u32,
 }
 
 impl World {
@@ -18,15 +20,15 @@ impl World {
         World {
 			world_size: world_size,
             player: Player::new([0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0,0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0,0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0,0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0,0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0,0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0,0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0,1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,]),
-			swarm: Swarm::new(10,5, world_size),
+			enemies: vec![],
 			player_bullet: PlayerBullet::new(),
 			bullets: vec![],
+			scrolly: 4000,
         }
     }
 
 	pub fn reset(&mut self, reset_type: ResetType) {
         self.bullets.clear();
-		self.swarm.reset(reset_type);
 		self.player.alive = true;
 		self.player.reset_location();
 	}
@@ -59,16 +61,8 @@ impl World {
 		&mut self.player
 	}
 
-	pub fn get_swarm(&self) -> &Swarm {
-		&self.swarm
-	}
-
-	pub fn get_swarm_mut(&mut self) -> &mut Swarm {
-		&mut self.swarm
-	}
-
-	pub fn get_for_collisions(&mut self) -> (&mut Player, &mut Swarm, &mut PlayerBullet, &mut Vec<Bullet>) {
-		(&mut self.player, &mut self.swarm, &mut self.player_bullet, &mut self.bullets)
+	pub fn get_for_collisions(&mut self) -> (&mut Player, &mut PlayerBullet, &mut Vec<Bullet>) {
+		(&mut self.player, &mut self.player_bullet, &mut self.bullets)
 	}
 
 

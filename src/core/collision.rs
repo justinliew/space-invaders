@@ -4,7 +4,7 @@ impl Game {
 
 	pub unsafe fn handle_collisions(&mut self) {
 		let world = &mut self.world;
-		let (player,swarm,player_bullet, bullets) = world.get_for_collisions();
+		let (player, player_bullet, bullets) = world.get_for_collisions();
 
 		// TODO move this to a game event?
 		let mut queued_events = vec![];
@@ -16,17 +16,7 @@ impl Game {
 		});
 
 		if player_bullet.active {
-			let swarmhit = swarm.check_hit(player_bullet);
-			if let Some(hits) = swarmhit {
-				for hit in hits {
-					let points = hit.0;
-					let loc = hit.1;
-					queued_events.push(GameEvent::EntityDied(loc, ColourIndex::WHITE));
-					self.score += points as i32;
-					queued_events.push(GameEvent::ScoreChanged(self.score));
-					player_bullet.active = false;
-				}
-			}
+			// TODO
 		}
 
 		for e in queued_events {

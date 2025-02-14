@@ -19,6 +19,9 @@ mod player;
 #[path = "./entities/swarm.rs"]
 mod swarm;
 
+#[path = "./entities/enemy.rs"]
+mod enemy;
+
 #[path = "./entities/world.rs"]
 mod world;
 
@@ -47,7 +50,7 @@ extern crate lazy_static;
 
 lazy_static! {
 	static ref RENDER: Mutex<RenderData> = Mutex::new(RenderData::new());
-    static ref GAME: Mutex<GameData> = Mutex::new(GameData::new(WorldSize::new(1008.,804.), RENDER.lock().unwrap().sender.clone()));
+    static ref GAME: Mutex<GameData> = Mutex::new(GameData::new(WorldSize::new(1008.,1000.), RENDER.lock().unwrap().sender.clone()));
 }
 
 #[no_mangle]
@@ -63,7 +66,8 @@ pub unsafe extern "C" fn resize(width: c_double, height: c_double) -> c_double {
 	let data = &mut GAME.lock().unwrap();
 	let world_size = data.game.world.world_size;
 
-	render.resize(world_size, width, height)
+	render.resize(world_size, width, height);
+    1.
 }
 
 #[no_mangle]
