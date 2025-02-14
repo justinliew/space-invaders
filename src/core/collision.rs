@@ -15,9 +15,9 @@ impl Game {
 			true
 		});
 
-		if player_bullet.active {
-			// TODO
-		}
+		// TODO
+		// if player_bullet.active {
+		// }
 
 		for e in queued_events {
 			self.send_game_event(e);

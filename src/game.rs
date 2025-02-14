@@ -1,6 +1,8 @@
 use std::os::raw::c_int;
 use std::sync::mpsc::Sender;
 
+use crate::bullet::PlayerBullet;
+use crate::player;
 use crate::size::WorldSize;
 use crate::input::Input;
 use crate::world::World;
@@ -153,9 +155,8 @@ impl Game {
 
 				// Add bullets
 				if input.fire {
-					if !self.world.get_player_bullet().active {
-						self.world.get_player_bullet_mut().respawn(player_location, 800.);
-					}
+					// TODo add a cooldown so we can't just spam
+					self.world.get_player_bullets_mut().push(PlayerBullet::new(player_location,800.));
 				}
 
 				// if input.alt {
@@ -169,10 +170,14 @@ impl Game {
 					bullet.update(dt);
 				}
 
-				if self.world.get_player_bullet().active {
-					let bullet = self.world.get_for_player_bullet_abilities();
-					bullet.update(dt);
+				for player_bullet in self.world.get_player_bullets_mut() {
+					player_bullet.update(dt);
 				}
+
+				// if self.world.get_player_bullets().active {
+				// 	let bullet = self.world.get_player_bullets_mut();
+				// 	bullet.update(dt);
+				// }
 
 				// Remove bullets outside the viewport
 				{
@@ -185,11 +190,12 @@ impl Game {
 						within
 					});
 
-					let player_bullet = self.world.get_player_bullet_mut();
-					if player_bullet.x() < 0. || player_bullet.x() > width ||
-					player_bullet.y() < 0. || player_bullet.y() > height {
-						player_bullet.despawn();
-					}
+					let player_bullets = self.world.get_player_bullets_mut();
+					player_bullets.retain(|bullet| {
+						let within = bullet.x() > 0. && bullet.x() < width &&
+								bullet.y() > 0. && bullet.y() < height;
+						within
+					});
 				}
 
 				self.handle_collisions();

@@ -137,10 +137,9 @@ impl RenderData {
                         let bp = self.world_to_screen(&bullet.location.position);
                         draw_bullet(bp.x, bp.y);
                     }
-                    let player_bullet = world.get_player_bullet();
-                    if player_bullet.active {
+                    for player_bullet in world.get_player_bullets() {
                         let bp = self.world_to_screen(&player_bullet.location.position);
-                        draw_player_bullet(bp.x, bp.y, player_bullet.facing);
+                        draw_player_bullet(bp.x, bp.y, player_bullet.facing);                        
                     }
                 }
 

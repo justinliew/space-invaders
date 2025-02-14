@@ -249,9 +249,10 @@ impl Swarm {
 
 
 	pub fn check_hit(&mut self, bullet: &PlayerBullet) -> Option<Vec<(i32,Point)>> {
-		if !bullet.active {
-			return None;
-		}
+		// TODO
+		// if !bullet.active {
+		// 	return None;
+		// }
 		if bullet.x() < self.top_left.x || bullet.x() > self.get_bottom_right().x {
 			return None;
 		}

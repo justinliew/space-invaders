@@ -28,27 +28,15 @@ pub struct PlayerBullet {
     pub location: Vector,
 	pub speed: f64,
 	pub facing: f64,
-	pub active: bool,
 }
 
 impl PlayerBullet {
-	pub fn new() -> PlayerBullet {
+	pub fn new(spawn_location: Vector, speed: f64) -> PlayerBullet {
 		PlayerBullet {
-			location: Vector::default(),
-			speed: 0.,
+			location: spawn_location,
+			speed: speed,
 			facing: 0.,
-			active: false,
 		}
-	}
-
-	pub fn respawn(&mut self, spawn_location: Vector, speed: f64) {
-		self.active = true;
-		self.location = spawn_location;
-		self.speed = speed;	
-	}
-
-	pub fn despawn(&mut self) {
-		self.active = false;
 	}
 
 	pub fn x(&self) -> f64 { self.location.position.x }

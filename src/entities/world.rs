@@ -9,7 +9,7 @@ pub struct World {
 	pub world_size: WorldSize,
     player: Player,
 	enemies: Vec<Enemy>,
-	player_bullet: PlayerBullet,
+	player_bullets: Vec<PlayerBullet>,
 	bullets: Vec<Bullet>,
 	pub scrolly: u32,
 }
@@ -21,7 +21,7 @@ impl World {
 			world_size: world_size,
             player: Player::new([0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0,0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0,0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0,0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0,0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0,0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0,0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0,0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0,1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,]),
 			enemies: vec![],
-			player_bullet: PlayerBullet::new(),
+			player_bullets: vec![],
 			bullets: vec![],
 			scrolly: 4000,
         }
@@ -41,16 +41,12 @@ impl World {
 		&mut self.bullets
 	}
 
-	pub fn get_player_bullet(&self) -> &PlayerBullet {
-		&self.player_bullet
+	pub fn get_player_bullets(&self) -> &Vec<PlayerBullet> {
+		&self.player_bullets
 	}
 
-	pub fn get_player_bullet_mut(&mut self) -> &mut PlayerBullet {
-		&mut self.player_bullet
-	}
-
-	pub fn get_for_player_bullet_abilities(&mut self) -> &mut PlayerBullet {
-		&mut self.player_bullet
+	pub fn get_player_bullets_mut(&mut self) -> &mut Vec<PlayerBullet> {
+		&mut self.player_bullets
 	}
 
 	pub fn get_player(&self) -> &Player {
@@ -61,8 +57,8 @@ impl World {
 		&mut self.player
 	}
 
-	pub fn get_for_collisions(&mut self) -> (&mut Player, &mut PlayerBullet, &mut Vec<Bullet>) {
-		(&mut self.player, &mut self.player_bullet, &mut self.bullets)
+	pub fn get_for_collisions(&mut self) -> (&mut Player, &mut Vec<PlayerBullet>, &mut Vec<Bullet>) {
+		(&mut self.player, &mut self.player_bullets, &mut self.bullets)
 	}
 
 
