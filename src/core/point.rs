@@ -2,13 +2,13 @@
 
 //use super::Size;
 
-use std::ops::{Add, Sub, Mul, Div};
+use std::ops::{Add, Div, Mul, Sub};
 
 /// A `Point` represents a position in space
-#[derive(Clone, Default, Copy)]
+#[derive(Clone, Default, Copy, Debug)]
 pub struct Point {
     pub x: f64,
-    pub y: f64
+    pub y: f64,
 }
 
 impl Point {
@@ -24,7 +24,7 @@ impl Point {
 
 /// Implements '==' for Point, as well as its inverse '!='
 impl PartialEq for Point {
-    fn eq (&self, _rhs: &Self) -> bool {
+    fn eq(&self, _rhs: &Self) -> bool {
         (self.x == _rhs.x) && (self.y == _rhs.y)
     }
 }

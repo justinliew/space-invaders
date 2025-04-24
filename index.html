@@ -41,11 +41,19 @@
 			font-family: courier;
 		}
 
+		#fill {
+			background-color: black;
+		}
+
 		#gamearea {
 			z-index: 0;
 		}
 		#animation {
 			z-index: 1;
+		}
+		#topanim {
+			z-index: 1;
+			background-color: black;
 		}
 		#namediv {
 			z-index: 2;
@@ -56,10 +64,12 @@
 
 <body id="bodyid">
 	<div id="gamediv">
+		<canvas id="fill" style='position:absolute; left:0%; top:0%; width: 100%; height: 100%'></canvas>
 		<canvas id="topbar" style='position:absolute; left:0px; top:0px; width: 100%; height: 10%'></canvas>
-		<div id="animation" style='position:absolute; left:0px; top:5%; width: 80%; height: 100%'></div>
-		<canvas id="gamearea" style='position:absolute; left:0px; top:10%; width: 80%; height: 90%'></canvas>
-		<div id="leaderboard" style='position:absolute; left:80%; top:10%; width: 50%; height: 100%'></div>
+		<div id="animation" style='position:absolute; left:0px; top:5%; width: 100%; height: 100%'></div>
+		<div id="topanim" style='position:absolute; left:0px; top:5%; width: 100%; height: 25%'></div>
+		<canvas id="gamearea" style='position:absolute; left:10%; top:10%; width: 80%; height: 80%'></canvas>
+		<div id="leaderboard" style='position:absolute; left:30%; top:80%; width: 40%; height: 20%'></div>
 		</div>
 	</div>
 
@@ -78,6 +88,7 @@
 		let start_explosion_anim = true;
 		let start_intro_anim = true;
 		let intro_anim = {};
+		let topbar_anim = {};
 		let start_outro_anim = true;
 		let outro_anim = {};
 		let outro_complete = 0;
@@ -431,7 +442,7 @@ const buttonTemplate = `
 			pfCtx.fill();
 
 			leaderboard_table = document.createElement('table');
-			leaderboard_table.style.width = '30%';
+			leaderboard_table.style.width = '100%';
 			var tbdy = document.createElement('tbody');
 			leaderboard_table.appendChild(tbdy);
 
@@ -527,6 +538,16 @@ const buttonTemplate = `
 						autoplay: true,
 						name: 'intro_anim'
 					});
+					document.getElementById('topanim').style.display = 'block';
+					topbar_anim = bodymovin.loadAnimation({
+						container: document.getElementById('topanim'),
+						path: 'intro.json',
+						render: 'canvas',
+						loop: true,
+						autoplay: true,
+						name: 'intro_anim'
+					});
+
 					// setTimeout(() => {
 					// 	anim.stop();
 					// },500);
@@ -939,6 +960,7 @@ const buttonTemplate = `
 			So we double the sprites when we init, and then when we render we need to scale by game to screen
 			*/
 			function init_sprites(scale) {
+				console.log("init_sprites ", scale);
 				let enemy0_0 = [
 					0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
 					0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
@@ -1114,6 +1136,7 @@ const buttonTemplate = `
 				leaderboardglobal_elem.width = window.innerWidth * 0.2;
 				leaderboardglobal_elem.height = window.innerHeight * 0.9;
 				let scale = module.resize(gamearea.width, gamearea.height);
+				console.log("RESIZE scale ", scale);
 				init_sprites(scale);
 			}
 			window.addEventListener('resize', () => {
