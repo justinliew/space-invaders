@@ -122,7 +122,6 @@ impl RenderData {
 		self.screen_top_left_offset.x = (width - world_size.width) / 2.;
 		self.screen_top_left_offset.y = (height - world_size.height) / 2.;
 		self.game_to_screen = 1.;
-        log(&format!("resize {} {} vs {} {}", width, height, world_size.width, world_size.height));
 
 		return self.game_to_screen;
 //        }

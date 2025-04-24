@@ -613,36 +613,36 @@ const buttonTemplate = `
 				
 				ctx.fillStyle = "red";
 				ctx.font = "20px courier";
-				ctx.fillText("You got a high score! Enter your initials", 300,300);
+				ctx.fillText("You got a high score! Enter your initials", 300,900);
 				ctx.font = "30px courier";
 				for (li = 0; li < letter_index+1; ++li) {
 					let letter_offset = li * 110;
 					ctx.strokeStyle = "red";
 					ctx.beginPath();
-					ctx.moveTo(letter_offset + 450, 400);
-					ctx.lineTo(letter_offset + 500, 400);
-					ctx.lineTo(letter_offset + 500, 450);
-					ctx.lineTo(letter_offset + 450, 450);
-					ctx.lineTo(letter_offset + 450, 400);
+					ctx.moveTo(letter_offset + 450, 1000);
+					ctx.lineTo(letter_offset + 500, 1000);
+					ctx.lineTo(letter_offset + 500, 1050);
+					ctx.lineTo(letter_offset + 450, 1050);
+					ctx.lineTo(letter_offset + 450, 1000);
 					ctx.stroke();
 					ctx.beginPath();
-					ctx.moveTo(letter_offset + 440, 410);
-					ctx.lineTo(letter_offset + 430, 420);
-					ctx.lineTo(letter_offset + 440, 430);
+					ctx.moveTo(letter_offset + 440, 1010);
+					ctx.lineTo(letter_offset + 430, 1020);
+					ctx.lineTo(letter_offset + 440, 1030);
 					ctx.stroke();
 					ctx.beginPath();
-					ctx.moveTo(letter_offset + 510, 410);
-					ctx.lineTo(letter_offset + 520, 420);
-					ctx.lineTo(letter_offset + 510, 430);
+					ctx.moveTo(letter_offset + 510, 1010);
+					ctx.lineTo(letter_offset + 520, 1020);
+					ctx.lineTo(letter_offset + 510, 1030);
 					ctx.stroke();
 
 					if (li == letter_index) {
 						high_score_name_letters[high_score_index] = cur_high_score_letter;
 						let letter = String.fromCharCode(65 + cur_high_score_letter);
-						ctx.fillText(letter, letter_offset + 465,425);
+						ctx.fillText(letter, letter_offset + 465,1025);
 					} else {
 						let letter = String.fromCharCode(65 + high_score_name_letters[li]);
-						ctx.fillText(letter, letter_offset + 465, 425);
+						ctx.fillText(letter, letter_offset + 465, 1025);
 					}
 				}
 				submit_high_score = true;
