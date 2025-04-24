@@ -1,6 +1,7 @@
 extern crate itertools_num;
 use std::os::raw::{c_double, c_int, c_char};
 use std::sync::Mutex;
+use std::ffi::CString;
 
 mod input;
 mod render;
@@ -38,6 +39,9 @@ mod vector;
 
 #[path = "./core/size.rs"]
 mod size;
+
+#[path = "./core/log.rs"]
+mod log;
 
 use crate::size::WorldSize;
 use crate::game::GameData;
@@ -116,4 +120,9 @@ pub extern "C" fn toggle_fire(b: c_int) {
 pub extern "C" fn toggle_alt(b: c_int) {
     let data = &mut GAME.lock().unwrap();
     data.input.alt = int_to_bool(b);
+}
+
+#[no_mangle]
+pub extern "C" fn dealloc_str(ptr: *mut c_char) {
+    let _ = unsafe { CString::from_raw(ptr) };
 }
