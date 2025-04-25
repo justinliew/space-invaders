@@ -55,7 +55,7 @@ impl Player {
 		let hit = self.collision[offsetx + 11 * offsety] != 0;
 
 		if hit {
-//			self.alive = false;
+			self.alive = false;
 		}
 		hit
 	}
