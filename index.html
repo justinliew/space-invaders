@@ -36,7 +36,7 @@
 			z-index: 0;
 		}
 		#animation {
-			z-index: 1;
+			z-index: 2;
 		}
 		#header {
 			z-index: 1;
@@ -49,7 +49,7 @@
 <body id="bodyid">
 	<div id="gamediv">
 		<canvas id="fill" style='position:absolute; left:0%; top:0%; width: 100%; height: 100%'></canvas>
-		<div id="animation" style='position:absolute; left:0px; top:5%; width: 100%; height: 100%'></div>
+		<div id="animation" style='position:absolute; left:0px; top:0px; width: 100%; height: 100%'></div>
 		<canvas id="topbar" style='position:absolute; left:0px; top:0px; width: 100%; height: 5%'></canvas>
 		<div id="header" style='position:absolute; left:0px; top:5%; width: 100%; height: 15%'></div>
 		<div id="leaderboard" style='position:absolute; left:0%; top:20%; width: 100%; height: 20%'></div>
@@ -476,7 +476,25 @@ const buttonTemplate = `
 
 				footer.appendChild(img);
 			}
+
+			function hide_game_elements() {
+				document.getElementById('topbar').style.display = 'none';
+				document.getElementById('header').style.display = 'none';
+				document.getElementById('leaderboard').style.display = 'none';
+				document.getElementById('gamearea').style.display = 'none';
+				document.getElementById('footer').style.display = 'none';
+			}
+
+			function show_game_elements() {
+				document.getElementById('topbar').style.display = 'block';
+				document.getElementById('header').style.display = 'block';
+				document.getElementById('leaderboard').style.display = 'block';
+				document.getElementById('gamearea').style.display = 'block';
+				document.getElementById('footer').style.display = 'block';
+			}
+
 			function new_session() {
+				show_game_elements();
 				show_header_image();
 				show_footer_image();
 				show_game_end_screen = false;
@@ -546,6 +564,7 @@ const buttonTemplate = `
 
 			function draw_intro() {
 				if (start_intro_anim) {
+					hide_game_elements();
 					document.getElementById('animation').style.display = 'block';
 					intro_anim = bodymovin.loadAnimation({
 						container: document.getElementById('animation'),
@@ -611,6 +630,8 @@ const buttonTemplate = `
 			}
 
 			function draw_name_picker(letter_index, cur_letter) {
+				show_game_elements();
+
 				if (letter_index != high_score_index) {
 					high_score_name_letters[high_score_index] = cur_high_score_letter;
 				}
@@ -690,6 +711,7 @@ const buttonTemplate = `
 				// gamearea.style.backgroundColor = "red";
 
 				if (start_explosion_anim) {
+					hide_game_elements();
 					document.getElementById('animation').style.display = 'block';
 					let anim = bodymovin.loadAnimation({
 						container: document.getElementById('animation'),
@@ -707,6 +729,7 @@ const buttonTemplate = `
 					start_explosion_anim = false;
 				}
 				if (start_outro_anim) {
+					hide_game_elements();
 					outro_anim = bodymovin.loadAnimation({
 						container: document.getElementById('animation'),
 						path: 'outro.json',
