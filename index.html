@@ -638,38 +638,41 @@ const buttonTemplate = `
 				high_score_index = letter_index;
 				cur_high_score_letter = cur_letter;
 				
+				var base_x = gamearea.width / 2;
+				var base_y = gamearea.height / 4;
+
 				ctx.fillStyle = "red";
 				ctx.font = "20px courier";
-				ctx.fillText("You got a high score! Enter your initials", 300,900);
+				ctx.fillText("You got a high score! Enter your initials", base_x - 200, base_y);
 				ctx.font = "30px courier";
 				for (li = 0; li < letter_index+1; ++li) {
 					let letter_offset = li * 110;
 					ctx.strokeStyle = "red";
 					ctx.beginPath();
-					ctx.moveTo(letter_offset + 450, 1000);
-					ctx.lineTo(letter_offset + 500, 1000);
-					ctx.lineTo(letter_offset + 500, 1050);
-					ctx.lineTo(letter_offset + 450, 1050);
-					ctx.lineTo(letter_offset + 450, 1000);
+					ctx.moveTo(letter_offset + base_x - 100, base_y + 50);
+					ctx.lineTo(letter_offset + base_x - 50, base_y + 50);
+					ctx.lineTo(letter_offset + base_x - 50, base_y + 100);
+					ctx.lineTo(letter_offset + base_x - 100, base_y + 100);
+					ctx.lineTo(letter_offset + base_x - 100, base_y + 50);
 					ctx.stroke();
 					ctx.beginPath();
-					ctx.moveTo(letter_offset + 440, 1010);
-					ctx.lineTo(letter_offset + 430, 1020);
-					ctx.lineTo(letter_offset + 440, 1030);
+					ctx.moveTo(letter_offset + base_x - 110, base_y + 60);
+					ctx.lineTo(letter_offset + base_x - 120, base_y + 70);
+					ctx.lineTo(letter_offset + base_x - 110, base_y + 80);
 					ctx.stroke();
 					ctx.beginPath();
-					ctx.moveTo(letter_offset + 510, 1010);
-					ctx.lineTo(letter_offset + 520, 1020);
-					ctx.lineTo(letter_offset + 510, 1030);
+					ctx.moveTo(letter_offset + base_x - 40, base_y + 60);
+					ctx.lineTo(letter_offset + base_x - 30, base_y + 70);
+					ctx.lineTo(letter_offset + base_x - 40, base_y + 80);
 					ctx.stroke();
 
 					if (li == letter_index) {
 						high_score_name_letters[high_score_index] = cur_high_score_letter;
 						let letter = String.fromCharCode(65 + cur_high_score_letter);
-						ctx.fillText(letter, letter_offset + 465,1025);
+						ctx.fillText(letter, letter_offset + base_x - 85, base_y + 75);
 					} else {
 						let letter = String.fromCharCode(65 + high_score_name_letters[li]);
-						ctx.fillText(letter, letter_offset + 465, 1025);
+						ctx.fillText(letter, letter_offset + base_x - 85, base_y + 75);
 					}
 				}
 				submit_high_score = true;
