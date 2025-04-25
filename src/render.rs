@@ -118,28 +118,13 @@ impl RenderData {
         self.width = width.trunc() as usize;
         self.height = height.trunc() as usize;
 
-//        if world_size.width < width && world_size.height < height {
-		self.screen_top_left_offset.x = (width - world_size.width) / 2.;
-		self.screen_top_left_offset.y = (height - world_size.height) / 2.;
-		self.game_to_screen = 1.;
+        self.screen_top_left_offset.x = 0.;
+        self.screen_top_left_offset.y = 0.;
+
+        let scale = (self.width as f64 / world_size.width).min(self.height as f64 / world_size.height);
+		self.game_to_screen = scale;
 
 		return self.game_to_screen;
-//        }
-
-        // this stuff doesn't work very well...
-        // if world_size.width > width {
-        //     self.game_to_screen = width / world_size.width;
-        //     // this isn't quite right; it needs some sort of scaling
-        //     self.screen_top_left_offset.y = (height - world_size.height) / 2.;
-		// 	log(&format!("setting y"));
-        // } else if world_size.height > height {
-        //     self.game_to_screen = height / world_size.height;
-        //     // this isn't quite right; it needs some sort of scaling
-        //     self.screen_top_left_offset.x = (width - world_size.width) / 2.;
-		// 	log(&format!("setting x"));
-        // }
-		// log(&format!("game to screen {:?}", self.screen_top_left_offset));
-        self.game_to_screen
     }
 
     unsafe fn draw_swarm(&self, swarm: &Swarm) {
@@ -289,7 +274,8 @@ impl RenderData {
 
                 // unsafe {
 				// 	let tl = self.world_to_screen(&Point::new(0.,0.));
-                //     draw_bounds(tl.x,tl.y, self.width as f64, self.height as f64);
+                //     let br = self.world_to_screen(&Point::new(1000.,800.));
+                //     draw_bounds(tl.x,tl.y, br.x,br.y);
                 // }
 
                 if let GameState::GameOverFastlyTreatment(t) = game_state {

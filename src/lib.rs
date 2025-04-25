@@ -53,7 +53,7 @@ extern crate lazy_static;
 
 lazy_static! {
 	static ref RENDER: Mutex<RenderData> = Mutex::new(RenderData::new());
-    static ref GAME: Mutex<GameData> = Mutex::new(GameData::new(WorldSize::new(1008.,804.), RENDER.lock().unwrap().sender.clone()));
+    static ref GAME: Mutex<GameData> = Mutex::new(GameData::new(WorldSize::new(1000.,800.), RENDER.lock().unwrap().sender.clone()));
 }
 
 #[no_mangle]

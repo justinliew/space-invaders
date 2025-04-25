@@ -51,7 +51,7 @@
 		#animation {
 			z-index: 1;
 		}
-		#topanim {
+		#header {
 			z-index: 1;
 			background-color: black;
 		}
@@ -65,11 +65,12 @@
 <body id="bodyid">
 	<div id="gamediv">
 		<canvas id="fill" style='position:absolute; left:0%; top:0%; width: 100%; height: 100%'></canvas>
-		<canvas id="topbar" style='position:absolute; left:0px; top:0px; width: 100%; height: 10%'></canvas>
 		<div id="animation" style='position:absolute; left:0px; top:5%; width: 100%; height: 100%'></div>
-		<div id="topanim" style='position:absolute; left:0px; top:5%; width: 100%; height: 25%'></div>
-		<canvas id="gamearea" style='position:absolute; left:10%; top:10%; width: 80%; height: 80%'></canvas>
-		<div id="leaderboard" style='position:absolute; left:30%; top:80%; width: 40%; height: 20%'></div>
+		<canvas id="topbar" style='position:absolute; left:0px; top:0px; width: 100%; height: 5%'></canvas>
+		<div id="header" style='position:absolute; left:0px; top:5%; width: 100%; height: 15%'></div>
+		<div id="leaderboard" style='position:absolute; left:0%; top:20%; width: 100%; height: 20%'></div>
+		<canvas id="gamearea" style='position:absolute; left:0%; top:40%; width: 100%; height: 45%'></canvas>
+		<div id="footer" style='position:absolute; left:0px; top:85%; width: 100%; height: 15%'></div>
 		</div>
 	</div>
 
@@ -294,8 +295,8 @@ const buttonTemplate = `
 				i += 1;
 			});
 
-			var header = table.createTHead();
-			var row = header.insertRow(0);
+			var lheader = table.createTHead();
+			var row = lheader.insertRow(0);
 			var cell = row.insertCell(0);
 			cell.innerHTML = "<b>" + name + "</b>";
 		}
@@ -366,6 +367,11 @@ const buttonTemplate = `
 			leaderboard_req.send();
 		}
 
+		function get_src_to_screen_fill_scale(srcx,srcy,screenx,screeny) {
+			var scale = Math.min(screenx / srcx, screeny / srcy);
+			return scale;
+		}
+
 		// Returns an object containing resources that will be used later for drawing
 		function resources() {
 			let res = {
@@ -377,15 +383,15 @@ const buttonTemplate = `
 				particle: document.createElement('canvas'),
 				shields: {},
 				shield_hit: gamearea.getContext("2d").createImageData(40, 40), // TODO scale shields
-				title_img: new Image(),
-				game_over_img: new Image(),
+				header_img: new Image(),
+				footer_img: new Image(),
 			}
 
-			res.title_img.src = 'title.png';
-			res.title_img.alt = 'Bug Invaders Title Screen';
+			res.header_img.src = 'header.png';
+			res.header_img.alt = 'Bot Invaders Header';
 
-			res.game_over_img.src = 'game_over_w_score.png';
-			res.game_over_img.alt = 'Bug Invaders Game Over Screen';
+			res.footer_img.src = 'header.png';
+			res.footer_img.alt = 'Bot Invaders Footer';
 
 			// Particle
 			res.particle.width = 20;
@@ -461,7 +467,39 @@ const buttonTemplate = `
 			var ctx = gamearea.getContext("2d");
 			var topbar_ctx = topbar.getContext("2d");
 
+			function show_header_image() {
+				var header = document.getElementById('header');
+				header.style.display = 'block';
+				header.innerHTML = '';
+				var scale = get_src_to_screen_fill_scale(res.header_img.width, res.header_img.height, header.clientWidth, header.clientHeight);
+				console.log("header ", res.header_img.width, res.header_img.height, header.clientWidth, header.clientHeight, scale);
+				var img = document.createElement("img");
+				img.src = res.header_img.src;
+				img.width = res.header_img.width * scale;
+				img.height = res.header_img.height * scale;
+				img.alt = res.header_img.alt;
+
+				header.appendChild(img);
+			}
+
+			function show_footer_image() {
+				var footer = document.getElementById('footer');
+				footer.style.display = 'block';
+				footer.innerHTML = '';
+				var scale = get_src_to_screen_fill_scale(res.footer_img.width, res.footer_img.height, footer.clientWidth, footer.clientHeight);
+				console.log("footer ", res.footer_img.width, res.footer_img.height, footer.clientWidth, footer.clientHeight, scale);
+
+				var img = document.createElement("img");
+				img.src = res.footer_img.src;
+				img.width = res.footer_img.width * scale;
+				img.height = res.footer_img.height * scale;
+				img.alt = res.footer_img.alt;
+
+				footer.appendChild(img);
+			}
 			function new_session() {
+				show_header_image();
+				show_footer_image();
 				show_game_end_screen = false;
 				start_explosion_anim = true;
 				start_intro_anim = true;
@@ -481,7 +519,7 @@ const buttonTemplate = `
 
 			function clear_screen() {
 				ctx.fillStyle = "black";
-				ctx.fillRect(0, 0, gamearea.width, gamearea.height);
+				ctx.fillRect(0, 0, gamearea.clientWidth, gamearea.clientHeight);
 				topbar_ctx.fillStyle = "black";
 				topbar_ctx.fillRect(0, 0, topbar.width, topbar.height);
 			}
@@ -538,20 +576,9 @@ const buttonTemplate = `
 						autoplay: true,
 						name: 'intro_anim'
 					});
-					document.getElementById('topanim').style.display = 'block';
-					topbar_anim = bodymovin.loadAnimation({
-						container: document.getElementById('topanim'),
-						path: 'intro.json',
-						render: 'canvas',
-						loop: true,
-						autoplay: true,
-						name: 'intro_anim'
-					});
-
 					// setTimeout(() => {
 					// 	anim.stop();
 					// },500);
-
 					start_intro_anim = false;
 				}
 			}
@@ -715,13 +742,15 @@ const buttonTemplate = `
 			}
 
 			function reset_fastly_treatment() {
-				let gamearea = document.getElementById('bodyid');
-				gamearea.style.opacity = 1;
+				let body = document.getElementById('bodyid');
+				body.style.opacity = 1;
 				bodymovin.destroy();
 			}
 
 
 			function draw_bounds(x1, y1, x2, y2) {
+				// console.log("draw_bounds ", x1, y1, x2, y2);
+				console.log("draw_bounds ", gamearea.clientWidth, gamearea.clientHeight);
 				ctx.strokeStyle = "orange";
 				ctx.beginPath();
 				ctx.moveTo(x1, y1);
@@ -960,7 +989,7 @@ const buttonTemplate = `
 			So we double the sprites when we init, and then when we render we need to scale by game to screen
 			*/
 			function init_sprites(scale) {
-				console.log("init_sprites ", scale);
+//				console.log("init_sprites ", scale);
 				let enemy0_0 = [
 					0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
 					0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
@@ -1128,15 +1157,23 @@ const buttonTemplate = `
 
 			// Resizing
 			function resize() {
-				// We make the gamearea somewhat smaller to get some zooming
-				gamearea.width = window.innerWidth * 0.8;
-				gamearea.height = window.innerHeight * 0.9;
 				topbar.width = window.innerWidth;
-				topbar.height = window.innerHeight * 0.1;
-				leaderboardglobal_elem.width = window.innerWidth * 0.2;
-				leaderboardglobal_elem.height = window.innerHeight * 0.9;
-				let scale = module.resize(gamearea.width, gamearea.height);
-				console.log("RESIZE scale ", scale);
+				topbar.height = window.innerHeight * 0.05;
+
+				// var scale = get_src_to_screen_fill_scale(res.header_img.width, res.header_img.height, header.clientWidth, header.clientHeight);
+				// console.log("header ", res.header_img.width, res.header_img.height, header.clientWidth, header.clientHeight, scale);
+				// var img = document.createElement("img");
+				// img.src = res.header_img.src;
+				// img.width = res.header_img.width * scale;
+				// img.height = res.header_img.height * scale;
+				// img.alt = res.header_img.alt;
+				
+				// leaderboardglobal_elem.width = window.innerWidth * 0.2;
+				// leaderboardglobal_elem.height = window.innerHeight * 0.9;
+
+				gamearea.width = gamearea.clientWidth;
+				gamearea.height = gamearea.clientHeight;
+				var scale = module.resize(gamearea.clientWidth, gamearea.clientHeight);
 				init_sprites(scale);
 			}
 			window.addEventListener('resize', () => {
