@@ -20,26 +20,12 @@
 			background-color: black;
 		}
 
-		#namediv {
-			display: none;
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			transform: translate(-50%, -50%);
-			background-color: blue;
-			font-family: courier;
-			width: 600px;
-			height: 100px;
-			padding: 20px;
-			border: 1px solid white;
-		}
-
 		#leaderboard,
 		tr {
 			background-color: black;
 			color: green;
 			font-family: courier;
-			font-size: xx-large;
+			font-size: x-large;
 		}
 
 		#fill {
@@ -56,9 +42,6 @@
 			z-index: 1;
 			background-color: black;
 		}
-		#namediv {
-			z-index: 2;
-		}
 	</style>
 </head>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js" integrity="sha512-jEnuDt6jfecCjthQAJ+ed0MTVA++5ZKmlUcmDGBv2vUI/REn6FuIdixLNnQT+vKusE2hhTk2is3cFvv5wA+Sgg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -73,10 +56,6 @@
 		<canvas id="gamearea" style='position:absolute; left:0%; top:40%; width: 100%; height: 45%'></canvas>
 		<div id="footer" style='position:absolute; left:0px; top:85%; width: 100%; height: 15%'></div>
 		</div>
-	</div>
-
-	<div id="namediv">
-		You got a high score! Enter your name: <input id="player_name" value="" />
 	</div>
 
 	<script>
@@ -449,7 +428,6 @@ const buttonTemplate = `
 			pfCtx.fill();
 
 			leaderboard_table = document.createElement('table');
-			leaderboard_table.style.width = '100%';
 			var tbdy = document.createElement('tbody');
 			leaderboard_table.appendChild(tbdy);
 
@@ -903,7 +881,6 @@ const buttonTemplate = `
 
 			local_score.name = "Kiosk Player"; // TODO add unique id to this?
 			document.getElementById('gamediv').style.display = 'block';
-			document.getElementById('namediv').style.display = 'none';
 			local_score.score = 0;
 
 			get_leaderboard_entries();
@@ -1168,6 +1145,8 @@ const buttonTemplate = `
 				gamearea.height = gamearea.clientHeight;
 				var scale = module.resize(gamearea.clientWidth, gamearea.clientHeight);
 				init_sprites(scale);
+
+				leaderboard_table.style.width = '50%';
 			}
 			window.addEventListener('resize', () => {
 				resize();
